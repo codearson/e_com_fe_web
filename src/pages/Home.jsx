@@ -1,13 +1,17 @@
+import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
+
 export const Home = () => {
     return (
         <div className="min-h-screen bg-white">
+            <Navbar />
             {/* Hero Section */}
             <section className="relative h-[600px] bg-gray-100">
                 <div className="container mx-auto px-4 h-full flex items-center">
                     <div className="max-w-2xl">
                         <h1 className="text-5xl font-bold text-gray-900 mb-4">Welcome to Our Store</h1>
                         <p className="text-xl text-gray-600 mb-8">Discover amazing products at great prices</p>
-                        <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                        <button className="bg-[#1E90FF] text-white px-8 py-3 rounded-lg hover:bg-[#1876cc] transition-colors">
                             Shop Now
                         </button>
                     </div>
@@ -39,7 +43,7 @@ export const Home = () => {
                                 <div className="aspect-square bg-gray-200 rounded-lg mb-4"></div>
                                 <h3 className="font-medium text-gray-900 mb-2">Product Name</h3>
                                 <p className="text-gray-600 mb-2">$99.99</p>
-                                <button className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition-colors">
+                                <button className="w-full bg-[#1E90FF] text-white py-2 rounded hover:bg-[#1876cc] transition-colors">
                                     Add to Cart
                                 </button>
                             </div>
@@ -47,6 +51,7 @@ export const Home = () => {
                     </div>
                 </div>
             </section>
+            <Footer />
         </div>
     )
 }

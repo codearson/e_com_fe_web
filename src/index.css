@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* Optional: Smooth sidebar transition and custom scrollbar for mobile menu */
+.mobile-sidebar {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mobile-sidebar::-webkit-scrollbar {
+  width: 8px;
+  background: #f1f1f1;
+}
+.mobile-sidebar::-webkit-scrollbar-thumb {
+  background: #b2dfdb;
+  border-radius: 4px;
+}

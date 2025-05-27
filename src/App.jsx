@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { Home } from "./pages/Home"
 import { NotFound } from "./pages/NotFound"
+import SellProduct from "./pages/SellProduct"
 import { Favourited } from "./pages/Favourited"
 import { Profile } from "./pages/Profile"
 import { ProfileEdit } from "./pages/ProfileEdit"
@@ -17,6 +18,7 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="profile/edit" element={<ProfileEdit />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="/sell" element={<SellProduct />} />
         </Routes>
       </BrowserRouter>
     </>

@@ -138,7 +138,13 @@ export const Navbar = () => {
           ) : (
             <button className="px-4 py-1.5 border border-[#1E90FF] text-[#1E90FF] rounded-md font-medium bg-white hover:bg-[#e6f3ff] transition-all text-sm" style={{fontWeight: 500}} onClick={() => setAuthModalOpen(true)}>Sign up | Log in</button>
           )}
-          <button className="px-4 py-1.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-all text-sm" style={{fontWeight: 500}}>Sell now</button>
+          <button 
+            onClick={() => navigate('/sell')}
+            className="px-4 py-1.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-all text-sm" 
+            style={{fontWeight: 500}}
+          >
+            Sell now
+          </button>
         </div>
 
         {/* Mobile Menu Button */}
@@ -182,7 +188,15 @@ export const Navbar = () => {
             </div>
 
             <div className="p-4 flex flex-col gap-3">
-              <button className="w-full py-2.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-colors">Sell now</button>
+              <button
+                onClick={() => {
+                  navigate('/sell');
+                  setMenuOpen(false);
+                }}
+                className="w-full py-2.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-colors"
+              >
+                Sell now
+              </button>
               <button className="w-full py-2.5 border border-[#1E90FF] text-[#1E90FF] rounded-md font-medium hover:bg-[#e6f3ff] transition-colors" onClick={() => setAuthModalOpen(true)}>Sign up | Log in</button>
               <a href="#" className="block text-center text-[#1E90FF] text-sm mt-2 hover:underline">Your Guide to E-Com</a>
             </div>

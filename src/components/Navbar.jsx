@@ -1,7 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { AuthModal } from "./AuthModal";
+import { getUserByEmail } from "../API/config";
+import { decodeJwt } from "../API/UserApi";
+import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+
+  // Fetch user info if logged in
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        const decoded = decodeJwt(token);
+        const email = decoded?.sub;
+        if (email) {
+          const userData = await getUserByEmail(email);
+          setUser(userData);
+        }
+      } else {
+        setUser(null);
+      }
+    };
+    fetchUser();
+  }, [authModalOpen]); // refetch after modal closes (login)
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setUserDropdownOpen(false);
+      }
+    }
+    if (userDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [userDropdownOpen]);
 
   const categories = [
     { name: 'Women', icon: <svg className="w-5 h-5 inline mr-2 text-[#1E90FF]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 14v7m0-7c-2.5 0-4-2-4-4a4 4 0 1 1 8 0c0 2-1.5 4-4 4z" /></svg> },
@@ -14,6 +56,14 @@ export const Navbar = () => {
     { name: 'Sports', icon: <svg className="w-5 h-5 inline mr-2 text-[#1E90FF]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg> },
     { name: 'Pet care', icon: <svg className="w-5 h-5 inline mr-2 text-[#1E90FF]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M5.5 8.5a2 2 0 1 1 3 0M15.5 8.5a2 2 0 1 1 3 0M5.5 15.5a2 2 0 1 0 3 0M15.5 15.5a2 2 0 1 0 3 0" /></svg> },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    setUser(null);
+    setUserDropdownOpen(false);
+    navigate('/'); // Redirect to home page
+  };
+
   return (
     <nav className="bg-white border-b border-gray-200 font-sans sticky top-0 z-50">
       {/* Main Navbar */}
@@ -55,7 +105,39 @@ export const Navbar = () => {
 
         {/* Right Side Buttons (hidden on mobile) */}
         <div className="hidden lg:flex items-center space-x-3">
-          <button className="px-4 py-1.5 border border-[#1E90FF] text-[#1E90FF] rounded-md font-medium bg-white hover:bg-[#e6f3ff] transition-all text-sm" style={{fontWeight: 500}}>Sign up | Log in</button>
+          {user ? (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                className="flex items-center gap-2 px-4 py-1.5 border border-[#1E90FF] text-[#1E90FF] rounded-full font-medium bg-white hover:bg-[#e6f3ff] transition-all text-sm shadow-sm"
+                style={{ fontWeight: 500 }}
+                onClick={() => setUserDropdownOpen((v) => !v)}
+              >
+                {/* User avatar with initials */}
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-[#1E90FF] to-[#6dd5ed] text-white font-bold text-base">
+                  {user.firstName?.[0]}{user.lastName?.[0]}
+                </span>
+                <span className="ml-1">{user.firstName}</span>
+                <svg className={`w-4 h-4 ml-2 transition-transform ${userDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {userDropdownOpen && (
+                <div className="absolute right-0 mt-2 min-w-[13rem] w-auto max-w-xs bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
+                  <div className="flex flex-col py-2">
+                    <div className="flex items-center px-4 py-2">
+                      <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white font-bold text-base mr-3">
+                        {user.firstName?.[0]}{user.lastName?.[0]}
+                      </span>
+                      <span className="font-medium text-gray-900">{user.firstName}</span>
+                    </div>
+                    <button className="text-left px-4 py-2 text-sm text-[#1E90FF] hover:bg-gray-100 font-semibold cursor-pointer" onClick={handleLogout}>Log out</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button className="px-4 py-1.5 border border-[#1E90FF] text-[#1E90FF] rounded-md font-medium bg-white hover:bg-[#e6f3ff] transition-all text-sm" style={{fontWeight: 500}} onClick={() => setAuthModalOpen(true)}>Sign up | Log in</button>
+          )}
           <button className="px-4 py-1.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-all text-sm" style={{fontWeight: 500}}>Sell now</button>
         </div>
 
@@ -101,7 +183,7 @@ export const Navbar = () => {
 
             <div className="p-4 flex flex-col gap-3">
               <button className="w-full py-2.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-colors">Sell now</button>
-              <button className="w-full py-2.5 border border-[#1E90FF] text-[#1E90FF] rounded-md font-medium hover:bg-[#e6f3ff] transition-colors">Sign up | Log in</button>
+              <button className="w-full py-2.5 border border-[#1E90FF] text-[#1E90FF] rounded-md font-medium hover:bg-[#e6f3ff] transition-colors" onClick={() => setAuthModalOpen(true)}>Sign up | Log in</button>
               <a href="#" className="block text-center text-[#1E90FF] text-sm mt-2 hover:underline">Your Guide to E-Com</a>
             </div>
 
@@ -121,6 +203,9 @@ export const Navbar = () => {
           </aside>
         </>
       )}
+
+      {/* Render AuthModal */}
+      <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </nav>
   );
 }; 

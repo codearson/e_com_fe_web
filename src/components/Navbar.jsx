@@ -1,7 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+   const navigate = useNavigate();
 
   const categories = [
     { name: 'Women', icon: <svg className="w-5 h-5 inline mr-2 text-[#1E90FF]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 14v7m0-7c-2.5 0-4-2-4-4a4 4 0 1 1 8 0c0 2-1.5 4-4 4z" /></svg> },
@@ -56,7 +58,13 @@ export const Navbar = () => {
         {/* Right Side Buttons (hidden on mobile) */}
         <div className="hidden lg:flex items-center space-x-3">
           <button className="px-4 py-1.5 border border-[#1E90FF] text-[#1E90FF] rounded-md font-medium bg-white hover:bg-[#e6f3ff] transition-all text-sm" style={{fontWeight: 500}}>Sign up | Log in</button>
-          <button className="px-4 py-1.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-all text-sm" style={{fontWeight: 500}}>Sell now</button>
+          <button 
+            onClick={() => navigate('/sell')}
+            className="px-4 py-1.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-all text-sm" 
+            style={{fontWeight: 500}}
+          >
+            Sell now
+          </button>
         </div>
 
         {/* Mobile Menu Button */}
@@ -100,7 +108,15 @@ export const Navbar = () => {
             </div>
 
             <div className="p-4 flex flex-col gap-3">
-              <button className="w-full py-2.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-colors">Sell now</button>
+              <button
+                onClick={() => {
+                  navigate('/sell');
+                  setMenuOpen(false);
+                }}
+                className="w-full py-2.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-colors"
+              >
+                Sell now
+              </button>
               <button className="w-full py-2.5 border border-[#1E90FF] text-[#1E90FF] rounded-md font-medium hover:bg-[#e6f3ff] transition-colors">Sign up | Log in</button>
               <a href="#" className="block text-center text-[#1E90FF] text-sm mt-2 hover:underline">Your Guide to E-Com</a>
             </div>

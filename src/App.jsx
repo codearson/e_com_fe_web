@@ -5,6 +5,7 @@ import SellProduct from "./pages/SellProduct"
 import { Favourited } from "./pages/Favourited"
 import { Profile } from "./pages/Profile"
 import { ProfileEdit } from "./pages/ProfileEdit"
+import OurPlatform from "./pages/OurPlatform"
 
 
 function App() {
@@ -18,7 +19,8 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="profile/edit" element={<ProfileEdit />} />
           <Route path="*" element={<NotFound />} />
-          <Route path="/sell" element={<SellProduct />} />
+          <Route path="/sell" element={<SellProduct />} />  
+          <Route path="/our-platform" element={<OurPlatform />} />
         </Routes>
       </BrowserRouter>
     </>

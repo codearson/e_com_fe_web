@@ -76,7 +76,7 @@ export const Footer = () => (
           <a href="#" className="hover:underline">Cookie Policy</a>
           <a href="#" className="hover:underline">Cookie Settings</a>
           <a href="#" className="hover:underline">Terms & Conditions</a>
-          <a href="#" className="hover:underline">Our Platform</a>
+          <a href="/our-platform" className="hover:underline">Our Platform</a>
         </div>
       </div>
     </div>

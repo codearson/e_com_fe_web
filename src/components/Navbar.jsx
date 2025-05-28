@@ -130,6 +130,36 @@ export const Navbar = () => {
                       </span>
                       <span className="font-medium text-gray-900">{user.firstName}</span>
                     </div>
+                    {/* Profile link */}
+                    <button 
+                      className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        navigate('/profile');
+                        setUserDropdownOpen(false);
+                      }}
+                    >
+                      Profile
+                    </button>
+                    {/* Favourites link */}
+                    <button 
+                      className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        navigate('/favourites');
+                        setUserDropdownOpen(false);
+                      }}
+                    >
+                      Favourites
+                    </button>
+                     {/* Settings link */}
+                     <button 
+                      className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        navigate('/profile/edit');
+                        setUserDropdownOpen(false);
+                      }}
+                    >
+                      Settings
+                    </button>
                     <button className="text-left px-4 py-2 text-sm text-[#1E90FF] hover:bg-gray-100 font-semibold cursor-pointer" onClick={handleLogout}>Log out</button>
                   </div>
                 </div>

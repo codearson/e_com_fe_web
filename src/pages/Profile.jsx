@@ -1,54 +1,66 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { useNavigate } from "react-router-dom";
-
-const profile = {
-  username: "prusoth26",
-  reviews: 0,
-  location: "United Kingdom",
-  lastSeen: "12 seconds ago",
-  followers: 0,
-  following: 0,
-  verified: ["Google", "Email"],
-  avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-};
+import { getUserByEmail } from "../API/config";
+import { decodeJwt } from "../API/UserApi";
 
 export const Profile = () => {
   const [tab, setTab] = useState("listings");
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        const decoded = decodeJwt(token);
+        const email = decoded?.sub;
+        if (email) {
+          const userData = await getUserByEmail(email);
+          setUser(userData);
+        }
+      }
+    };
+    fetchUser();
+  }, []);
+
+  if (!user) {
+    return <div>Loading profile...</div>; // Or a loading spinner
+  }
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
       <main className="flex-1 flex flex-col items-center px-2 py-8">
         <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row md:items-center md:space-x-8 bg-white rounded-2xl shadow p-4 md:p-10 mb-8">
           <div className="flex-shrink-0 flex justify-center md:block mb-4 md:mb-0">
-            <img src={profile.avatar} alt="Profile" className="w-28 h-28 md:w-40 md:h-40 rounded-full object-cover border-4 border-gray-100 shadow" />
+            <img src={`https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random&color=fff&size=160`} alt="Profile" className="w-28 h-28 md:w-40 md:h-40 rounded-full object-cover border-4 border-gray-100 shadow" />
           </div>
           <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between w-full">
             <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
               <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-1">
-                <span className="text-2xl md:text-3xl font-bold mr-0 sm:mr-3">{profile.username}</span>
+                <span className="text-2xl md:text-3xl font-bold mr-0 sm:mr-3">{user.firstName} {user.lastName}</span>
                 <span className="text-gray-500 text-base">No reviews yet</span>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 text-gray-600 text-base mb-2 gap-1 sm:gap-0">
                 <div className="flex items-center justify-center mb-1 sm:mb-0">
                   <svg className="w-5 h-5 mr-1 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a2 2 0 0 1-2.828 0l-4.243-4.243a8 8 0 1 1 11.314 0z"/><circle cx="12" cy="11" r="3"/></svg>
-                  {profile.location}
+                  {user.address || "Address not available"}
                 </div>
                 <div className="flex items-center justify-center mb-1 sm:mb-0">
                   <svg className="w-5 h-5 mr-1 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M8 17v1a3 3 0 0 0 3 3h2a3 3 0 0 0 3-3v-1"/><path d="M12 12v4"/><path d="M12 4v4"/></svg>
-                  Last seen {profile.lastSeen}
+                  Last seen 12 seconds ago
                 </div>
                 <div className="flex items-center justify-center">
                   <svg className="w-5 h-5 mr-1 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17 20h5v-2a4 4 0 0 0-3-3.87"/><path d="M9 20H4v-2a4 4 0 0 1 3-3.87"/><circle cx="12" cy="7" r="4"/></svg>
-                  <span>{profile.followers} followers, </span>
-                  <span className="ml-1">{profile.following} following</span>
+                  <span>0 followers, </span>
+                  <span className="ml-1">0 following</span>
                 </div>
               </div>
               <div className="flex flex-wrap items-center justify-center md:justify-start text-gray-600 text-base mb-2 gap-x-3 gap-y-1">
                 <span className="mr-2">Verified info:</span>
-                {profile.verified.map((v) => (
+                {[ "Google", "Email"].map((v) => (
                   <span key={v} className="flex items-center mr-2">
                     <svg className="w-5 h-5 mr-1 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
                     {v}

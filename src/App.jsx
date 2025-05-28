@@ -7,7 +7,6 @@ import { Profile } from "./pages/Profile"
 import { ProfileEdit } from "./pages/ProfileEdit"
 import OurPlatform from "./pages/OurPlatform"
 
-
 function App() {
 
   return (

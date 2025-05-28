@@ -1,10 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
+import { getUserByEmail } from "../API/config";
+import { decodeJwt, updateUser } from "../API/UserApi";
+import { searchUserBankDetails, saveUserBankDetails, updateUserBankDetails } from "../API/userBankDetailsApi";
+import { getAllBanksBySearch } from "../API/bankApi";
+import { getAllBranchesBySearch } from "../API/branchApi";
+import { getAllShippingAddressesBySearch, saveShippingAddress, updateShippingAddress } from "../API/shippingAddressApi";
+
+// Define the provinces and districts data
+const provinceDistrictData = [
+    { province: "Central Province", districts: ["Kandy", "Matale", "Nuwara Eliya"] },
+    { province: "Eastern Province", districts: ["Ampara", "Batticaloa", "Trincomalee"] },
+    { province: "Northern Province", districts: ["Jaffna", "Kilinochchi", "Mannar", "Mullaitivu", "Vavuniya"] },
+    { province: "North Central Province", districts: ["Anuradhapura", "Polonnaruwa"] },
+    { province: "North Western Province", districts: ["Kurunegala", "Puttalam"] },
+    { province: "Sabaragamuwa Province", districts: ["Kegalle", "Ratnapura"] },
+    { province: "Southern Province", districts: ["Galle", "Matara", "Hambantota"] },
+    { province: "Uva Province", districts: ["Badulla", "Monaragala"] },
+    { province: "Western Province", districts: ["Colombo", "Gampaha", "Kalutara"] },
+];
 
 const tabs = [
   { key: "profile", label: "Profile details" },
   { key: "account", label: "Account settings" },
+  { key: "bank", label: "Bank Details" },
+  { key: "shipping-address", label: "Shipping Addresses" },
   { key: "privacy", label: "Privacy settings" },
   { key: "security", label: "Security" },
 ];
@@ -63,6 +85,821 @@ function VerifyPhone({ onBack }) {
 export const ProfileEdit = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [securityPage, setSecurityPage] = useState(null);
+  const [user, setUser] = useState(null);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [address, setAddress] = useState("");
+  const [email, setEmail] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [bankDetails, setBankDetails] = useState(null);
+  const [accountHolderName, setAccountHolderName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [bankId, setBankId] = useState(1);
+  const [branchId, setBranchId] = useState(1);
+  const [savingBankDetails, setSavingBankDetails] = useState(false);
+  const [bankDetailsError, setBankDetailsError] = useState(null);
+  const [bankDetailsStatus, setBankDetailsStatus] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [updateStatus, setUpdateStatus] = useState("");
+  const [banks, setBanks] = useState([]);
+  const [selectedBankId, setSelectedBankId] = useState("");
+  const [bankSearch, setBankSearch] = useState("");
+  const [filteredBanks, setFilteredBanks] = useState([]);
+  const [isBankDropdownOpen, setIsBankDropdownOpen] = useState(false);
+
+  // New state for Branches
+  const [branches, setBranches] = useState([]);
+  const [selectedBranchId, setSelectedBranchId] = useState("");
+  const [branchSearch, setBranchSearch] = useState("");
+  const [filteredBranches, setFilteredBranches] = useState([]);
+  const [isBranchDropdownOpen, setIsBranchDropdownOpen] = useState(false);
+
+  // State for edit mode
+  const [isEditingBankDetails, setIsEditingBankDetails] = useState(false);
+  const [isAddingShippingAddress, setIsAddingShippingAddress] = useState(false);
+  const [shippingAddresses, setShippingAddresses] = useState([]);
+  const [newShippingAddress, setNewShippingAddress] = useState({
+    address: "",
+    city: "",
+    postalCode: "",
+    district: "",
+    province: "",
+    isPrimary: false,
+    name: "",
+    mobileNumber: "",
+  });
+  const [editingAddressId, setEditingAddressId] = useState(null);
+  const [editingShippingAddress, setEditingShippingAddress] = useState(null);
+  const [isEditingShippingAddress, setIsEditingShippingAddress] = useState(false);
+  const [savingShippingAddress, setSavingShippingAddress] = useState(false);
+
+  const [districts, setDistricts] = useState([]);
+  const [provinces, setProvinces] = useState([]);
+  const [filteredDistricts, setFilteredDistricts] = useState([]);
+  const [filteredProvinces, setFilteredProvinces] = useState([]);
+  const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
+  const [showProvinceDropdown, setShowProvinceDropdown] = useState(false);
+
+  const navigate = useNavigate();
+
+  // Initialize provinces and districts on mount
+  useEffect(() => {
+      const allProvinces = provinceDistrictData.map(item => item.province);
+      const allDistricts = provinceDistrictData.flatMap(item => item.districts);
+      setProvinces(allProvinces);
+      setFilteredProvinces(allProvinces);
+      setDistricts(allDistricts);
+      setFilteredDistricts(allDistricts);
+  }, []);
+
+  const fetchShippingAddresses = async (userId) => {
+    console.log("Fetching shipping addresses for user ID:", userId);
+    const addresses = await getAllShippingAddressesBySearch();
+    console.log("All shipping addresses fetched:", addresses);
+    // Filter addresses by logged-in user's ID
+    if (userId && addresses) {
+        const userAddresses = addresses.filter(address => address.userDto?.id === userId);
+        console.log("Filtered shipping addresses for user:", userAddresses);
+        setShippingAddresses(userAddresses);
+    } else {
+        console.log("User ID not available or no addresses fetched, setting empty array.");
+        setShippingAddresses([]);
+    }
+  };
+
+  useEffect(() => {
+    const fetchUserAndData = async () => {
+      console.log("fetchUserAndData started");
+      const token = localStorage.getItem("accessToken");
+      console.log("Token:", token);
+      if (token) {
+        const decoded = decodeJwt(token);
+        console.log("Decoded email:", decoded?.sub);
+        const userEmail = decoded?.sub;
+        if (userEmail) {
+          let userData = null;
+          try {
+             userData = await getUserByEmail(userEmail);
+             console.log("User data from API:", userData);
+          } catch (error) {
+              console.error('Error fetching user data:', error);
+               setLoading(false);
+               setShippingAddresses([]); // Clear addresses on user fetch error
+              return; // Stop execution if user data cannot be fetched
+          }
+
+          if (userData) {
+            setUser(userData);
+            setFirstName(userData.firstName || "");
+            setLastName(userData.lastName || "");
+            setAddress(userData.address || "");
+            setEmail(userData.emailAddress || "");
+            setMobileNumber(userData.mobileNumber || "");
+
+            // Fetch bank details (add error handling)
+            try {
+               console.log("Fetching bank data for account holder:", userData.firstName || "");
+               const bankDataResponse = await searchUserBankDetails();
+               console.log("Bank data response from API:", bankDataResponse);
+               const userBankDetail = bankDataResponse.find(detail => detail.userDto?.id === userData.id);
+               if (userBankDetail) {
+                   setBankDetails(userBankDetail);
+                   setSelectedBankId(userBankDetail.bankDto?.id || "");
+                   setBankSearch(userBankDetail.bankDto?.name || "");
+                   setSelectedBranchId(userBankDetail.branchDto?.id || "");
+                   setBranchSearch(userBankDetail.branchDto?.branchName || "");
+                   setAccountHolderName(userBankDetail.accountHolderName || "");
+                   setAccountNumber(userBankDetail.accountNumber || "");
+                   console.log("Bank details state set:", userBankDetail);
+               } else {
+                   setBankDetails(null);
+                   setSelectedBankId("");
+                   setBankSearch("");
+                   setSelectedBranchId("");
+                   setBranchSearch("");
+                   setAccountHolderName("");
+                   setAccountNumber("");
+
+                   console.log("No bank details found for this user.");
+               }
+            } catch (error) {
+                console.error('Error fetching bank details:', error);
+                setBankDetails(null); // Ensure bank details state is clear on error
+            }
+
+            console.log("User state updated:", { firstName: userData.firstName, lastName: userData.lastName, address: userData.address, email: userData.emailAddress, mobileNumber: userData.mobileNumber });
+
+            // Now that user data is loaded, fetch shipping addresses using the fetched user ID
+            if (userData?.id) {
+               await fetchShippingAddresses(userData.id);
+            } else {
+                console.error("User ID not available after fetching user data.");
+                 setShippingAddresses([]); // Ensure shipping addresses are cleared if user ID is missing
+            }
+
+          }
+        } else {
+             console.log("No userEmail from decoded token.");
+             setShippingAddresses([]); // Clear shipping addresses if no user email
+             setLoading(false);
+             return; // Stop execution if no user email
+        }
+      } else {
+           console.log("No accessToken found.");
+           setShippingAddresses([]); // Clear shipping addresses if no access token
+           setLoading(false);
+           return; // Stop execution if no access token
+      }
+
+      // Fetch banks and branches (add error handling)
+      try {
+        console.log("Fetching banks and branches...");
+        const banksData = await getAllBanksBySearch();
+        setBanks(banksData);
+        setFilteredBanks(banksData);
+        console.log("Banks fetched:", banksData.length);
+
+        const branchesData = await getAllBranchesBySearch();
+        setBranches(branchesData);
+        setFilteredBranches(branchesData);
+        console.log("Branches fetched:", branchesData.length);
+
+      } catch (error) {
+        console.error('Error fetching initial data (banks/branches):', error);
+         setBanks([]); // Clear banks/branches state on error
+         setFilteredBanks([]);
+         setBranches([]);
+         setFilteredBranches([]);
+      }
+
+      setLoading(false);
+      console.log("setLoading(false) called");
+    };
+    fetchUserAndData();
+  }, []); // Empty dependency array means this runs once on mount
+
+  // Effect for filtering banks
+  useEffect(() => {
+    if (bankSearch.trim() === "") {
+      setFilteredBanks(banks);
+      if (!bankDetails) {
+         setSelectedBankId("");
+      }
+    } else {
+      const filtered = banks.filter(bank => 
+        bank.name.toLowerCase().includes(bankSearch.toLowerCase())
+      );
+      setFilteredBanks(filtered);
+    }
+  }, [bankSearch, banks, bankDetails]);
+
+  // Effect for filtering branches
+  useEffect(() => {
+    if (branchSearch.trim() === "") {
+      setFilteredBranches(branches);
+       if (!bankDetails) {
+         setSelectedBranchId("");
+      }
+    } else {
+      const filtered = branches.filter(branch => 
+        branch.branchName.toLowerCase().includes(branchSearch.toLowerCase())
+      );
+      setFilteredBranches(filtered);
+    }
+  }, [branchSearch, branches, bankDetails]);
+
+  const handleProfileUpdate = async () => {
+    setUpdateStatus("Updating...");
+    const updatedUserData = {
+      ...user,
+      firstName: firstName,
+      lastName: lastName,
+      address: address,
+    };
+    const result = await updateUser(updatedUserData);
+    if (result && result.status) {
+      setUpdateStatus("Profile updated successfully!");
+      setUser(updatedUserData);
+    } else {
+      setUpdateStatus("Failed to update profile.");
+      setError(result?.errorDescription || "An error occurred.");
+    }
+    setTimeout(() => setUpdateStatus(""), 3000);
+    setTimeout(() => setError(null), 3000);
+  };
+
+  const handleBankSelect = (bank) => {
+    setSelectedBankId(bank.id);
+    setBankSearch(bank.name);
+    setIsBankDropdownOpen(false);
+    if (bankDetailsError && bankDetailsError.includes("bank")) {
+        setBankDetailsError(null);
+    }
+  };
+
+  const handleBankInputChange = (e) => {
+    const value = e.target.value;
+    setBankSearch(value);
+    if (!isBankDropdownOpen && value.length > 0) {
+        setIsBankDropdownOpen(true);
+    }
+    if (banks.find(b => b.id === parseInt(selectedBankId))?.name !== value) {
+        setSelectedBankId("");
+    }
+    if (bankDetailsError && bankDetailsError.includes("bank")) {
+        setBankDetailsError(null);
+    }
+  };
+
+  const handleClearBankSelection = () => {
+    setSelectedBankId("");
+    setBankSearch("");
+    setFilteredBanks(banks);
+    if (bankDetailsError && bankDetailsError.includes("bank")) {
+        setBankDetailsError(null);
+    }
+  };
+
+  // New handlers for Branch dropdown
+  const handleBranchSelect = (branch) => {
+    setSelectedBranchId(branch.id);
+    setBranchSearch(branch.branchName);
+    setIsBranchDropdownOpen(false);
+    if (bankDetailsError && bankDetailsError.includes("branch")) {
+        setBankDetailsError(null);
+    }
+  };
+
+  const handleBranchInputChange = (e) => {
+    const value = e.target.value;
+    setBranchSearch(value);
+    if (!isBranchDropdownOpen && value.length > 0) {
+        setIsBranchDropdownOpen(true);
+    }
+    if (branches.find(b => b.id === parseInt(selectedBranchId))?.branchName !== value) {
+        setSelectedBranchId("");
+    }
+    if (bankDetailsError && bankDetailsError.includes("branch")) {
+        setBankDetailsError(null);
+    }
+  };
+
+    const handleClearBranchSelection = () => {
+    setSelectedBranchId("");
+    setBranchSearch("");
+    setFilteredBranches(branches);
+    if (bankDetailsError && bankDetailsError.includes("branch")) {
+        setBankDetailsError(null);
+    }
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isBankDropdownOpen && event.target.closest('.bank-dropdown-container') === null) {
+        setIsBankDropdownOpen(false);
+        if (selectedBankId && banks.find(b => b.id === parseInt(selectedBankId))?.name !== bankSearch) {
+             setBankSearch("");
+             setSelectedBankId("");
+        }
+      }
+       if (isBranchDropdownOpen && event.target.closest('.branch-dropdown-container') === null) {
+        setIsBranchDropdownOpen(false);
+         if (selectedBranchId && branches.find(b => b.id === parseInt(selectedBranchId))?.branchName !== branchSearch) {
+             setBranchSearch("");
+             setSelectedBranchId("");
+         }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isBankDropdownOpen, selectedBankId, bankSearch, isBranchDropdownOpen, selectedBranchId, branchSearch, banks, branches]);
+
+    // Set initial search values and selected IDs when bankDetails is loaded or updated
+    useEffect(() => {
+        if (bankDetails) {
+             setBankSearch(bankDetails.bankDto?.name || "");
+             setSelectedBankId(bankDetails.bankDto?.id || "");
+             setBranchSearch(bankDetails.branchDto?.branchName || "");
+             setSelectedBranchId(bankDetails.branchDto?.id || "");
+             setAccountHolderName(bankDetails.accountHolderName || "");
+             setAccountNumber(bankDetails.accountNumber || "");
+        } else {
+             setBankSearch("");
+             setSelectedBankId("");
+             setBranchSearch("");
+             setSelectedBranchId("");
+             setAccountHolderName("");
+             setAccountNumber("");
+        }
+         setBankDetailsError(null);
+         setBankDetailsStatus("");
+    }, [bankDetails]);
+
+     // Clear search and selection when switching away from bank tab or when bankDetails becomes null
+    useEffect(() => {
+        if (activeTab !== "bank" || !bankDetails) {
+            setBankSearch("");
+            setSelectedBankId("");
+            setBranchSearch("");
+            setSelectedBranchId("");
+            setIsBankDropdownOpen(false);
+            setIsBranchDropdownOpen(false);
+             setBankDetailsError(null);
+            setBankDetailsStatus("");
+            setSavingBankDetails(false);
+            setIsEditingBankDetails(false);
+        }
+    }, [activeTab, bankDetails]);
+
+  const handleSaveBankDetails = async () => {
+    setSavingBankDetails(true);
+    setBankDetailsStatus("Saving...");
+    setBankDetailsError(null);
+
+    if (!accountHolderName.trim()) {
+         setBankDetailsError("Please enter account holder name.");
+         setSavingBankDetails(false);
+         setTimeout(() => setBankDetailsError(null), 3000);
+         return;
+    }
+     if (!accountNumber.trim()) {
+         setBankDetailsError("Please enter account number.");
+         setSavingBankDetails(false);
+         setTimeout(() => setBankDetailsError(null), 3000);
+         return;
+    }
+    if (!selectedBankId) {
+        setBankDetailsError("Please select a bank.");
+        setSavingBankDetails(false);
+        setTimeout(() => setBankDetailsError(null), 3000);
+        return;
+    }
+     if (!selectedBranchId) {
+        setBankDetailsError("Please select a branch.");
+        setSavingBankDetails(false);
+        setTimeout(() => setBankDetailsError(null), 3000);
+        return;
+    }
+
+    const bankDetailsPayload = {
+      accountHolderName: accountHolderName,
+      accountNumber: accountNumber,
+      createdAt: new Date().toISOString(),
+      userDto: {
+        id: user.id,
+      },
+      bankDto: {
+        id: parseInt(selectedBankId),
+      },
+      branchDto: {
+        id: parseInt(selectedBranchId),
+      },
+      isActive: 1,
+    };
+
+    const result = await saveUserBankDetails(bankDetailsPayload);
+
+    if (result && result.status) {
+      setBankDetailsStatus("Bank details saved successfully!");
+      const bankDataResponse = await searchUserBankDetails();
+      const userBankDetail = bankDataResponse.find(detail => detail.userDto?.id === user.id);
+      if (userBankDetail) {
+        setBankDetails(userBankDetail);
+        setSelectedBankId(userBankDetail.bankDto?.id || "");
+        setBankSearch(userBankDetail.bankDto?.name || "");
+        setSelectedBranchId(userBankDetail.branchDto?.id || "");
+        setBranchSearch(userBankDetail.branchDto?.branchName || "");
+        setAccountHolderName(userBankDetail.accountHolderName || "");
+        setAccountNumber(userBankDetail.accountNumber || "");
+      }
+      if (!bankDetails) {
+          setAccountHolderName("");
+          setAccountNumber("");
+          setSelectedBankId("");
+          setBankSearch("");
+          setSelectedBranchId("");
+          setBranchSearch("");
+      }
+    } else {
+      setBankDetailsError(result?.errorDescription || "Failed to save bank details.");
+      setBankDetailsStatus("");
+    }
+    setSavingBankDetails(false);
+    setTimeout(() => setBankDetailsStatus(""), 3000);
+    setTimeout(() => setBankDetailsError(null), 3000);
+  };
+
+    const handleUpdateBankDetails = async () => {
+        setSavingBankDetails(true);
+        setBankDetailsStatus("Updating...");
+        setBankDetailsError(null);
+
+         if (!accountHolderName.trim()) {
+             setBankDetailsError("Please enter account holder name.");
+             setSavingBankDetails(false);
+             setTimeout(() => setBankDetailsError(null), 3000);
+             return;
+        }
+         if (!accountNumber.trim()) {
+             setBankDetailsError("Please enter account number.");
+             setSavingBankDetails(false);
+             setTimeout(() => setBankDetailsError(null), 3000);
+             return;
+        }
+        if (!selectedBankId) {
+            setBankDetailsError("Please select a bank.");
+            setSavingBankDetails(false);
+            setTimeout(() => setBankDetailsError(null), 3000);
+            return;
+        }
+         if (!selectedBranchId) {
+            setBankDetailsError("Please select a branch.");
+            setSavingBankDetails(false);
+            setTimeout(() => setBankDetailsError(null), 3000);
+            return;
+        }
+
+        const bankDetailsPayload = {
+            id: bankDetails.id,
+            accountHolderName: accountHolderName,
+            accountNumber: accountNumber,
+            createdAt: bankDetails.createdAt,
+             userDto: {
+                id: user.id,
+            },
+            bankDto: {
+                id: parseInt(selectedBankId),
+            },
+            branchDto: {
+                id: parseInt(selectedBranchId),
+            },
+            isActive: bankDetails.isActive
+        };
+
+        const result = await updateUserBankDetails(bankDetailsPayload);
+
+         if (result && result.status) {
+             setBankDetailsStatus("Bank details updated successfully!");
+              const bankDataResponse = await searchUserBankDetails();
+             const userBankDetail = bankDataResponse.find(detail => detail.userDto?.id === user.id);
+             if (userBankDetail) {
+                 setBankDetails(userBankDetail);
+                 setSelectedBankId(userBankDetail.bankDto?.id || "");
+                 setBankSearch(userBankDetail.bankDto?.name || "");
+                 setSelectedBranchId(userBankDetail.branchDto?.id || "");
+                 setBranchSearch(userBankDetail.branchDto?.branchName || "");
+                 setAccountHolderName(userBankDetail.accountHolderName || "");
+                 setAccountNumber(userBankDetail.accountNumber || "");
+             }
+             setIsEditingBankDetails(false);
+         } else {
+             setBankDetailsError(result?.errorDescription || "Failed to update bank details.");
+             setBankDetailsStatus("");
+         }
+         setSavingBankDetails(false);
+         setTimeout(() => setBankDetailsStatus(""), 3000);
+         setTimeout(() => setBankDetailsError(null), 3000);
+    };
+
+    const handleCancelEdit = () => {
+        setIsEditingBankDetails(false);
+        if (bankDetails) {
+            setAccountHolderName(bankDetails.accountHolderName || "");
+            setAccountNumber(bankDetails.accountNumber || "");
+            setSelectedBankId(bankDetails.bankDto?.id || "");
+            setBankSearch(bankDetails.bankDto?.name || "");
+            setSelectedBranchId(bankDetails.branchDto?.id || "");
+            setBranchSearch(bankDetails.branchDto?.branchName || "");
+        }
+        setBankDetailsError(null);
+        setBankDetailsStatus("");
+        setSavingBankDetails(false);
+    };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (isAddingShippingAddress) {
+      setNewShippingAddress({
+        ...newShippingAddress,
+        [name]: value,
+      });
+    } else if (editingAddressId) {
+       setEditingShippingAddress({
+        ...editingShippingAddress,
+        [name]: value,
+      });
+    }
+
+    if (name === "district") {
+      const filtered = districts.filter((d) =>
+          d.toLowerCase().includes(value.toLowerCase())
+        );
+      setFilteredDistricts(filtered);
+      setShowDistrictDropdown(true);
+    } else if (name === "province") {
+       const filtered = provinces.filter((p) =>
+          p.toLowerCase().includes(value.toLowerCase())
+        );
+      setFilteredProvinces(filtered);
+      setShowProvinceDropdown(true);
+    }
+  };
+
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+     if (isAddingShippingAddress) {
+        setNewShippingAddress({
+          ...newShippingAddress,
+          [name]: checked,
+        });
+      } else if (editingAddressId) {
+         setEditingShippingAddress({
+          ...editingShippingAddress,
+          [name]: checked,
+        });
+      }
+  };
+
+  const handleDistrictSelect = (district) => {
+     if (isAddingShippingAddress) {
+        setNewShippingAddress({
+          ...newShippingAddress,
+          district: district,
+        });
+      } else if (editingAddressId) {
+         setEditingShippingAddress({
+          ...editingShippingAddress,
+          district: district,
+        });
+      }
+    setShowDistrictDropdown(false);
+  };
+
+  const handleProvinceSelect = (province) => {
+     if (isAddingShippingAddress) {
+        setNewShippingAddress(prev => ({ ...prev, province: province, district: "" })); // Clear district when province changes
+         // Filter districts based on selected province
+         const relatedDistricts = provinceDistrictData.find(item => item.province === province)?.districts || [];
+         setFilteredDistricts(relatedDistricts);
++        setShowDistrictDropdown(false); // Close district dropdown after province selection
+      } else if (editingAddressId) {
+         setEditingShippingAddress(prev => ({ ...prev, province: province, district: "" })); // Clear district when province changes
+         // Filter districts based on selected province
+         const relatedDistricts = provinceDistrictData.find(item => item.province === province)?.districts || [];
+         setFilteredDistricts(relatedDistricts);
++        setShowDistrictDropdown(false); // Close district dropdown after province selection
+      }
+    setShowProvinceDropdown(false);
+     setFilteredProvinces(provinces); // Reset province filter
+  };
+
+  const handleAddShippingAddressClick = () => {
+    setIsAddingShippingAddress(true);
+    setEditingAddressId(null);
+    setEditingShippingAddress(null);
+    setNewShippingAddress({
+      address: "",
+      city: "",
+      postalCode: "",
+      district: "",
+      province: "",
+      isPrimary: shippingAddresses.length === 0 ? true : false, // Set as primary by default if it's the first address
+      name: "", // Add name field
+      mobileNumber: "", // Add mobileNumber field
+    });
+    setFilteredDistricts(districts);
+    setFilteredProvinces(provinces);
+  };
+
+  const handleEditShippingAddressClick = (address) => {
+    setIsAddingShippingAddress(false);
+    setIsEditingShippingAddress(true);
+    setEditingAddressId(address.id);
+    setEditingShippingAddress({...address});
+    setFilteredDistricts(districts);
+    setFilteredProvinces(provinces);
+  };
+
+  const handleSaveNewShippingAddress = async () => {
+    setSavingShippingAddress(true);
+    // First, unset any other primary addresses if the new one is primary
+    if (newShippingAddress.isPrimary) {
+        const currentlyPrimary = shippingAddresses.find(address => address.isPrimary);
+        if (currentlyPrimary) {
+            console.log("Unsetting previous primary address:", currentlyPrimary.id);
+            // Create a payload to unset isPrimary
+            const unsetPrimaryPayload = {
+                 ...currentlyPrimary,
+                 isPrimary: false,
+                 // Ensure userDto is included for the update API
+                 userDto: { id: user.id },
+                 // Explicitly set country to undefined if it exists in the original data
+                 country: undefined
+            };
+             // Explicitly include name, mobileNumber, and address if they exist in the original data
+            if (currentlyPrimary.name) unsetPrimaryPayload.name = currentlyPrimary.name;
+            if (currentlyPrimary.mobileNumber) unsetPrimaryPayload.mobileNumber = currentlyPrimary.mobileNumber;
+            if (currentlyPrimary.address) unsetPrimaryPayload.address = currentlyPrimary.address;
+
+            try {
+                const updateResponse = await updateShippingAddress(unsetPrimaryPayload);
+                if (updateResponse && !updateResponse.status) {
+                    console.error("Failed to unset previous primary address:", updateResponse.errorDescription);
+                    // Decide how to handle this error - perhaps stop the save process or warn the user
+                    setSavingShippingAddress(false);
+                    return; // Stop if unsetting failed critically
+                }
+            } catch (error) {
+                 console.error("Error calling updateShippingAddress to unset primary:", error);
+                 setSavingShippingAddress(false);
+                 return; // Stop on API error
+            }
+        }
+    }
+
+    const payload = {
+      ...newShippingAddress,
+      createdAt: new Date().toISOString(),
+       userDto: { id: user.id },
+       // Country field removed as per request and from state
+       country: undefined, // Explicitly set to undefined to ensure it's not sent
+       isActive: 1 // Add isActive field with value 1
+    };
+    // Ensure name and mobileNumber are included in the payload if they exist in newShippingAddress
+    if (newShippingAddress.name) payload.name = newShippingAddress.name;
+    if (newShippingAddress.mobileNumber) payload.mobileNumber = newShippingAddress.mobileNumber;
+
+    // Also ensure address is not undefined if it was empty string initially
+     if (newShippingAddress.address) payload.address = newShippingAddress.address;
+
+    const response = await saveShippingAddress(payload);
+    if (response && response.status) {
+      console.log("Shipping address saved successfully:", response);
+      setIsAddingShippingAddress(false);
+      setNewShippingAddress({
+        address: "",
+        city: "", // City field removed as per request
+        postalCode: "",
+        // Country field removed as per request
+        district: "",
+        province: "",
+        isPrimary: shippingAddresses.length === 0 ? true : false, // Set as primary by default if it's the first address
+        name: "", // Add name field
+        mobileNumber: "", // Add mobileNumber field
+        isActive: 1
+      });
+      await fetchShippingAddresses(); // Refetch to show updated primary status
+    } else {
+      console.error("Error saving shipping address:", response?.errorDescription || "Failed to save shipping address.");
+      // Handle save error
+    }
+    setSavingShippingAddress(false);
+  };
+
+  const handleUpdateShippingAddress = async () => {
+    if (!editingShippingAddress) return;
+
+    setSavingShippingAddress(true);
+
+     // First, unset any other primary addresses if the updated one is primary
+    if (editingShippingAddress.isPrimary) {
+        const currentlyPrimary = shippingAddresses.find(address => address.isPrimary && address.id !== editingShippingAddress.id);
+        if (currentlyPrimary) {
+             console.log("Unsetting previous primary address on update:", currentlyPrimary.id);
+             // Create a payload to unset isPrimary
+            const unsetPrimaryPayload = {
+                 ...currentlyPrimary,
+                 isPrimary: false,
+                 // Ensure userDto is included for the update API
+                 userDto: { id: user.id },
+                 // Explicitly set country to undefined if it exists in the original data
+                 country: undefined
+            };
+             // Explicitly include name, mobileNumber, and address if they exist in the original data
+            if (currentlyPrimary.name) unsetPrimaryPayload.name = currentlyPrimary.name;
+            if (currentlyPrimary.mobileNumber) unsetPrimaryPayload.mobileNumber = currentlyPrimary.mobileNumber;
+            if (currentlyPrimary.address) unsetPrimaryPayload.address = currentlyPrimary.address;
+
+            try {
+                const updateResponse = await updateShippingAddress(unsetPrimaryPayload);
+                 if (updateResponse && !updateResponse.status) {
+                    console.error("Failed to unset previous primary address on update:", updateResponse.errorDescription);
+                     // Decide how to handle this error
+                    setSavingShippingAddress(false);
+                    return; // Stop if unsetting failed critically
+                }
+            } catch (error) {
+                 console.error("Error calling updateShippingAddress to unset primary on update:", error);
+                 setSavingShippingAddress(false);
+                 return; // Stop on API error
+            }
+        }
+    }
+
+    const payload = {
+      ...editingShippingAddress,
+      userDto: { id: user.id },
+       // Country field removed as per request and from state
+       country: undefined, // Explicitly set to undefined to ensure it's not sent
+    };
+     // Ensure name and mobileNumber are included in the payload if they exist in editingShippingAddress
+     if (editingShippingAddress.name) payload.name = editingShippingAddress.name;
+     if (editingShippingAddress.mobileNumber) payload.mobileNumber = editingShippingAddress.mobileNumber;
+
+     // Also ensure address is not undefined if it was empty string initially
+     if (editingShippingAddress.address) payload.address = editingShippingAddress.address;
+
+    const response = await updateShippingAddress(payload);
+
+    if (response && response.status) {
+      console.log("Shipping address updated successfully:", response);
+      setEditingAddressId(null);
+      setEditingShippingAddress(null);
+      setIsEditingShippingAddress(false);
+      await fetchShippingAddresses(); // Refetch to show updated primary status
+    } else {
+       console.error("Error updating shipping address:", response?.errorDescription || "Failed to update shipping address.");
+       // Handle update error
+    }
+     setSavingShippingAddress(false);
+  };
+
+  const handleCancelAddShippingAddress = () => {
+    setIsAddingShippingAddress(false);
+    setNewShippingAddress({
+      address: "",
+      city: "",
+      postalCode: "",
+      district: "",
+      province: "",
+      isPrimary: false,
+      name: "",
+      mobileNumber: "",
+    });
+  };
+
+   const handleCancelEditShippingAddress = () => {
+    setEditingAddressId(null);
+    setEditingShippingAddress(null);
+    setFilteredDistricts(districts);
+    setFilteredProvinces(provinces);
+  };
+
+  if (loading) {
+    return <div>Loading settings...</div>;
+  }
+
+  if (error && !user) {
+    return <div className="text-red-500 text-center">Error loading profile: {error}</div>;
+  }
+
+  if (!user) {
+    return <div className="text-center">User not found. Please log in.</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -98,15 +935,18 @@ export const ProfileEdit = () => {
                 <div className="mb-6 flex flex-col md:flex-row md:items-center gap-6">
                   <div className="flex flex-col items-center md:items-start">
                     <span className="text-base font-medium mb-2">Your photo</span>
-                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Profile" className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 mb-2" />
+                    <img src={`https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random&color=fff&size=160`} alt="Profile" className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 mb-2" />
                     <button className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition">Choose photo</button>
                   </div>
                   <div className="flex-1 flex flex-col gap-4">
-                    <div>
-                      <span className="block font-medium mb-1">Username</span>
-                      <div className="flex gap-2 items-center">
-                        <input type="text" className="border rounded px-3 py-2 w-full max-w-xs" value="prusoth26" readOnly />
-                        <button className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition">Change username</button>
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1">
+                        <span className="block font-medium mb-1">First Name</span>
+                        <input type="text" className="border rounded px-3 py-2 w-full" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                      </div>
+                      <div className="flex-1">
+                        <span className="block font-medium mb-1">Last Name</span>
+                        <input type="text" className="border rounded px-3 py-2 w-full" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                       </div>
                     </div>
                     <div>
@@ -115,25 +955,11 @@ export const ProfileEdit = () => {
                     </div>
                   </div>
                 </div>
-                <h4 className="text-lg font-semibold mb-2 text-gray-700">My location</h4>
+                <h4 className="text-lg font-semibold mb-2 text-gray-700">Address</h4>
                 <div className="bg-gray-50 rounded-xl p-4 mb-6 flex flex-col gap-4">
-                  <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    <div className="flex-1">
-                      <span className="block font-medium mb-1">Country</span>
-                      <select className="border rounded px-3 py-2 w-full max-w-xs">
-                        <option>United Kingdom</option>
-                      </select>
-                    </div>
-                    <div className="flex-1">
-                      <span className="block font-medium mb-1">Town/City</span>
-                      <select className="border rounded px-3 py-2 w-full max-w-xs">
-                        <option>Select a city</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">Show city in profile</span>
-                    <input type="checkbox" className="accent-[#1E90FF] w-5 h-5" defaultChecked />
+                  <div>
+                    <span className="block font-medium mb-1">Address</span>
+                    <input type="text" className="border rounded px-3 py-2 w-full max-w-xs" value={address} onChange={(e) => setAddress(e.target.value)} />
                   </div>
                 </div>
                 <h4 className="text-lg font-semibold mb-2 text-gray-700">Language</h4>
@@ -144,7 +970,9 @@ export const ProfileEdit = () => {
                   </select>
                 </div>
                 <div className="flex justify-end">
-                  <button className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition">Update profile</button>
+                  {updateStatus && <span className="mr-4 text-sm text-green-600">{updateStatus}</span>}
+                  {error && <span className="mr-4 text-sm text-red-500">{error}</span>}
+                  <button className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition" onClick={handleProfileUpdate}>Update profile</button>
                 </div>
               </div>
             )}
@@ -155,15 +983,21 @@ export const ProfileEdit = () => {
                   <div>
                     <span className="block font-medium mb-1">Email</span>
                     <div className="flex gap-2 items-center">
-                      <input type="email" className="border rounded px-3 py-2 w-full max-w-xs" value="mrprusothaman@gmail.com" readOnly />
+                      <input type="email" className="border rounded px-3 py-2 w-full max-w-xs" value={email} readOnly />
                       <button className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition">Change</button>
                     </div>
                   </div>
                   <div>
                     <span className="block font-medium mb-1">Phone number</span>
                     <div className="flex gap-2 items-center">
-                      <input type="tel" className="border rounded px-3 py-2 w-full max-w-xs" placeholder="Enter phone number" />
+                      <input type="tel" className="border rounded px-3 py-2 w-full max-w-xs" value={mobileNumber} readOnly />
                       <button className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition">Verify</button>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="block font-medium mb-1">Whatsapp Number</span>
+                    <div className="flex gap-2 items-center">
+                      <input type="text" className="border rounded px-3 py-2 w-full max-w-xs" value={user.whatsappNumber || ""} readOnly />
                     </div>
                   </div>
                 </div>
@@ -171,7 +1005,7 @@ export const ProfileEdit = () => {
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex-1">
                       <span className="block font-medium mb-1">Full name</span>
-                      <input type="text" className="border rounded px-3 py-2 w-full max-w-xs" value="Prusothaman Mr" readOnly />
+                      <input type="text" className="border rounded px-3 py-2 w-full max-w-xs" value={`${firstName} ${lastName}`} readOnly />
                     </div>
                     <div className="flex-1">
                       <span className="block font-medium mb-1">Gender</span>
@@ -193,6 +1027,514 @@ export const ProfileEdit = () => {
                   <button className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition">Save</button>
                 </div>
               </div>
+            )}
+            {activeTab === "bank" && (
+              <div>
+                <h3 className="text-xl font-bold mb-4">Bank Details</h3>
+                {bankDetails ? (
+                  isEditingBankDetails ? (
+                     <div className="bg-gray-50 rounded-xl p-4 mb-6 flex flex-col gap-4">
+                        <p className="text-gray-700">Edit your bank details below.</p>
+
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <div className="flex-1">
+                                <span className="block font-medium mb-1">Account Holder Name</span>
+                                <input type="text" className="border rounded px-3 py-2 w-full" value={accountHolderName} onChange={(e) => setAccountHolderName(e.target.value)} placeholder="Enter account holder name" />
+                            </div>
+                            <div className="flex-1">
+                                <span className="block font-medium mb-1">Account Number</span>
+                                <input type="text" className="border rounded px-3 py-2 w-full" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Enter account number" />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <div className="flex-1">
+                                <span className="block font-medium mb-1">Bank</span>
+                                <div className="relative bank-dropdown-container flex items-center w-full">
+                                    <input
+                                        type="text"
+                                        className="border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#1E90FF] pr-8"
+                                        value={bankSearch}
+                                        onChange={handleBankInputChange}
+                                        placeholder="Select a bank"
+                                        onFocus={() => setIsBankDropdownOpen(true)}
+                                    />
+                                    {(bankSearch || selectedBankId) && (
+                                        <button
+                                            className="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
+                                            onClick={handleClearBankSelection}
+                                            type="button"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    )}
+                                    {isBankDropdownOpen && filteredBanks.length > 0 && (
+                                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
+                                            <div className="max-h-60 overflow-y-auto">
+                                                {filteredBanks.map((bank) => (
+                                                    <div
+                                                        key={bank.id}
+                                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                                        onClick={() => handleBankSelect(bank)}
+                                                    >
+                                                        {bank.name}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {isBankDropdownOpen && filteredBanks.length === 0 && bankSearch.length > 0 && (
+                                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
+                                            <div className="px-4 py-2 text-gray-500">No banks found</div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex-1">
+                                <span className="block font-medium mb-1">Branch</span>
+                                <div className="relative branch-dropdown-container flex items-center w-full">
+                                    <input
+                                        type="text"
+                                        className="border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#1E90FF] pr-8"
+                                        value={branchSearch}
+                                        onChange={handleBranchInputChange}
+                                        placeholder="Select a branch"
+                                        onFocus={() => setIsBranchDropdownOpen(true)}
+                                    />
+                                     {(branchSearch || selectedBranchId) && (
+                                        <button
+                                            className="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
+                                            onClick={handleClearBranchSelection}
+                                            type="button"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                     )}
+                                     {isBranchDropdownOpen && filteredBranches.length > 0 && (
+                                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
+                                            <div className="max-h-60 overflow-y-auto">
+                                                {filteredBranches.map((branch) => (
+                                                    <div
+                                                        key={branch.id}
+                                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                                        onClick={() => handleBranchSelect(branch)}
+                                                    >
+                                                        {branch.branchName}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {isBranchDropdownOpen && filteredBranches.length === 0 && branchSearch.length > 0 && (
+                                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
+                                            <div className="px-4 py-2 text-gray-500">No branches found</div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {bankDetailsError && <span className="text-red-500 text-sm">{bankDetailsError}</span>}
+                        {bankDetailsStatus && <span className="text-green-600 text-sm">{bankDetailsStatus}</span>}
+                         <div className="flex justify-end gap-4 mt-4">
+                            <button
+                                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition"
+                                onClick={handleCancelEdit}
+                                disabled={savingBankDetails}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition"
+                                onClick={handleUpdateBankDetails}
+                                disabled={savingBankDetails}
+                            >
+                                {savingBankDetails ? "Updating..." : "Update Bank Details"}
+                            </button>
+                         </div>
+                     </div>
+                  ) : (
+                    <div className="bg-gray-50 rounded-xl p-4 mb-6 flex flex-col gap-4">
+                      <div className="flex flex-col md:flex-row gap-4">
+                        <div className="flex-1">
+                          <span className="block font-medium mb-1">Account Holder Name</span>
+                          <input type="text" className="border rounded px-3 py-2 w-full" value={bankDetails.accountHolderName} readOnly />
+                        </div>
+                        <div className="flex-1">
+                          <span className="block font-medium mb-1">Account Number</span>
+                          <input type="text" className="border rounded px-3 py-2 w-full" value={bankDetails.accountNumber} readOnly />
+                        </div>
+                      </div>
+                      <div className="flex flex-col md:flex-row gap-4">
+                        <div className="flex-1">
+                          <span className="block font-medium mb-1">Bank Name</span>
+                          <input type="text" className="border rounded px-3 py-2 w-full" value={bankDetails.bankDto?.name || "N/A"} readOnly />
+                        </div>
+                        <div className="flex-1">
+                          <span className="block font-medium mb-1">Branch Name</span>
+                          <input type="text" className="border rounded px-3 py-2 w-full" value={bankDetails.branchDto?.branchName || "N/A"} readOnly />
+                        </div>
+                      </div>
+                       <div className="flex justify-end">
+                           <button
+                               className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition"
+                               onClick={() => setIsEditingBankDetails(true)}
+                           >
+                               Edit
+                           </button>
+                       </div>
+                    </div>
+                  )
+                ) : (
+                  <div className="bg-gray-50 rounded-xl p-4 mb-6 flex flex-col gap-4">
+                    <p className="text-gray-700">No bank details found. Please add your bank details.</p>
+
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1">
+                        <span className="block font-medium mb-1">Account Holder Name</span>
+                        <input type="text" className="border rounded px-3 py-2 w-full" value={accountHolderName} onChange={(e) => setAccountHolderName(e.target.value)} placeholder="Enter account holder name" />
+                      </div>
+                      <div className="flex-1">
+                        <span className="block font-medium mb-1">Account Number</span>
+                        <input type="text" className="border rounded px-3 py-2 w-full" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Enter account number" />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1">
+                        <span className="block font-medium mb-1">Bank</span>
+                        <div className="relative bank-dropdown-container flex items-center w-full">
+                          <input
+                            type="text"
+                            className="border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#1E90FF] pr-8"
+                            value={bankSearch}
+                            onChange={handleBankInputChange}
+                            placeholder="Select a bank"
+                            onFocus={() => setIsBankDropdownOpen(true)}
+                          />
+                          {(bankSearch || selectedBankId) && (
+                            <button
+                              className="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
+                              onClick={handleClearBankSelection}
+                              type="button"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                          )}
+                          {isBankDropdownOpen && filteredBanks.length > 0 && (
+                            <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
+                              <div className="max-h-60 overflow-y-auto">
+                                {filteredBanks.map((bank) => (
+                                  <div
+                                    key={bank.id}
+                                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                    onClick={() => handleBankSelect(bank)}
+                                  >
+                                    {bank.name}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                            {isBankDropdownOpen && filteredBanks.length === 0 && bankSearch.length > 0 && (
+                                 <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
+                                      <div className="px-4 py-2 text-gray-500">No banks found</div>
+                                 </div>
+                            )}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <span className="block font-medium mb-1">Branch</span>
+                         <div className="relative branch-dropdown-container flex items-center w-full">
+                            <input
+                                type="text"
+                                className="border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#1E90FF] pr-8"
+                                value={branchSearch}
+                                onChange={handleBranchInputChange}
+                                placeholder="Select a branch"
+                                onFocus={() => setIsBranchDropdownOpen(true)}
+                             />
+                             {(branchSearch || selectedBranchId) && (
+                                <button
+                                    className="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
+                                    onClick={handleClearBranchSelection}
+                                    type="button"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                             )}
+                             {isBranchDropdownOpen && filteredBranches.length > 0 && (
+                                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
+                                    <div className="max-h-60 overflow-y-auto">
+                                        {filteredBranches.map((branch) => (
+                                            <div
+                                                key={branch.id}
+                                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                                onClick={() => handleBranchSelect(branch)}
+                                            >
+                                                {branch.branchName}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {isBranchDropdownOpen && filteredBranches.length === 0 && branchSearch.length > 0 && (
+                                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
+                                    <div className="px-4 py-2 text-gray-500">No branches found</div>
+                                </div>
+                            )}
+                         </div>
+                      </div>
+                    </div>
+
+                    {bankDetailsError && <span className="text-red-500 text-sm">{bankDetailsError}</span>}
+                    {bankDetailsStatus && <span className="text-green-600 text-sm">{bankDetailsStatus}</span>}
+                    <button
+                      className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition"
+                      onClick={handleSaveBankDetails}
+                      disabled={savingBankDetails}
+                    >
+                      {savingBankDetails ? "Saving..." : "Save Bank Details"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+            {activeTab === "shipping-address" && (
+                <div>
+                    <h3 className="text-xl font-bold mb-6">Shipping Addresses</h3>
+
+                    {shippingAddresses.length === 0 && !isAddingShippingAddress && !editingAddressId ? (
+                        <div className="mt-4">
+                            <p className="text-sm text-gray-600">No shipping addresses found.</p>
+                            <button
+                                type="button"
+                                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mt-2"
+                                onClick={handleAddShippingAddressClick}
+                            >
+                                Add Shipping Address
+                            </button>
+                        </div>
+                    ) : isAddingShippingAddress || editingAddressId ? (
+                        <div className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
+                            <div className="sm:col-span-6">
+                                <label htmlFor="address" className="block text-sm font-medium leading-6 text-gray-900">
+                                    Street address
+                                </label>
+                                <div className="mt-2">
+                                    <input
+                                        type="text"
+                                        name="address"
+                                        id="address"
+                                        value={isAddingShippingAddress ? newShippingAddress.address : editingShippingAddress?.address || ""}
+                                        onChange={handleInputChange}
+                                        autoComplete="street-address"
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-3">
+                                <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
+                                    Name
+                                </label>
+                                <div className="mt-2">
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        id="name"
+                                        value={isAddingShippingAddress ? newShippingAddress.name : editingShippingAddress?.name || ""}
+                                        onChange={handleInputChange}
+                                        autoComplete="name"
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-3">
+                                <label htmlFor="mobileNumber" className="block text-sm font-medium leading-6 text-gray-900">
+                                    Mobile Number
+                                </label>
+                                <div className="mt-2">
+                                    <input
+                                        type="text"
+                                        name="mobileNumber"
+                                        id="mobileNumber"
+                                        value={isAddingShippingAddress ? newShippingAddress.mobileNumber : editingShippingAddress?.mobileNumber || ""}
+                                        onChange={handleInputChange}
+                                        autoComplete="tel"
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-3 sm:col-start-1">
+                                <label htmlFor="province" className="block text-sm font-medium leading-6 text-gray-900">
+                                    Province
+                                </label>
+                                <div className="mt-2 relative">
+                                    <input
+                                        type="text"
+                                        name="province"
+                                        id="province"
+                                        value={isAddingShippingAddress ? newShippingAddress.province : editingShippingAddress?.province || ""}
+                                        onChange={handleInputChange}
+                                        onFocus={() => setShowProvinceDropdown(true)}
+                                        onBlur={() => setTimeout(() => setShowProvinceDropdown(false), 100)}
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                        autoComplete="address-level1"
+                                    />
+                                    {showProvinceDropdown && filteredProvinces.length > 0 && (
+                                        <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                            {filteredProvinces.map((province) => (
+                                                <li
+                                                    key={province}
+                                                    className="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-indigo-600 hover:text-white"
+                                                    onClick={() => handleProvinceSelect(province)}
+                                                >
+                                                    {province}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-3">
+                                <label htmlFor="district" className="block text-sm font-medium leading-6 text-gray-900">
+                                    District
+                                </label>
+                                <div className="mt-2 relative">
+                                    <input
+                                        type="text"
+                                        name="district"
+                                        id="district"
+                                        value={isAddingShippingAddress ? newShippingAddress.district : editingShippingAddress?.district || ""}
+                                        onChange={handleInputChange}
+                                        onFocus={() => setShowDistrictDropdown(true)}
+                                        onBlur={() => setTimeout(() => setShowDistrictDropdown(false), 100)}
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                        autoComplete="address-level2"
+                                    />
+                                    {showDistrictDropdown && filteredDistricts.length > 0 && (
+                                        <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                            {filteredDistricts.map((district) => (
+                                                <li
+                                                    key={district}
+                                                    className="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-indigo-600 hover:text-white"
+                                                    onClick={() => handleDistrictSelect(district)}
+                                                >
+                                                    {district}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-2 sm:col-start-1">
+                                <label htmlFor="postal-code" className="block text-sm font-medium leading-6 text-gray-900">
+                                    ZIP / Postal code
+                                </label>
+                                <div className="mt-2">
+                                    <input
+                                        type="text"
+                                        name="postalCode"
+                                        id="postal-code"
+                                        value={isAddingShippingAddress ? newShippingAddress.postalCode : editingShippingAddress?.postalCode || ""}
+                                        onChange={handleInputChange}
+                                        autoComplete="postal-code"
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-6">
+                                <div className="relative flex items-start">
+                                    <div className="flex h-6 items-center">
+                                        <input
+                                            id="isPrimary"
+                                            name="isPrimary"
+                                            type="checkbox"
+                                            checked={isAddingShippingAddress ? newShippingAddress.isPrimary : editingShippingAddress?.isPrimary || false}
+                                            onChange={handleCheckboxChange}
+                                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                        />
+                                    </div>
+                                    <div className="ml-3 text-sm leading-6">
+                                        <label htmlFor="isPrimary" className="font-medium text-gray-900">
+                                            Set as Primary Address
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="sm:col-span-6 mt-4">
+                                {isAddingShippingAddress ? (
+                                    <button
+                                        type="button"
+                                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2"
+                                        onClick={handleSaveNewShippingAddress}
+                                    >
+                                        Save Shipping Address
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2"
+                                        onClick={handleUpdateShippingAddress}
+                                    >
+                                        Update Shipping Address
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    className="rounded-md bg-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-400"
+                                    onClick={isAddingShippingAddress ? handleCancelAddShippingAddress : handleCancelEditShippingAddress}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    ) : ( // Display list of addresses
+                        <div className="mt-4">
+                            {shippingAddresses.map((address) => (
+                                <div key={address.id} className="border rounded-md p-3 mb-4">
+                                    <p className="text-base font-semibold text-gray-900">{address.name}</p>
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-4 flex-wrap">
+                                            <div>
+                                                <p className="text-sm text-gray-700">{address.address}</p>
+                                                <p className="text-sm text-gray-600">{address.district}, {address.province}, {address.postalCode}</p>
+                                            </div>
+                                            {address.isPrimary && (
+                                                <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                                    Primary
+                                                 </span>
+                                             )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ml-4 flex-shrink-0"
+                                            onClick={() => handleEditShippingAddressClick(address)}
+                                        >
+                                            Edit
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                             {!isAddingShippingAddress && !editingAddressId && (
+                                <button
+                                    type="button"
+                                    className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mt-2"
+                                    onClick={handleAddShippingAddressClick}
+                                >
+                                    Add New Shipping Address
+                                </button>
+                             )}
+                        </div>
+                    )}
+                </div>
             )}
             {activeTab === "privacy" && (
               <div>

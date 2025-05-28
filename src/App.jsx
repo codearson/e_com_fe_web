@@ -6,7 +6,7 @@ import { Favourited } from "./pages/Favourited"
 import { Profile } from "./pages/Profile"
 import { ProfileEdit } from "./pages/ProfileEdit"
 import OurPlatform from "./pages/OurPlatform"
-
+import ProductView from "./pages/ProductView"
 
 function App() {
 
@@ -20,7 +20,8 @@ function App() {
           <Route path="profile/edit" element={<ProfileEdit />} />
           <Route path="*" element={<NotFound />} />
           <Route path="/sell" element={<SellProduct />} />  
-          <Route path="/our-platform" element={<OurPlatform />} />
+          <Route path="/our-platform" element={<OurPlatform />} /> 
+          <Route path="/productView" element={<ProductView />} />
         </Routes>
       </BrowserRouter>
     </>

@@ -6,7 +6,6 @@ import { Favourited } from "./pages/Favourited"
 import { Profile } from "./pages/Profile"
 import { ProfileEdit } from "./pages/ProfileEdit"
 
-
 function App() {
 
   return (

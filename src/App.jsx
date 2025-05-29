@@ -7,6 +7,8 @@ import { Profile } from "./pages/Profile";
 import { ProfileEdit } from "./pages/ProfileEdit";
 import OurPlatform from "./pages/OurPlatform";
 import AboutUs from "./pages/AboutUs";
+import ProductView from "./pages/ProductView";
+
 function App() {
   return (
     <>
@@ -20,6 +22,7 @@ function App() {
           <Route path="/sell" element={<SellProduct />} />
           <Route path="/our-platform" element={<OurPlatform />} />
           <Route path="/about-us" element={<AboutUs />} />
+          <Route path="/productView" element={<ProductView />} />
         </Routes>
       </BrowserRouter>
     </>

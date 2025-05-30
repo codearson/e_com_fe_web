@@ -1,13 +1,14 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Home } from "./pages/Home";
-import { NotFound } from "./pages/NotFound";
-import SellProduct from "./pages/SellProduct";
-import { Favourited } from "./pages/Favourited";
-import { Profile } from "./pages/Profile";
-import { ProfileEdit } from "./pages/ProfileEdit";
-import OurPlatform from "./pages/OurPlatform";
-import AboutUs from "./pages/AboutUs";
-import ProductView from "./pages/ProductView";
+import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { Home } from "./pages/Home"
+import { NotFound } from "./pages/NotFound"
+import SellProduct from "./pages/SellProduct"
+import { Favourited } from "./pages/Favourited"
+import { Profile } from "./pages/Profile"
+import { ProfileEdit } from "./pages/ProfileEdit"
+import OurPlatform from "./pages/OurPlatform"
+import AboutUs from "./pages/AboutUs"
+import ProductView from "./pages/ProductView"
+import Products from "./pages/Products"
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/our-platform" element={<OurPlatform />} />
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/productView" element={<ProductView />} />
+          <Route path="/products" element={<Products />} />
         </Routes>
       </BrowserRouter>
     </>

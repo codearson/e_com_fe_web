@@ -6,7 +6,7 @@ export const Home = () => {
         <div className="min-h-screen bg-white">
             <Navbar />
             {/* Hero Section */}
-            <section className="relative h-[600px] bg-gray-100">
+            <section className="relative h-[600px] bg-gray-100 z-0">
                 <div className="container mx-auto px-4 h-full flex items-center">
                     <div className="max-w-2xl">
                         <h1 className="text-5xl font-bold text-gray-900 mb-4">Welcome to Our Store</h1>

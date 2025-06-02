@@ -158,16 +158,16 @@ export const Footer = () => (
       {/* Bottom: Policy Links */}
       <div className="flex flex-col md:flex-row md:justify-between items-center gap-2 border-t pt-4 mt-6 text-xs text-gray-500">
         <div className="flex flex-wrap gap-4 mb-2 md:mb-0">
-          <a href="#" className="hover:underline">
+          <a href="/privacy-policy" className="hover:underline">
             Privacy Policy
           </a>
-          <a href="#" className="hover:underline">
+          <a href="/cookie-policy" className="hover:underline">
             Cookie Policy
           </a>
-          <a href="#" className="hover:underline">
+          <a href="/cookie-settings" className="hover:underline">
             Cookie Settings
           </a>
-          <a href="#" className="hover:underline">
+          <a href="/terms-and-conditions" className="hover:underline">
             Terms & Conditions
           </a>
           <a href="/our-platform" className="hover:underline">

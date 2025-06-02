@@ -9,6 +9,10 @@ import OurPlatform from "./pages/OurPlatform"
 import AboutUs from "./pages/AboutUs"
 import ProductView from "./pages/ProductView"
 import Products from "./pages/Products"
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import CookiePolicy from "./pages/CookiePolicy";
+import CookieSettings from "./pages/CookieSettings";
+import TermsAndConditions from "./pages/TermsAndConditions";
 
 function App() {
   return (
@@ -25,7 +29,11 @@ function App() {
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/productView" element={<ProductView />} />
           <Route path="/products" element={<Products />} />
-        </Routes>
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route path="/cookie-settings" element={<CookieSettings />} />
+          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+          </Routes>
       </BrowserRouter>
     </>
   );

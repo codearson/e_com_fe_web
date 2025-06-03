@@ -74,12 +74,12 @@ export const Footer = () => (
               </a>
             </li>
             <li>
-              <a href="#" className="hover:underline">
+              <a href="/selling" className="hover:underline">
                 Selling
               </a>
             </li>
             <li>
-              <a href="#" className="hover:underline">
+              <a href="/buying" className="hover:underline">
                 Buying
               </a>
             </li>

@@ -13,6 +13,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import CookiePolicy from "./pages/CookiePolicy";
 import CookieSettings from "./pages/CookieSettings";
 import TermsAndConditions from "./pages/TermsAndConditions";
+import Selling from "./pages/Selling";
+import Buying from "./pages/Buying";
 
 function App() {
   return (
@@ -33,7 +35,9 @@ function App() {
           <Route path="/cookie-policy" element={<CookiePolicy />} />
           <Route path="/cookie-settings" element={<CookieSettings />} />
           <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
-          </Routes>
+          <Route path="/selling" element={<Selling />} />
+          <Route path="/buying" element={<Buying />} />
+        </Routes>
       </BrowserRouter>
     </>
   );

@@ -12,11 +12,11 @@ export const AboutUs = () => {
           unique items. We're here to support a greener way to shop.
         </p>
       </section>
-      <div className="w-full">
+      <div>
         <img
-          src="https://images.pexels.com/photos/5632397/pexels-photo-5632397.jpeg?auto=compress&cs=tinysrgb&w=600"
+          src="https://images.pexels.com/photos/5632397/pexels-photo-5632397.jpeg?auto=compress&cs=tinysrgb"
           alt="About Us"
-          className="w-full h-auto"
+          className=" h-full object-cover"
         />
       </div>
 

@@ -89,6 +89,7 @@ export const ProfileEdit = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [address, setAddress] = useState("");
+  const [about, setAbout] = useState("");
   const [email, setEmail] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [bankDetails, setBankDetails] = useState(null);
@@ -140,6 +141,8 @@ export const ProfileEdit = () => {
   const [filteredProvinces, setFilteredProvinces] = useState([]);
   const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
   const [showProvinceDropdown, setShowProvinceDropdown] = useState(false);
+
+  const [gender, setGender] = useState(user?.gender || "");
 
   const navigate = useNavigate();
 
@@ -194,6 +197,7 @@ export const ProfileEdit = () => {
             setFirstName(userData.firstName || "");
             setLastName(userData.lastName || "");
             setAddress(userData.address || "");
+            setAbout(userData.about || "");
             setEmail(userData.emailAddress || "");
             setMobileNumber(userData.mobileNumber || "");
 
@@ -228,7 +232,7 @@ export const ProfileEdit = () => {
                 setBankDetails(null); // Ensure bank details state is clear on error
             }
 
-            console.log("User state updated:", { firstName: userData.firstName, lastName: userData.lastName, address: userData.address, email: userData.emailAddress, mobileNumber: userData.mobileNumber });
+            console.log("User state updated:", { firstName: userData.firstName, lastName: userData.lastName, address: userData.address, about: userData.about, email: userData.emailAddress, mobileNumber: userData.mobileNumber });
 
             // Now that user data is loaded, fetch shipping addresses using the fetched user ID
             if (userData?.id) {
@@ -316,6 +320,7 @@ export const ProfileEdit = () => {
       firstName: firstName,
       lastName: lastName,
       address: address,
+      about: about,
     };
     const result = await updateUser(updatedUserData);
     if (result && result.status) {
@@ -951,23 +956,76 @@ export const ProfileEdit = () => {
                     </div>
                     <div>
                       <span className="block font-medium mb-1">About you</span>
-                      <textarea className="border rounded px-3 py-2 w-full min-h-[60px]" placeholder="Tell us more about yourself and your style" />
+                      <textarea className="border rounded px-3 py-2 w-full min-h-[60px]" placeholder="Tell us more about yourself and your style" value={about} onChange={(e) => setAbout(e.target.value)} />
                     </div>
                   </div>
                 </div>
                 <h4 className="text-lg font-semibold mb-2 text-gray-700">Address</h4>
                 <div className="bg-gray-50 rounded-xl p-4 mb-6 flex flex-col gap-4">
                   <div>
-                    <span className="block font-medium mb-1">Address</span>
+                    {/* <span className="block font-medium mb-1">Address</span> */}
                     <input type="text" className="border rounded px-3 py-2 w-full max-w-xs" value={address} onChange={(e) => setAddress(e.target.value)} />
                   </div>
                 </div>
-                <h4 className="text-lg font-semibold mb-2 text-gray-700">Language</h4>
-                <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                  <span className="block font-medium mb-1">Language</span>
-                  <select className="border rounded px-3 py-2 w-full max-w-xs">
-                    <option>English, UK (English)</option>
-                  </select>
+                <div className="bg-gray-50 rounded-xl p-6 mb-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Birthday Section */}
+                    <div className="flex-1">
+                      <span className="block font-medium mb-2 text-gray-700">Birthday</span>
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          <input 
+                            type="text" 
+                            className="w-full border rounded-lg px-4 py-2.5 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200" 
+                            placeholder="Day" 
+                            maxLength="2"
+                          />
+                        </div>
+                        <div className="flex-[2]">
+                          <select 
+                            className="w-full border rounded-lg px-4 py-2.5 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200"
+                          >
+                            <option value="">Month</option>
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04">April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                          </select>
+                        </div>
+                        <div className="flex-[1.5]">
+                          <input 
+                            type="text" 
+                            className="w-full border rounded-lg px-4 py-2.5 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200" 
+                            placeholder="Year" 
+                            maxLength="4"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Gender Section */}
+                    <div className="flex-1">
+                      <span className="block font-medium mb-2 text-gray-700">Gender</span>
+                      <select 
+                        className="w-full border rounded-lg px-4 py-2.5 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200"
+                        value={gender}
+                        onChange={(e) => setGender(e.target.value)}
+                      >
+                        <option value="">Select gender</option>
+                        <option value="MALE">Male</option>
+                        <option value="FEMALE">Female</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex justify-end">
                   {updateStatus && <span className="mr-4 text-sm text-green-600">{updateStatus}</span>}
@@ -984,7 +1042,7 @@ export const ProfileEdit = () => {
                     <span className="block font-medium mb-1">Email</span>
                     <div className="flex gap-2 items-center">
                       <input type="email" className="border rounded px-3 py-2 w-full max-w-xs" value={email} readOnly />
-                      <button className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition">Change</button>
+                      {/* <button className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition">Change</button> */}
                     </div>
                   </div>
                   <div>
@@ -1006,20 +1064,6 @@ export const ProfileEdit = () => {
                     <div className="flex-1">
                       <span className="block font-medium mb-1">Full name</span>
                       <input type="text" className="border rounded px-3 py-2 w-full max-w-xs" value={`${firstName} ${lastName}`} readOnly />
-                    </div>
-                    <div className="flex-1">
-                      <span className="block font-medium mb-1">Gender</span>
-                      <select className="border rounded px-3 py-2 w-full max-w-xs">
-                        <option>Select gender</option>
-                      </select>
-                    </div>
-                    <div className="flex-1">
-                      <span className="block font-medium mb-1">Birthday</span>
-                      <div className="flex gap-2">
-                        <input type="text" className="border rounded px-2 py-2 w-16" placeholder="Day" />
-                        <input type="text" className="border rounded px-2 py-2 w-24" placeholder="Month" />
-                        <input type="text" className="border rounded px-2 py-2 w-24" placeholder="Year" />
-                      </div>
                     </div>
                   </div>
                 </div>

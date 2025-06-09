@@ -138,8 +138,8 @@ export const Home = () => {
             {/* Latest Products */}
             <section className="py-16 bg-gray-50">
                 <div className="container mx-auto px-4">
-                    <h2 className="text-3xl font-semibold text-gray-900 mb-2">Latest Products</h2>
-                    <p className="text-gray-600 mb-8">Check out our newest arrivals</p>
+                    <h2 className="text-3xl font-semibold text-gray-900 mb-2">Featured Products</h2>
+                    <p className="text-gray-600 mb-8">Check out our featured collection</p>
                     
                     {loading ? (
                         <div className="flex justify-center items-center h-64">

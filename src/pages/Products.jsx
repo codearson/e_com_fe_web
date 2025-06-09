@@ -93,12 +93,8 @@ const Products = () => {
     navigate('/productView', { state: { product } });
   };
 
-  const latestProducts = [...products]
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 4);
-
   if (loading) {
-    return (-
+    return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <div className="flex-1 flex justify-center items-center">
@@ -133,23 +129,6 @@ const Products = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-8">
-        {/* Featured Products Section */}
-        <section className="mb-12">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Latest Products</h2>
-            <p className="text-sm text-gray-500 mt-1">Check out our newest arrivals</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {latestProducts.map(product => (
-              <ProductCard 
-                key={`featured-${product.id}`}
-                product={product}
-                onProductClick={handleProductClick}
-              />
-            ))}
-          </div>
-        </section>
-
         {/* All Products Section */}
         <section>
           <div className="mb-8 flex justify-between items-center">

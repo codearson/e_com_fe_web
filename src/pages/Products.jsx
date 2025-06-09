@@ -2,56 +2,103 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
+import { getAllproductPage } from '../API/productApi';
+import { HeartIcon } from '@heroicons/react/24/outline';
 
-// Sample product data for testing
-const sampleProducts = [
-  {
-    id: 1,
-    name: "iPhone 13 Pro",
-    price: 999.99,
-    description: "Latest iPhone model with advanced camera system and A15 Bionic chip",
-    image: "https://images.unsplash.com/photo-1656392851225-ec9a304ef9d0?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGklMjBwaG9uZSUyMDEzJTIwcHJvfGVufDB8fDB8fHww",
-    condition: "New"
-  },
-  {
-    id: 2,
-    name: "Samsung Galaxy S21",
-    price: 799.99,
-    description: "5G Android smartphone with 120Hz display and pro-grade camera",
-    image: "https://images.unsplash.com/photo-1611282104572-e0b0e9a707f7?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Z2FsYXh5JTIwczIxJTIwdWx0cmF8ZW58MHx8MHx8fDA%3D",
-    condition: "New"
-  },
-  {
-    id: 3,
-    name: "MacBook Pro 2023",
-    price: 1299.99,
-    description: "Powerful laptop with M2 chip and stunning Retina display",
-    image: "https://plus.unsplash.com/premium_photo-1681160405609-389cd83998d0?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fG1hYyUyMGJvb2slMjBwcm98ZW58MHx8MHx8fDA%3D",
-    condition: "Refurbished"
-  },
-  {
-    id: 4,
-    name: "iPad Air",
-    price: 599.99,
-    description: "Versatile tablet perfect for work and entertainment",
-    image: "https://images.unsplash.com/photo-1682426526490-667d4912b8de?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8SSUyMHBhZCUyMGFpcnxlbnwwfHwwfHx8MA%3D%3D",
-    condition: "New"
-  }
-];
+const ProductCard = ({ product, onProductClick }) => (
+  <div
+    className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100"
+  >
+    <div className="relative group">
+      <img
+        src={product.imageUrl || 'https://via.placeholder.com/400x400?text=No+Image'}
+        alt={product.title}
+        className="w-full h-64 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-105"
+        onClick={() => onProductClick(product)}
+      />
+      <button className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors shadow-sm">
+        <HeartIcon className="h-5 w-5 text-gray-600 hover:text-red-500" />
+      </button>
+    </div>
+    <div className="p-4">
+      <div className="mb-3">
+        <h3 className="text-lg font-medium text-gray-900 line-clamp-1">
+          {product.brand?.brand}
+        </h3>
+        {product.size && (
+          <p className="text-sm text-gray-600 mt-1">
+            {product.size}
+          </p>
+        )}
+        <p className="text-sm text-gray-500 mt-1">
+          {product.conditions?.name || 'Condition not specified'}
+        </p>
+      </div>
+      
+      <div className="mt-4">
+        <div className="flex items-baseline">
+          <span className="text-lg font-bold text-gray-900">
+            LKR {product.price?.toFixed(2)}
+          </span>
+          {product.originalPrice && (
+            <span className="ml-2 text-sm text-gray-500 line-through">
+              LKR {product.originalPrice.toFixed(2)}
+            </span>
+          )}
+        </div>
+      </div>
+      
+      <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+        <span className="text-xs text-gray-500">
+          {product.quantity > 0 ? 'In stock' : 'Out of stock'}
+        </span>
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          product.conditions?.name === 'New with tags' ? 'bg-green-100 text-green-800' :
+          product.conditions?.name === 'New without tags' ? 'bg-blue-100 text-blue-800' :
+          'bg-gray-100 text-gray-800'
+        }`}>
+          {product.conditions?.name || 'Used'}
+        </span>
+      </div>
+    </div>
+  </div>
+);
 
 const Products = () => {
-  const [products, setProducts] = useState(sampleProducts); 
+  const [products, setProducts] = useState([]); 
   const [loading, setLoading] = useState(false); 
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const data = await getAllproductPage();
+        console.log('Product data:', data);
+        if (data.payload && data.payload.length > 0) {
+          console.log('First product brand:', data.payload[0].brand);
+        }
+        setProducts(data.payload || []);
+      } catch (err) {
+        setError(err.message || 'Failed to fetch products');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   const handleProductClick = (product) => {
     navigate('/productView', { state: { product } });
   };
 
+  const latestProducts = [...products]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 4);
+
   if (loading) {
-    return (
+    return (-
       <div className="min-h-screen flex flex-col">
         <Navbar />
         <div className="flex-1 flex justify-center items-center">
@@ -86,56 +133,49 @@ const Products = () => {
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-8">
-        <h1 className="text-2xl text-start text-gray-700 mb-8">
-          All Products
-        </h1>
-        {products.length === 0 ? (
-          <div className="flex justify-center items-center h-64">
-            <p className="text-gray-500 text-lg">No products available</p>
+        {/* Featured Products Section */}
+        <section className="mb-12">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">Latest Products</h2>
+            <p className="text-sm text-gray-500 mt-1">Check out our newest arrivals</p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map(product => (
-              <div
-                key={product.id}
-                onClick={() => handleProductClick(product)}
-                className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden cursor-pointer"
-              >
-                <div className="aspect-w-1 aspect-h-1 bg-gray-200">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-48 object-cover object-center"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = 'https://via.placeholder.com/400x400?text=No+Image';
-                    }}
-                  />
-                </div>
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                    {product.name}
-                  </h3>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xl font-bold text-blue-600">
-                      ${product.price?.toFixed(2)}
-                    </span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      product.condition === 'New' ? 'bg-green-100 text-green-800' :
-                      product.condition === 'Refurbished' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {product.condition}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 text-sm line-clamp-2">
-                    {product.description}
-                  </p>
-                </div>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {latestProducts.map(product => (
+              <ProductCard 
+                key={`featured-${product.id}`}
+                product={product}
+                onProductClick={handleProductClick}
+              />
             ))}
           </div>
-        )}
+        </section>
+
+        {/* All Products Section */}
+        <section>
+          <div className="mb-8 flex justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">All Products</h2>
+              <p className="text-sm text-gray-500 mt-1">Browse our complete collection</p>
+            </div>
+            <p className="text-sm text-gray-500">Shipping fees will be added at checkout</p>
+          </div>
+          
+          {products.length === 0 ? (
+            <div className="flex justify-center items-center h-64">
+              <p className="text-gray-500 text-lg">No products available</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products.map(product => (
+                <ProductCard 
+                  key={product.id}
+                  product={product}
+                  onProductClick={handleProductClick}
+                />
+              ))}
+            </div>
+          )}
+        </section>
       </main>
       <Footer />
     </div>

@@ -66,6 +66,35 @@ export const getAllProducts = async () => {
     }
 };
 
+export const getAllproductPage = async (pageNumber = 1, pageSize = 10, status = 1) => {
+    try {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+            return { payload: [], totalRecords: 0 };
+        }
+
+        const response = await axios.get(
+            `${BASE_BACKEND_URL}/product/getAllPage?pageNumber=${pageNumber}&pageSize=${pageSize}&status=${status}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }
+        );
+        
+        console.log('API Response:', response.data);
+        console.log('Products:', response.data.responseDto?.payload);
+        if (response.data.responseDto?.payload?.length > 0) {
+            console.log('Sample Product:', response.data.responseDto.payload[0]);
+            console.log('Sample Brand:', response.data.responseDto.payload[0].brand);
+        }
+        return response.data.responseDto || { payload: [], totalRecords: 0 };
+    } catch (error) {
+        console.error('Error fetching product page:', error);
+        return { payload: [], totalRecords: 0 };
+    }
+};
+
 export const getProductById = async (productId) => {
     try {
         const accessToken = localStorage.getItem("accessToken");

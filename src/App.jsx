@@ -15,6 +15,7 @@ import CookieSettings from "./pages/CookieSettings";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import Selling from "./pages/Selling";
 import Buying from "./pages/Buying";
+import SearchResults from "./pages/SearchResults";
 
 function App() {
   return (
@@ -29,7 +30,7 @@ function App() {
           <Route path="/sell" element={<SellProduct />} />
           <Route path="/our-platform" element={<OurPlatform />} />
           <Route path="/about-us" element={<AboutUs />} />
-          <Route path="/productView" element={<ProductView />} />
+          <Route path="/productView/:id" element={<ProductView />} />
           <Route path="/products" element={<Products />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/cookie-policy" element={<CookiePolicy />} />
@@ -37,6 +38,7 @@ function App() {
           <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
           <Route path="/selling" element={<Selling />} />
           <Route path="/buying" element={<Buying />} />
+          <Route path="/search" element={<SearchResults />} />
         </Routes>
       </BrowserRouter>
     </>

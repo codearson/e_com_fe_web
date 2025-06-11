@@ -1,0 +1,27 @@
+/* Search suggestion styles */
+.suggestion-item {
+  transition: background-color 0.2s ease;
+}
+
+.suggestion-item:hover {
+  background-color: #f0f8ff;
+}
+
+/* Scrollbar styling for suggestions */
+.suggestions-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.suggestions-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 0 0 8px 0;
+}
+
+.suggestions-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.suggestions-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+} 

@@ -58,7 +58,7 @@ export const getUserByEmail = async (email) => {
     return null;
   } catch (error) {
     console.error('Error fetching user by email:', error);
-    return null; // Return null on error to be handled by the calling component
+    return null;
   }
 };
 
@@ -88,4 +88,97 @@ export const resetPassword = async (token, newPassword) => {
     }
   );
   return response.data;
+};
+
+export const sendEmailVerification = async (email) => {
+  try {
+    // Ensure the backend expects the key "emailAddress" as string in the body
+    const response = await axios.post(
+      `${BASE_BACKEND_URL}/user/emailTokenSend`,
+      {
+        email: email
+       
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        timeout: 10000,
+      }
+    );
+
+    if (response.data) {
+      // Some backends send string message, others send objects — adapt accordingly
+      if (
+        typeof response.data === "string" &&
+        (response.data.toLowerCase().includes("success") || response.data.toLowerCase().includes("sent"))
+      ) {
+        return { success: true, message: response.data };
+      }
+
+      // If backend sends object with success key
+      if (response.data.success) {
+        return { success: true, message: response.data.message || "Verification email sent." };
+      }
+
+      return { error: response.data.message || response.data };
+    }
+
+    return { error: "Failed to send verification email" };
+  } catch (error) {
+    console.error("Email verification error:", error.response?.data || error.message);
+
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      return {
+        error: errorData.message || errorData.error || "An unexpected error occurred. Please try again.",
+      };
+    }
+    return { error: "Failed to connect to the server. Please try again." };
+  }
+};
+
+export const verifyEmailToken = async (email, token) => {
+  try {
+    const response = await axios.post(
+      `${BASE_BACKEND_URL}/user/verifyEmailToken`,
+      {
+        emailAddress: email,
+        token: token,
+        type: "VERIFICATION",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        timeout: 10000,
+      }
+    );
+
+    if (response.data) {
+      if (
+        typeof response.data === "string" &&
+        (response.data.toLowerCase().includes("success") || response.data.toLowerCase().includes("verified"))
+      ) {
+        return { success: true, message: response.data };
+      }
+
+      if (response.data.success) {
+        return { success: true, message: response.data.message || "Email verified successfully." };
+      }
+
+      return { error: response.data.message || response.data };
+    }
+    return { error: "Failed to verify email" };
+  } catch (error) {
+    console.error("Token verification error:", error.response?.data || error.message);
+
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      return {
+        error: errorData.message || errorData.error || "An unexpected error occurred. Please try again.",
+      };
+    }
+    return { error: "Failed to connect to the server. Please try again." };
+  }
 };

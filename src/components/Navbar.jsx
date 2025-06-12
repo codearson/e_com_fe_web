@@ -5,6 +5,9 @@ import { decodeJwt } from "../API/UserApi";
 import { useNavigate } from "react-router-dom";
 import { CategoryDropdown } from "./CategoryDropdown";
 import { getAllProductCategoriesBySearch } from "../API/ProductCategoryApi";
+import { searchProducts } from "../API/productApi";
+import { debounce } from "lodash";
+import "../styles/Navbar.css";
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -16,8 +19,76 @@ export const Navbar = () => {
   const [hoveredCategoryId, setHoveredCategoryId] = useState(null);
   const [hoveredLevel2CategoryId, setHoveredLevel2CategoryId] = useState(null);
   const [hoveredLevel3CategoryId, setHoveredLevel3CategoryId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const dropdownRef = useRef(null);
+  const searchRef = useRef(null);
   const navigate = useNavigate();
+
+  // Debounced search function
+  const debouncedSearch = useRef(
+    debounce(async (query) => {
+      if (query.trim().length > 0) {
+        setIsSearching(true);
+        try {
+          const results = await searchProducts(query);
+          // Limit to 5 suggestions
+          setSearchSuggestions(results.slice(0, 5));
+          setShowSuggestions(true);
+        } catch (error) {
+          console.error("Search error:", error);
+          setSearchSuggestions([]);
+        }
+        setIsSearching(false);
+      } else {
+        setSearchSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 300)
+  ).current;
+
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    debouncedSearch(query);
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (product) => {
+    navigate(`/productView/${product.id}`, { state: { product } });
+    setSearchQuery("");
+    setShowSuggestions(false);
+  };
+
+  // Handle clicks outside search to close suggestions
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
   // Track category state changes
   useEffect(() => {
@@ -153,23 +224,10 @@ export const Navbar = () => {
     navigate("/"); // Redirect to home page
   };
 
-  return (
-    <nav className="bg-white shadow-lg border-b border-gray-200 font-sans z-50 relative">
-      {/* Main Navbar */}
-      <div className="flex items-center justify-between px-4 py-3 lg:px-8 lg:py-4">
-        {/* Logo */}
-        <div className="flex items-center flex-shrink-0">
-          <span
-            className="text-2xl lg:text-3xl font-bold text-[#1E90FF] mr-6 select-none tracking-tight"
-            style={{ fontFamily: "cursive", cursor: "pointer" }}
-            onClick={() => navigate("/")}
-          >
-            E-Com
-          </span>
-        </div>
-
-        {/* Mobile Search (visible only on mobile) */}
-        <div className="lg:hidden flex-1 mx-4">
+  // Update the mobile search input
+  const mobileSearchInput = (
+    <div className="lg:hidden flex-1 mx-4" ref={searchRef}>
+      <form onSubmit={handleSearchSubmit} className="relative">
           <div className="flex items-center bg-gray-100 rounded-full px-3 py-1.5 border border-gray-200">
             <svg
               className="w-5 h-5 text-gray-500 mr-2"
@@ -188,12 +246,50 @@ export const Navbar = () => {
               type="text"
               placeholder="Search"
               className="flex-1 bg-transparent text-sm focus:outline-none text-gray-800 placeholder-gray-500"
-            />
-          </div>
+            value={searchQuery}
+            onChange={handleSearchChange}
+            onFocus={() => searchQuery.trim() && setShowSuggestions(true)}
+          />
+          {isSearching && (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+          )}
         </div>
+        {showSuggestions && searchSuggestions.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+            {searchSuggestions.map((product) => (
+              <div
+                key={product.id}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                onClick={() => handleSuggestionClick(product)}
+              >
+                <img
+                  src={product.thumbnail || "/placeholder-product.jpg"}
+                  alt={product.name}
+                  className="w-8 h-8 object-cover rounded mr-3"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-gray-900 truncate">
+                    {product.name}
+                  </div>
+                  <div className="text-sm text-gray-500 truncate">
+                    {product.brand}
+                  </div>
+                </div>
+                <div className="ml-3 text-sm font-semibold text-[#1E90FF]">
+                  ${product.price}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </form>
+        </div>
+  );
 
-        {/* Desktop Search (hidden on mobile) */}
-        <div className="hidden lg:flex flex-1 max-w-2xl mx-8">
+  // Update the desktop search input
+  const desktopSearchInput = (
+    <div className="hidden lg:flex flex-1 max-w-2xl mx-8" ref={searchRef}>
+      <form onSubmit={handleSearchSubmit} className="relative flex-1">
           <div className="flex items-center flex-1 bg-gray-100 rounded-full px-4 py-2 border border-gray-200">
             <svg
               className="w-5 h-5 text-gray-500 mr-3"
@@ -212,9 +308,66 @@ export const Navbar = () => {
               type="text"
               placeholder="Search for items..."
               className="flex-1 bg-transparent text-sm focus:outline-none text-gray-800 placeholder-gray-500"
-            />
-          </div>
+            value={searchQuery}
+            onChange={handleSearchChange}
+            onFocus={() => searchQuery.trim() && setShowSuggestions(true)}
+          />
+          {isSearching && (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+          )}
         </div>
+        {showSuggestions && searchSuggestions.length > 0 && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+            {searchSuggestions.map((product) => (
+              <div
+                key={product.id}
+                className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                onClick={() => handleSuggestionClick(product)}
+              >
+                <img
+                  src={product.thumbnail || "/placeholder-product.jpg"}
+                  alt={product.name}
+                  className="w-8 h-8 object-cover rounded mr-3"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-gray-900 truncate">
+                    {product.name}
+                  </div>
+                  <div className="text-sm text-gray-500 truncate">
+                    {product.brand}
+                  </div>
+                </div>
+                <div className="ml-3 text-sm font-semibold text-[#1E90FF]">
+                  ${product.price}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </form>
+    </div>
+  );
+
+  return (
+    <nav className="bg-white shadow-lg border-b border-gray-200 font-sans z-50 relative">
+      {/* Main Navbar */}
+      <div className="flex items-center justify-between px-4 py-3 lg:px-8 lg:py-4">
+        {/* Logo */}
+        <div className="flex items-center flex-shrink-0">
+          <span
+            className="text-2xl lg:text-3xl font-bold text-[#1E90FF] mr-6 select-none tracking-tight"
+            style={{ fontFamily: "cursive", cursor: "pointer" }}
+            onClick={() => navigate("/")}
+          >
+            E-Com
+          </span>
+        </div>
+
+        {/* Mobile Search */}
+        {mobileSearchInput}
+
+        {/* Desktop Search */}
+        {desktopSearchInput}
 
         {/* Right Side Buttons (hidden on mobile) */}
         <div className="hidden lg:flex items-center space-x-4">

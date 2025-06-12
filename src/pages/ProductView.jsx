@@ -1,21 +1,73 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
-import { useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
+import { getProductById } from '../API/productApi';
 
 const ProductView = () => {
+  const { id } = useParams();
   const location = useLocation();
-  const product = location.state?.product;
+  const [product, setProduct] = useState(location.state?.product || null);
+  const [loading, setLoading] = useState(!location.state?.product);
+  const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      // If we already have the product data from navigation state, don't fetch
+      if (location.state?.product) {
+        setProduct(location.state.product);
+        setLoading(false);
+        return;
+      }
+
+      // Only fetch if we don't have the product and have an ID
+      if (!product && id) {
+        try {
+          setLoading(true);
+          const productData = await getProductById(id);
+          if (productData) {
+            setProduct(productData);
+            setError(null);
+          } else {
+            setError('Product not found');
+          }
+        } catch (err) {
+          console.error('Error fetching product:', err);
+          setError('Failed to load product');
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchProduct();
+  }, [id, location.state]);
   
-  if (!product) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-4 py-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+            <div className="flex justify-center items-center min-h-[400px]">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="container mx-auto px-4 py-6">
           <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
             <div className="text-center text-gray-500">
-              Product not found
+              {error || 'Product not found'}
             </div>
           </div>
         </div>

@@ -143,22 +143,76 @@ export const updateProductStatus = async (productId, status) => {
 
 export const searchProducts = async (searchTerm) => {
     try {
+        console.log('Searching for:', searchTerm);
         const accessToken = localStorage.getItem("accessToken");
-        if (!accessToken) {
-            return [];
+        
+        const headers = {
+            "Content-Type": "application/json",
+        };
+        
+        if (accessToken) {
+            headers.Authorization = `Bearer ${accessToken}`;
         }
 
+        // Build query parameters
+        const params = new URLSearchParams({
+            pageNumber: '1',
+            pageSize: '20',
+            status: '1',
+            name: searchTerm, // Search in product name
+            description: searchTerm, // Search in description
+            brand: searchTerm, // Search in brand
+            category: searchTerm // Search in category
+        });
+
         const response = await axios.get(
-            `${BASE_BACKEND_URL}/product/search?term=${encodeURIComponent(searchTerm)}`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            }
+            `${BASE_BACKEND_URL}/product/getAllPage?${params.toString()}`,
+            { headers }
         );
-        return response.data.responseDto || [];
+        
+        console.log('Search API response:', response.data);
+        
+        // Handle the response format from getAllPage endpoint
+        let products = [];
+        if (response.data.responseDto?.payload) {
+            products = response.data.responseDto.payload;
+        } else if (response.data.payload) {
+            products = response.data.payload;
+        } else if (Array.isArray(response.data)) {
+            products = response.data;
+        }
+
+        // Filter products to match search term more closely
+        const searchTermLower = searchTerm.toLowerCase();
+        const filteredProducts = products.filter(product => {
+            const nameMatch = product.name?.toLowerCase().includes(searchTermLower);
+            const descMatch = product.description?.toLowerCase().includes(searchTermLower);
+            const brandMatch = product.brand?.toLowerCase().includes(searchTermLower);
+            const categoryMatch = product.category?.toLowerCase().includes(searchTermLower);
+            
+            // Prioritize exact matches in name or close matches
+            return nameMatch || descMatch || brandMatch || categoryMatch;
+        });
+
+        // Sort results by relevance (exact matches first)
+        filteredProducts.sort((a, b) => {
+            const aNameMatch = a.name?.toLowerCase().includes(searchTermLower);
+            const bNameMatch = b.name?.toLowerCase().includes(searchTermLower);
+            
+            if (aNameMatch && !bNameMatch) return -1;
+            if (!aNameMatch && bNameMatch) return 1;
+            return 0;
+        });
+        
+        return filteredProducts;
     } catch (error) {
         console.error('Error searching products:', error);
+        console.error('Error response:', error.response?.data);
+        
+        if (error.response?.status === 401 && localStorage.getItem("accessToken")) {
+            localStorage.removeItem("accessToken");
+        }
+        
         return [];
     }
 };

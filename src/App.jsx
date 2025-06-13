@@ -16,6 +16,8 @@ import TermsAndConditions from "./pages/TermsAndConditions";
 import Selling from "./pages/Selling";
 import Buying from "./pages/Buying";
 import SearchResults from "./pages/SearchResults";
+import { AdminUsers } from "./pages/AdminUsers";
+import { Users } from "./pages/Users";
 
 function App() {
   return (
@@ -39,6 +41,8 @@ function App() {
           <Route path="/selling" element={<Selling />} />
           <Route path="/buying" element={<Buying />} />
           <Route path="/search" element={<SearchResults />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/users" element={<Users />} />
         </Routes>
       </BrowserRouter>
     </>

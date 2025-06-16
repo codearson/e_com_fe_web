@@ -99,9 +99,11 @@ export const getProductById = async (productId) => {
     try {
         const accessToken = localStorage.getItem("accessToken");
         if (!accessToken) {
+            console.error('No access token found');
             return null;
         }
 
+        console.log('Fetching product with ID:', productId);
         const response = await axios.get(
             `${BASE_BACKEND_URL}/product/getById/${productId}`,
             {
@@ -110,9 +112,26 @@ export const getProductById = async (productId) => {
                 },
             }
         );
+        
+        console.log('Product API response:', response.data);
+        
+        if (!response.data) {
+            console.error('No data in response');
+            return null;
+        }
+
+        if (!response.data.responseDto) {
+            console.error('No responseDto in response data');
+            return null;
+        }
+
         return response.data.responseDto;
     } catch (error) {
         console.error('Error fetching product:', error);
+        if (error.response) {
+            console.error('Error response data:', error.response.data);
+            console.error('Error response status:', error.response.status);
+        }
         return null;
     }
 };

@@ -4,45 +4,7 @@ import { useEffect, useState } from "react";
 import { getAllproductPage } from "../API/productApi";
 import { useNavigate } from "react-router-dom";
 
-// Sample product data for when user is not authenticated
-const sampleProducts = [
-    {
-        id: 1,
-        name: "iPhone 13 Pro",
-        price: 999.99,
-        description: "Latest iPhone model with advanced camera system",
-        image: "https://images.unsplash.com/photo-1656392851225-ec9a304ef9d0?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGklMjBwaG9uZSUyMDEzJTIwcHJvfGVufDB8fDB8fHww",
-        condition: "New",
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: 2,
-        name: "Samsung Galaxy S21",
-        price: 799.99,
-        description: "5G Android smartphone with 120Hz display",
-        image: "https://images.unsplash.com/photo-1611282104572-e0b0e9a707f7?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Z2FsYXh5JTIwczIxJTIwdWx0cmF8ZW58MHx8MHx8fDA%3D",
-        condition: "New",
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: 3,
-        name: "MacBook Pro 2023",
-        price: 1299.99,
-        description: "Powerful laptop with M2 chip",
-        image: "https://plus.unsplash.com/premium_photo-1681160405609-389cd83998d0?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fG1hYyUyMGJvb2slMjBwcm98ZW58MHx8MHx8fDA%3D",
-        condition: "Refurbished",
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: 4,
-        name: "iPad Air",
-        price: 599.99,
-        description: "Versatile tablet for work and entertainment",
-        image: "https://images.unsplash.com/photo-1682426526490-667d4912b8de?w=700&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8SSUyMHBhZCUyMGFpcnxlbnwwfHwwfHx8MA%3D%3D",
-        condition: "New",
-        createdAt: new Date().toISOString()
-    }
-];
+
 
 export const Home = () => {
     const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -94,7 +56,7 @@ export const Home = () => {
             size: product.size || '',
             color: product.color || ''
         };
-        navigate('/productView', { state: { product: normalizedProduct } });
+        navigate(`/productView/${product.id}`, { state: { product: normalizedProduct } });
     };
 
     return (
@@ -159,12 +121,12 @@ export const Home = () => {
                                 >
                                     <div className="aspect-square bg-gray-200 rounded-lg mb-4 overflow-hidden">
                                         <img 
-                                            src={product.imageUrl || product.image} 
+                                            src={product.responseDto?.imageUrl || 'https://placehold.co/400x400/png'} 
                                             alt={product.title || product.name}
                                             className="w-full h-full object-cover"
                                             onError={(e) => {
                                                 e.target.onerror = null;
-                                                e.target.src = 'https://via.placeholder.com/400x400?text=No+Image';
+                                                e.target.src = 'https://placehold.co/400x400/png';
                                             }}
                                         />
                                     </div>

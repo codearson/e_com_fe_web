@@ -442,6 +442,24 @@ export const Navbar = () => {
                     >
                       Settings
                     </button>
+                    {/* Add Admin section for admin users */}
+                    {user?.userRoleDto?.userRole === "ROLE_ADMIN" && (
+                      <>
+                        <div className="border-t border-gray-100 my-1"></div>
+                        <div className="px-4 py-2">
+                          <span className="text-xs font-semibold text-gray-500">ADMIN</span>
+                        </div>
+                        <button
+                          className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer w-full"
+                          onClick={() => {
+                            navigate("/admin/users");
+                            setUserDropdownOpen(false);
+                          }}
+                        >
+                          User Management
+                        </button>
+                      </>
+                    )}
                     <button
                       className="text-left px-4 py-2 text-sm text-[#1E90FF] hover:bg-gray-100 font-semibold cursor-pointer w-full transition-colors border-t border-gray-100 mt-1 pt-2"
                       onClick={handleLogout}

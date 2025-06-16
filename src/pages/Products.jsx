@@ -11,10 +11,14 @@ const ProductCard = ({ product, onProductClick }) => (
   >
     <div className="relative group">
       <img
-        src={product.imageUrl || 'https://via.placeholder.com/400x400?text=No+Image'}
+        src={product.responseDto?.imageUrl || 'https://placehold.co/400x400/png'}
         alt={product.title}
         className="w-full h-64 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-105"
         onClick={() => onProductClick(product)}
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = 'https://placehold.co/400x400/png';
+        }}
       />
       <button className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors shadow-sm">
         <HeartIcon className="h-5 w-5 text-gray-600 hover:text-red-500" />
@@ -23,8 +27,11 @@ const ProductCard = ({ product, onProductClick }) => (
     <div className="p-4">
       <div className="mb-3">
         <h3 className="text-lg font-medium text-gray-900 line-clamp-1">
-          {product.brand?.brand}
+          {product.title}
         </h3>
+        <h4 className="text-sm text-gray-600 mt-1">
+          {product.brand?.brand}
+        </h4>
         {product.size && (
           <p className="text-sm text-gray-600 mt-1">
             {product.size}
@@ -90,7 +97,7 @@ const Products = () => {
   }, []);
 
   const handleProductClick = (product) => {
-    navigate('/productView', { state: { product } });
+    navigate(`/productView/${product.id}`, { state: { product } });
   };
 
   if (loading) {

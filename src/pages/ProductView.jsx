@@ -42,7 +42,7 @@ const ProductView = () => {
     };
 
     fetchProduct();
-  }, [id, location.state]);
+  }, [id, location.state, product]);
   
   if (loading) {
     return (
@@ -77,9 +77,14 @@ const ProductView = () => {
   }
 
   // Create an array of images (use actual image or fallback)
-  const productImages = product.imageUrl 
-    ? [product.imageUrl] 
-    : ["https://via.placeholder.com/400x400?text=No+Image"];
+  const productImages = product.responseDto?.imageUrl 
+    ? [product.responseDto.imageUrl] 
+    : ["https://placehold.co/400x400/png"];
+
+  console.log('Product data:', product);
+  console.log('Product responseDto:', product.responseDto);
+  console.log('Product image URL:', product.responseDto?.imageUrl);
+  console.log('Product images array:', productImages);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -101,7 +106,7 @@ const ProductView = () => {
                   className="w-full h-[400px] object-cover rounded-lg"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = 'https://via.placeholder.com/400x400?text=No+Image';
+                    e.target.src = 'https://placehold.co/400x400/png';
                   }}
                 />
               </div>
@@ -121,7 +126,7 @@ const ProductView = () => {
                         className="w-full h-20 object-cover"
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = 'https://via.placeholder.com/400x400?text=No+Image';
+                          e.target.src = 'https://placehold.co/400x400/png';
                         }}
                       />
                     </button>

@@ -80,12 +80,7 @@ const ProductView = () => {
   const productImages = product.responseDto?.imageUrl 
     ? [product.responseDto.imageUrl] 
     : ["https://placehold.co/400x400/png"];
-
-  console.log('Product data:', product);
-  console.log('Product responseDto:', product.responseDto);
-  console.log('Product image URL:', product.responseDto?.imageUrl);
-  console.log('Product images array:', productImages);
-
+ 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />

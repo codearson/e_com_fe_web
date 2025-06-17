@@ -266,7 +266,7 @@ export const Navbar = () => {
                 onClick={() => handleSuggestionClick(product)}
               >
                 <img
-                  src={product.thumbnail || "/placeholder-product.jpg"}
+                  src={product.imageUrl || "/placeholder-product.jpg"}
                   alt={product.name}
                   className="w-8 h-8 object-cover rounded mr-3"
                 />
@@ -329,7 +329,7 @@ export const Navbar = () => {
                 onClick={() => handleSuggestionClick(product)}
               >
                 <img
-                  src={product.thumbnail || "/placeholder-product.jpg"}
+                  src={product.imageUrl || "/placeholder-product.jpg"}
                   alt={product.name}
                   className="w-8 h-8 object-cover rounded mr-3"
                 />

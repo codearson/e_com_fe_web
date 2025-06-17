@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { AuthModal } from "./AuthModal";
 import { getUserByEmail } from "../API/config";
 import { decodeJwt } from "../API/UserApi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { CategoryDropdown } from "./CategoryDropdown";
 import { getAllProductCategoriesBySearch } from "../API/ProductCategoryApi";
 import { searchProducts } from "../API/productApi";
@@ -26,6 +26,8 @@ export const Navbar = () => {
   const dropdownRef = useRef(null);
   const searchRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDashboardPage = location.pathname === '/admin/dashboard';
 
   // Debounced search function
   const debouncedSearch = useRef(
@@ -248,13 +250,14 @@ export const Navbar = () => {
               className="flex-1 bg-transparent text-sm focus:outline-none text-gray-800 placeholder-gray-500"
             value={searchQuery}
             onChange={handleSearchChange}
+            disabled={isDashboardPage}
             onFocus={() => searchQuery.trim() && setShowSuggestions(true)}
           />
           {isSearching && (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
           )}
         </div>
-        {showSuggestions && searchSuggestions.length > 0 && (
+        {showSuggestions && searchSuggestions.length > 0 && !isDashboardPage && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
             {searchSuggestions.map((product) => (
               <div
@@ -310,13 +313,14 @@ export const Navbar = () => {
               className="flex-1 bg-transparent text-sm focus:outline-none text-gray-800 placeholder-gray-500"
             value={searchQuery}
             onChange={handleSearchChange}
+            disabled={isDashboardPage}
             onFocus={() => searchQuery.trim() && setShowSuggestions(true)}
           />
           {isSearching && (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
           )}
         </div>
-        {showSuggestions && searchSuggestions.length > 0 && (
+        {showSuggestions && searchSuggestions.length > 0 && !isDashboardPage && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
             {searchSuggestions.map((product) => (
               <div
@@ -442,7 +446,17 @@ export const Navbar = () => {
                     >
                       Settings
                     </button>
-                    {/* Add Admin section for admin users */}
+
+                    <button
+                      className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer w-full"
+                      onClick={() => {
+                        navigate("/admin/dashboard");
+                        setUserDropdownOpen(false);
+                      }}
+                    >
+                      Dashboard
+                    </button>
+                    {/* Admin Dropdown for Admin Users */}
                     {user?.userRoleDto?.userRole === "ROLE_ADMIN" && (
                       <>
                         <div className="border-t border-gray-100 my-1"></div>

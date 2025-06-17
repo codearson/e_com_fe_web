@@ -18,6 +18,8 @@ import Buying from "./pages/Buying";
 import SearchResults from "./pages/SearchResults";
 import { AdminUsers } from "./pages/AdminUsers";
 import { Users } from "./pages/Users";
+import { DashboardAdmin } from "./pages/DashboardAdmin";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -43,6 +45,14 @@ function App() {
           <Route path="/search" element={<SearchResults />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/users" element={<Users />} />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+                <DashboardAdmin />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </>

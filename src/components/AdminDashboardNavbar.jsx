@@ -158,15 +158,7 @@ export const AdminDashboardNavbar = () => {
                     >
                       Dashboard
                     </button>
-                    <button
-                      className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer w-full"
-                      onClick={() => {
-                        navigate("/admin/users");
-                        setUserDropdownOpen(false);
-                      }}
-                    >
-                      User Management
-                    </button>
+                    
                     {/* Admin Dropdown for Admin Users */}
                     {user?.userRoleDto?.userRole === "ROLE_ADMIN" && (
                       <>
@@ -302,3 +294,5 @@ export const AdminDashboardNavbar = () => {
     </nav>
   );
 };
+
+

@@ -8,7 +8,8 @@ import { searchUserBankDetails, saveUserBankDetails, updateUserBankDetails } fro
 import { getAllBanksBySearch } from "../API/bankApi";
 import { getAllBranchesBySearch } from "../API/branchApi";
 import { getAllShippingAddressesBySearch, saveShippingAddress, updateShippingAddress } from "../API/shippingAddressApi";
-
+import { sendTwoStepEmailVerification, verifyTwoStepCode } from "../API/UserApi";
+window.__BACKEND_URL__ = "http://localhost:8080";
 // Define the provinces and districts data
 const provinceDistrictData = [
     { province: "Central Province", districts: ["Kandy", "Matale", "Nuwara Eliya"] },
@@ -66,7 +67,85 @@ function ChangePassword({ onBack }) {
   );
 }
 
-function VerifyPhone({ onBack }) {
+function VerifyEmail({ onBack, onSwitchToPhone }) {
+  const [email, setEmail] = React.useState("");
+  const [step, setStep] = React.useState("send"); // 'send' or 'verify' or 'success'
+  const [sentCode, setSentCode] = React.useState("");
+  const [inputCode, setInputCode] = React.useState("");
+  const [statusMsg, setStatusMsg] = React.useState("");
+  const [errorMsg, setErrorMsg] = React.useState("");
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!email || !email.includes("@")) {
+      setErrorMsg("Please enter a valid email address.");
+      return;
+    }
+  
+    try {
+      const responseText = await sendTwoStepEmailVerification(email);
+      setStep("verify");
+      setStatusMsg(`Verification code sent to ${email}`);
+      setErrorMsg("");
+      setInputCode("");
+  
+      // No need to simulate `sentCode` if backend handles it
+      // If you expect to compare the code manually, then backend must also send it back (not recommended for security)
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Failed to send verification code. Please try again.");
+    }
+  };
+
+ 
+const handleVerify = async (e) => {
+  e.preventDefault();
+  try {
+    const result = await verifyTwoStepCode(email, inputCode);
+    setStep("success");
+    setStatusMsg("Two-step verification successful!");
+    setErrorMsg("");
+  } catch (err) {
+    console.error(err);
+    setErrorMsg("Incorrect or expired code. Please try again.");
+  }
+};
+
+  return (
+    <div className="flex flex-col items-center justify-center py-12 w-full">
+      <h2 className="text-2xl font-bold mb-4 text-center">Verify your email address</h2>
+      <p className="text-lg text-gray-600 mb-4 text-center">We'll send a confirmation message to your email to verify that this is your address.</p>
+      {step === "send" && (
+        <form className="w-full max-w-xs flex flex-col items-center gap-4 mb-4" onSubmit={handleSend}>
+          <label className="block text-base font-medium mb-1 w-full text-left">Email address</label>
+          <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="border rounded px-4 py-2 w-full text-center" placeholder="Enter your email" />
+          <button type="submit" className="w-full px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors">Send</button>
+          {errorMsg && <div className="text-red-500 text-sm w-full text-center">{errorMsg}</div>}
+        </form>
+      )}
+      {step === "verify" && (
+        <form className="w-full max-w-xs flex flex-col items-center gap-4 mb-4" onSubmit={handleVerify}>
+          <div className="w-full text-center text-green-600 text-sm mb-2">{statusMsg}</div>
+          <label className="block text-base font-medium mb-1 w-full text-left">Enter verification code</label>
+          <input type="text" value={inputCode} onChange={e => setInputCode(e.target.value)} className="border rounded px-4 py-2 w-full text-center tracking-widest" placeholder="6-digit code" maxLength={6} />
+          <button type="submit" className="w-full px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors">Verify</button>
+          {errorMsg && <div className="text-red-500 text-sm w-full text-center">{errorMsg}</div>}
+        </form>
+      )}
+      {step === "success" && (
+        <div className="w-full max-w-xs flex flex-col items-center gap-4 mb-4">
+          <div className="w-full text-center text-green-600 text-lg font-semibold mb-2">{statusMsg}</div>
+          <div className="text-5xl mb-2">✅</div>
+        </div>
+      )}
+      <button onClick={onSwitchToPhone} className="mt-2 text-[#1E90FF] underline">Use phone instead</button>
+      <div className="text-gray-500 text-center">Having trouble? <a href="#" className="underline text-[#1E90FF]">Get help</a></div>
+      <button onClick={onBack} className="mt-8 text-[#1E90FF] font-medium">&larr; Back</button>
+    </div>
+  );
+}
+
+function VerifyPhone({ onBack, onSwitchToEmail }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 w-full">
       <h2 className="text-2xl font-bold mb-4 text-center">Verify your phone number</h2>
@@ -76,8 +155,10 @@ function VerifyPhone({ onBack }) {
         <input type="text" value="+44" className="border rounded px-4 py-2 w-full text-center" readOnly />
         <button className="w-full px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors">Send</button>
       </form>
+      <button onClick={onSwitchToEmail} className="mt-2 text-[#1E90FF] underline">Use email instead</button>
       <div className="text-gray-500 text-center">Having trouble? <a href="#" className="underline text-[#1E90FF]">Get help</a></div>
       <button onClick={onBack} className="mt-8 text-[#1E90FF] font-medium">&larr; Back</button>
+      
     </div>
   );
 }
@@ -85,6 +166,7 @@ function VerifyPhone({ onBack }) {
 export const ProfileEdit = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [securityPage, setSecurityPage] = useState(null);
+  const [securitySubPage, setSecuritySubPage] = useState(null); // new state for switching between phone/email
   const [user, setUser] = useState(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -1713,8 +1795,11 @@ export const ProfileEdit = () => {
             {activeTab === "security" && securityPage === "password" && (
               <ChangePassword onBack={() => setSecurityPage(null)} />
             )}
-            {activeTab === "security" && securityPage === "verify" && (
-              <VerifyPhone onBack={() => setSecurityPage(null)} />
+            {activeTab === "security" && securityPage === "verify" && !securitySubPage && (
+              <VerifyPhone onBack={() => setSecurityPage(null)} onSwitchToEmail={() => setSecuritySubPage("email")} />
+            )}
+            {activeTab === "security" && securityPage === "verify" && securitySubPage === "email" && (
+              <VerifyEmail onBack={() => setSecuritySubPage(null)} onSwitchToPhone={() => setSecuritySubPage(null)} />
             )}
           </section>
         </div>

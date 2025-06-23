@@ -271,8 +271,8 @@ export const AdminUsers = () => {
         </div>
         <main className="flex-1 overflow-auto">
           <div className="container mx-auto px-4 py-8">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex justify-between items-center mb-6">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => navigate('/admin/dashboard')}
@@ -280,143 +280,143 @@ export const AdminUsers = () => {
                   >
                     <IoArrowBack className="w-5 h-5" />
                   </button>
-                  <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+            <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
                 </div>
-                <div className="flex items-center gap-4">
-                  <select
-                    value={selectedStatus.toString()}
-                    onChange={(e) => setSelectedStatus(e.target.value === "true")}
-                    className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1E90FF] text-[#1E90FF] font-semibold bg-white hover:bg-[#e6f3ff]"
-                    style={{ minWidth: 120 }}
-                  >
-                    <option value="true" className="text-[#1E90FF] font-semibold">Active</option>
-                    <option value="false" className="text-[#1E90FF] font-semibold">Inactive</option>
-                  </select>
+            <div className="flex items-center gap-4">
+              <select
+                value={selectedStatus.toString()}
+                onChange={(e) => setSelectedStatus(e.target.value === "true")}
+                className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1E90FF] text-[#1E90FF] font-semibold bg-white hover:bg-[#e6f3ff]"
+                style={{ minWidth: 120 }}
+              >
+                <option value="true" className="text-[#1E90FF] font-semibold">Active</option>
+                <option value="false" className="text-[#1E90FF] font-semibold">Inactive</option>
+              </select>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="bg-[#1E90FF] text-white px-4 py-2 rounded-md hover:bg-[#1876cc] transition-colors font-medium text-base"
+              >
+                Add New User
+              </button>
+            </div>
+          </div>
+
+          {/* Add filter bar above the table */}
+          <div className="flex flex-wrap gap-4 mb-4 items-center">
+            <input
+              type="text"
+              placeholder="Search"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="border rounded px-3 py-2 min-w-[180px] focus:outline-none focus:ring-2 focus:ring-[#1E90FF]"
+            />
+            <select
+              value={roleFilter}
+              onChange={e => setRoleFilter(e.target.value)}
+              className="border rounded px-3 py-2 min-w-[160px] focus:outline-none focus:ring-2 focus:ring-[#1E90FF]"
+            >
+              <option value="">Select Role</option>
+              {userRoles.map(role => (
+                <option key={role.id} value={role.id}>{role.userRole}</option>
+              ))}
+            </select>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : error ? (
+            <div className="text-red-500 text-center py-4">{error}</div>
+          ) : (
+            <>
+              <div className="overflow-x-auto rounded-lg border border-gray-200">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Address</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredUsers.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                          No users found
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredUsers.map((user) => (
+                        <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-800">{user.emailAddress}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-800">{user.address || 'N/A'}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-purple-600 text-white">
+                              {user.userRoleDto?.userRole}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <button
+                              onClick={() => handleStatusToggle(user.id, !user.isActive)}
+                              className={`relative inline-flex items-center h-5 rounded-full w-9 transition-colors focus:outline-none ${user.isActive ? 'bg-green-500' : 'bg-gray-300'}`}
+                              aria-pressed={user.isActive}
+                            >
+                              <span
+                                className={`inline-block w-4 h-4 transform bg-white rounded-full shadow transition-transform ${user.isActive ? 'translate-x-4' : 'translate-x-1'}`}
+                              />
+                            </button>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap flex gap-2 items-center">
+                            <button className="border border-gray-300 rounded-md p-1.5 hover:bg-gray-100 text-sm" title="Lock" onClick={() => openPasswordModal(user)}>
+                              <FaLock className="text-gray-500 w-4 h-4" />
+                            </button>
+                            <button className="border border-gray-300 rounded-md p-1.5 hover:bg-gray-100 text-sm" title="Edit" onClick={() => openEditModal(user)}>
+                              <FaEdit className="text-[#1E90FF] w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination Section - Remove results text and per page dropdown */}
+              <div className="flex justify-end items-center mt-6 px-2">
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setShowAddModal(true)}
-                    className="bg-[#1E90FF] text-white px-4 py-2 rounded-md hover:bg-[#1876cc] transition-colors font-medium text-base"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 border rounded-md disabled:opacity-50 text-sm flex items-center gap-1 hover:bg-gray-50"
                   >
-                    Add New User
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Previous
+                  </button>
+                  <span className="px-3 py-1 text-sm text-gray-700">
+                    Page {currentPage} of {Math.ceil(totalRecords / pageSize)}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(prev => prev + 1)}
+                    disabled={currentPage * pageSize >= totalRecords}
+                    className="px-3 py-1.5 border rounded-md disabled:opacity-50 text-sm flex items-center gap-1 hover:bg-gray-50"
+                  >
+                    Next
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </button>
                 </div>
               </div>
-
-              {/* Add filter bar above the table */}
-              <div className="flex flex-wrap gap-4 mb-4 items-center">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="border rounded px-3 py-2 min-w-[180px] focus:outline-none focus:ring-2 focus:ring-[#1E90FF]"
-                />
-                <select
-                  value={roleFilter}
-                  onChange={e => setRoleFilter(e.target.value)}
-                  className="border rounded px-3 py-2 min-w-[160px] focus:outline-none focus:ring-2 focus:ring-[#1E90FF]"
-                >
-                  <option value="">Select Role</option>
-                  {userRoles.map(role => (
-                    <option key={role.id} value={role.id}>{role.userRole}</option>
-                  ))}
-                </select>
-              </div>
-
-              {loading ? (
-                <div className="flex justify-center items-center h-64">
-                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                </div>
-              ) : error ? (
-                <div className="text-red-500 text-center py-4">{error}</div>
-              ) : (
-                <>
-                  <div className="overflow-x-auto rounded-lg border border-gray-200">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Address</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {filteredUsers.length === 0 ? (
-                          <tr>
-                            <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
-                              No users found
-                            </td>
-                          </tr>
-                        ) : (
-                          filteredUsers.map((user) => (
-                            <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                              <td className="px-6 py-4 whitespace-nowrap text-gray-800">{user.emailAddress}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-gray-800">{user.address || 'N/A'}</td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span className="px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-purple-600 text-white">
-                                  {user.userRoleDto?.userRole}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <button
-                                  onClick={() => handleStatusToggle(user.id, !user.isActive)}
-                                  className={`relative inline-flex items-center h-5 rounded-full w-9 transition-colors focus:outline-none ${user.isActive ? 'bg-green-500' : 'bg-gray-300'}`}
-                                  aria-pressed={user.isActive}
-                                >
-                                  <span
-                                    className={`inline-block w-4 h-4 transform bg-white rounded-full shadow transition-transform ${user.isActive ? 'translate-x-4' : 'translate-x-1'}`}
-                                  />
-                                </button>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap flex gap-2 items-center">
-                                <button className="border border-gray-300 rounded-md p-1.5 hover:bg-gray-100 text-sm" title="Lock" onClick={() => openPasswordModal(user)}>
-                                  <FaLock className="text-gray-500 w-4 h-4" />
-                                </button>
-                                <button className="border border-gray-300 rounded-md p-1.5 hover:bg-gray-100 text-sm" title="Edit" onClick={() => openEditModal(user)}>
-                                  <FaEdit className="text-[#1E90FF] w-4 h-4" />
-                                </button>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Pagination Section - Remove results text and per page dropdown */}
-                  <div className="flex justify-end items-center mt-6 px-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-1.5 border rounded-md disabled:opacity-50 text-sm flex items-center gap-1 hover:bg-gray-50"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Previous
-                      </button>
-                      <span className="px-3 py-1 text-sm text-gray-700">
-                        Page {currentPage} of {Math.ceil(totalRecords / pageSize)}
-                      </span>
-                      <button
-                        onClick={() => setCurrentPage(prev => prev + 1)}
-                        disabled={currentPage * pageSize >= totalRecords}
-                        className="px-3 py-1.5 border rounded-md disabled:opacity-50 text-sm flex items-center gap-1 hover:bg-gray-50"
-                      >
-                        Next
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
+            </>
+          )}
             </div>
-          </div>
-        </main>
+        </div>
+      </main>
       </div>
 
       {/* Add User Modal */}

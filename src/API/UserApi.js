@@ -264,7 +264,7 @@ export function decodeJwt(token) {
 // Send OTP to email
 export async function sendTwoStepEmailVerification(email) {
     const res = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/auth/two-step-verify/twoFaRequest`,
+      `${BASE_BACKEND_URL}/auth/two-step-verify/twoFaRequest`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -278,7 +278,7 @@ export async function sendTwoStepEmailVerification(email) {
   // Verify OTP
   export async function verifyTwoStepCode(email, code) {
     const res = await fetch(
-      `${import.meta.env.VITE_BACKEND_URL}/auth/two-step-verify/twoFaVerification`,
+      `${BASE_BACKEND_URL}/auth/two-step-verify/twoFaVerification`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

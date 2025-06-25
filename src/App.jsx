@@ -20,6 +20,8 @@ import { AdminUsers } from "./pages/AdminUsers";
 import { Users } from "./pages/Users";
 import { DashboardAdmin } from "./pages/DashboardAdmin";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import BuyNow from "./pages/BuyNow";
+import Purchase from "./pages/Purchase";
 
 function App() {
   return (
@@ -53,6 +55,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/buyNow/:id" element={<BuyNow />} />
+          <Route path="/purchase/:id" element={<Purchase />} />
         </Routes>
       </BrowserRouter>
     </>

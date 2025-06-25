@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { getProductById } from '../API/productApi';
 
 const ProductView = () => {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(location.state?.product || null);
   const [loading, setLoading] = useState(!location.state?.product);
   const [error, setError] = useState(null);
@@ -220,6 +221,7 @@ const ProductView = () => {
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                   disabled={product.quentity <= 0}
+                  onClick={() => navigate(`/buyNow/${id}`, { state: { product } })}
                 >
                   Buy Now
                 </button>

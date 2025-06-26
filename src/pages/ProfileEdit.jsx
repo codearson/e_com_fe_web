@@ -67,7 +67,7 @@ function ChangePassword({ onBack }) {
   );
 }
 
-function VerifyEmail({ onBack, onSwitchToPhone }) {
+function VerifyEmail({ onBack, onSwitchToPhone, userEmail }) {
   const [email, setEmail] = React.useState("");
   const [step, setStep] = React.useState("send"); // 'send' or 'verify' or 'success'
   const [sentCode, setSentCode] = React.useState("");
@@ -81,35 +81,42 @@ function VerifyEmail({ onBack, onSwitchToPhone }) {
       setErrorMsg("Please enter a valid email address.");
       return;
     }
-  
+    if (userEmail && email.trim().toLowerCase() !== userEmail.trim().toLowerCase()) {
+      setErrorMsg("Wrong email: Please enter your account email.");
+      return;
+    }
     try {
-      const responseText = await sendTwoStepEmailVerification(email);
+      await sendTwoStepEmailVerification(email);
       setStep("verify");
       setStatusMsg(`Verification code sent to ${email}`);
       setErrorMsg("");
       setInputCode("");
-  
-      // No need to simulate `sentCode` if backend handles it
-      // If you expect to compare the code manually, then backend must also send it back (not recommended for security)
     } catch (err) {
       console.error(err);
       setErrorMsg("Failed to send verification code. Please try again.");
     }
   };
 
- 
-const handleVerify = async (e) => {
-  e.preventDefault();
-  try {
-    const result = await verifyTwoStepCode(email, inputCode);
-    setStep("success");
-    setStatusMsg("Two-step verification successful!");
-    setErrorMsg("");
-  } catch (err) {
-    console.error(err);
-    setErrorMsg("Incorrect or expired code. Please try again.");
-  }
-};
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    if (!inputCode || inputCode.length !== 6) {
+      setErrorMsg("Wrong OTP or empty");
+      return;
+    }
+    try {
+      const result = await verifyTwoStepCode(inputCode);
+      // Check backend response for success
+      if ((result && result.success) || result.status === true || result.verified === true) {
+        setStep("success");
+        setStatusMsg("Two-step verification successful!");
+        setErrorMsg("");
+      } else {
+        setErrorMsg("Verification failed");
+      }
+    } catch (err) {
+      setErrorMsg("Verification failed");
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center py-12 w-full">
@@ -1774,18 +1781,22 @@ export const ProfileEdit = () => {
                       <span className="block text-gray-500 text-sm">Protect your account with a stronger password.</span>
                     </span>
                   </button>
-                  <button
-                    onClick={() => setSecurityPage("verify")}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-[#f3f6fd] to-[#eaf1fb] shadow-sm hover:shadow-md border border-transparent hover:border-[#1E90FF] transition group focus:outline-none focus:ring-2 focus:ring-[#1E90FF]"
-                  >
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-[#f3f6fd] to-[#eaf1fb] shadow-sm border border-transparent">
                     <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#1E90FF]/10 text-[#1E90FF] text-lg">
                       <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 19v-6"/><circle cx="12" cy="7" r="4"/><path d="M5 21h14"/></svg>
                     </span>
                     <span className="flex-1 text-left">
                       <span className="block text-base font-semibold text-[#1E90FF] group-hover:underline">2-step verification</span>
-                      <span className="block text-gray-500 text-sm">Confirm new logins with a 4-digit code.</span>
+                      <span className="block text-gray-500 text-sm">Confirm new logins with a 6-digit code.</span>
                     </span>
-                  </button>
+                    <button
+                      onClick={() => setSecurityPage("verify")}
+                      className={`ml-4 px-4 py-2 rounded bg-[#1E90FF] text-white font-semibold transition disabled:opacity-50`}
+                      disabled={user?.twoStepVerification === true}
+                    >
+                      {user?.twoStepVerification === true ? "Enabled" : "Enable"}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -1799,7 +1810,7 @@ export const ProfileEdit = () => {
               <VerifyPhone onBack={() => setSecurityPage(null)} onSwitchToEmail={() => setSecuritySubPage("email")} />
             )}
             {activeTab === "security" && securityPage === "verify" && securitySubPage === "email" && (
-              <VerifyEmail onBack={() => setSecuritySubPage(null)} onSwitchToPhone={() => setSecuritySubPage(null)} />
+              <VerifyEmail onBack={() => setSecuritySubPage(null)} onSwitchToPhone={() => setSecuritySubPage(null)} userEmail={email} />
             )}
           </section>
         </div>

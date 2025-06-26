@@ -276,13 +276,13 @@ export async function sendTwoStepEmailVerification(email) {
   }
   
   // Verify OTP
-  export async function verifyTwoStepCode(email, code) {
+  export async function verifyTwoStepCode(token) {
     const res = await fetch(
       `${BASE_BACKEND_URL}/auth/two-step-verify/twoFaVerification`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp: code, type: "EMAIL" }),
+        body: JSON.stringify({ token }),
       }
     );
     if (!res.ok) throw new Error("Verification failed");

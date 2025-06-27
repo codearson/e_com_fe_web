@@ -231,7 +231,10 @@ export const ProfileEdit = () => {
   const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
   const [showProvinceDropdown, setShowProvinceDropdown] = useState(false);
 
-  const [gender, setGender] = useState(user?.gender || "");
+  const [gender, setGender] = useState("");
+  const [birthdayDay, setBirthdayDay] = useState("");
+  const [birthdayMonth, setBirthdayMonth] = useState("");
+  const [birthdayYear, setBirthdayYear] = useState("");
 
   const navigate = useNavigate();
 
@@ -331,6 +334,15 @@ export const ProfileEdit = () => {
                  setShippingAddresses([]); // Ensure shipping addresses are cleared if user ID is missing
             }
 
+            // Initialize birthday and gender from userData
+            if (userData.dateOfBirth) {
+              const [year, month, day] = userData.dateOfBirth.split("-");
+              setBirthdayDay(day || "");
+              setBirthdayMonth(month || "");
+              setBirthdayYear(year || "");
+            }
+            setGender(userData.gender || "");
+
           }
         } else {
              console.log("No userEmail from decoded token.");
@@ -404,12 +416,19 @@ export const ProfileEdit = () => {
 
   const handleProfileUpdate = async () => {
     setUpdateStatus("Updating...");
+    // Compose dateOfBirth string if all fields are present
+    let dateOfBirth = null;
+    if (birthdayYear && birthdayMonth && birthdayDay) {
+      dateOfBirth = `${birthdayYear}-${birthdayMonth.padStart(2, "0")}-${birthdayDay.padStart(2, "0")}`;
+    }
     const updatedUserData = {
       ...user,
       firstName: firstName,
       lastName: lastName,
       address: address,
       about: about,
+      dateOfBirth: dateOfBirth,
+      gender: gender,
     };
     const result = await updateUser(updatedUserData);
     if (result && result.status) {
@@ -554,51 +573,49 @@ export const ProfileEdit = () => {
     setBankDetailsStatus("Saving...");
     setBankDetailsError(null);
 
+    // Validation
     if (!accountHolderName.trim()) {
-         setBankDetailsError("Please enter account holder name.");
-         setSavingBankDetails(false);
-         setTimeout(() => setBankDetailsError(null), 3000);
-         return;
+      setBankDetailsError("Please enter account holder name.");
+      setSavingBankDetails(false);
+      setTimeout(() => setBankDetailsError(null), 3000);
+      return;
     }
-     if (!accountNumber.trim()) {
-         setBankDetailsError("Please enter account number.");
-         setSavingBankDetails(false);
-         setTimeout(() => setBankDetailsError(null), 3000);
-         return;
+    if (!accountNumber.trim()) {
+      setBankDetailsError("Please enter account number.");
+      setSavingBankDetails(false);
+      setTimeout(() => setBankDetailsError(null), 3000);
+      return;
     }
     if (!selectedBankId) {
-        setBankDetailsError("Please select a bank.");
-        setSavingBankDetails(false);
-        setTimeout(() => setBankDetailsError(null), 3000);
-        return;
+      setBankDetailsError("Please select a bank.");
+      setSavingBankDetails(false);
+      setTimeout(() => setBankDetailsError(null), 3000);
+      return;
     }
-     if (!selectedBranchId) {
-        setBankDetailsError("Please select a branch.");
-        setSavingBankDetails(false);
-        setTimeout(() => setBankDetailsError(null), 3000);
-        return;
+    if (!selectedBranchId) {
+      setBankDetailsError("Please select a branch.");
+      setSavingBankDetails(false);
+      setTimeout(() => setBankDetailsError(null), 3000);
+      return;
     }
 
+    // Build payload
     const bankDetailsPayload = {
       accountHolderName: accountHolderName,
       accountNumber: accountNumber,
       createdAt: new Date().toISOString(),
-      userDto: {
-        id: user.id,
-      },
-      bankDto: {
-        id: parseInt(selectedBankId),
-      },
-      branchDto: {
-        id: parseInt(selectedBranchId),
-      },
-      isActive: 1,
+      userDto: { id: user.id },
+      bankDto: { id: parseInt(selectedBankId) },
+      branchDto: { id: parseInt(selectedBranchId) },
+      isActive: true, // boolean, not 1/0
     };
 
+    // Call save API
     const result = await saveUserBankDetails(bankDetailsPayload);
 
     if (result && result.status) {
       setBankDetailsStatus("Bank details saved successfully!");
+      // Refresh bank details from backend
       const bankDataResponse = await searchUserBankDetails();
       const userBankDetail = bankDataResponse.find(detail => detail.userDto?.id === user.id);
       if (userBankDetail) {
@@ -610,14 +627,6 @@ export const ProfileEdit = () => {
         setAccountHolderName(userBankDetail.accountHolderName || "");
         setAccountNumber(userBankDetail.accountNumber || "");
       }
-      if (!bankDetails) {
-          setAccountHolderName("");
-          setAccountNumber("");
-          setSelectedBankId("");
-          setBankSearch("");
-          setSelectedBranchId("");
-          setBranchSearch("");
-      }
     } else {
       setBankDetailsError(result?.errorDescription || "Failed to save bank details.");
       setBankDetailsStatus("");
@@ -627,77 +636,75 @@ export const ProfileEdit = () => {
     setTimeout(() => setBankDetailsError(null), 3000);
   };
 
-    const handleUpdateBankDetails = async () => {
-        setSavingBankDetails(true);
-        setBankDetailsStatus("Updating...");
-        setBankDetailsError(null);
+  const handleUpdateBankDetails = async () => {
+    setSavingBankDetails(true);
+    setBankDetailsStatus("Updating...");
+    setBankDetailsError(null);
 
-         if (!accountHolderName.trim()) {
-             setBankDetailsError("Please enter account holder name.");
-             setSavingBankDetails(false);
-             setTimeout(() => setBankDetailsError(null), 3000);
-             return;
-        }
-         if (!accountNumber.trim()) {
-             setBankDetailsError("Please enter account number.");
-             setSavingBankDetails(false);
-             setTimeout(() => setBankDetailsError(null), 3000);
-             return;
-        }
-        if (!selectedBankId) {
-            setBankDetailsError("Please select a bank.");
-            setSavingBankDetails(false);
-            setTimeout(() => setBankDetailsError(null), 3000);
-            return;
-        }
-         if (!selectedBranchId) {
-            setBankDetailsError("Please select a branch.");
-            setSavingBankDetails(false);
-            setTimeout(() => setBankDetailsError(null), 3000);
-            return;
-        }
+    // Validation (same as above)
+    if (!accountHolderName.trim()) {
+      setBankDetailsError("Please enter account holder name.");
+      setSavingBankDetails(false);
+      setTimeout(() => setBankDetailsError(null), 3000);
+      return;
+    }
+    if (!accountNumber.trim()) {
+      setBankDetailsError("Please enter account number.");
+      setSavingBankDetails(false);
+      setTimeout(() => setBankDetailsError(null), 3000);
+      return;
+    }
+    if (!selectedBankId) {
+      setBankDetailsError("Please select a bank.");
+      setSavingBankDetails(false);
+      setTimeout(() => setBankDetailsError(null), 3000);
+      return;
+    }
+    if (!selectedBranchId) {
+      setBankDetailsError("Please select a branch.");
+      setSavingBankDetails(false);
+      setTimeout(() => setBankDetailsError(null), 3000);
+      return;
+    }
 
-        const bankDetailsPayload = {
-            id: bankDetails.id,
-            accountHolderName: accountHolderName,
-            accountNumber: accountNumber,
-            createdAt: bankDetails.createdAt,
-             userDto: {
-                id: user.id,
-            },
-            bankDto: {
-                id: parseInt(selectedBankId),
-            },
-            branchDto: {
-                id: parseInt(selectedBranchId),
-            },
-            isActive: bankDetails.isActive
-        };
-
-        const result = await updateUserBankDetails(bankDetailsPayload);
-
-         if (result && result.status) {
-             setBankDetailsStatus("Bank details updated successfully!");
-              const bankDataResponse = await searchUserBankDetails();
-             const userBankDetail = bankDataResponse.find(detail => detail.userDto?.id === user.id);
-             if (userBankDetail) {
-                 setBankDetails(userBankDetail);
-                 setSelectedBankId(userBankDetail.bankDto?.id || "");
-                 setBankSearch(userBankDetail.bankDto?.name || "");
-                 setSelectedBranchId(userBankDetail.branchDto?.id || "");
-                 setBranchSearch(userBankDetail.branchDto?.branchName || "");
-                 setAccountHolderName(userBankDetail.accountHolderName || "");
-                 setAccountNumber(userBankDetail.accountNumber || "");
-             }
-             setIsEditingBankDetails(false);
-         } else {
-             setBankDetailsError(result?.errorDescription || "Failed to update bank details.");
-             setBankDetailsStatus("");
-         }
-         setSavingBankDetails(false);
-         setTimeout(() => setBankDetailsStatus(""), 3000);
-         setTimeout(() => setBankDetailsError(null), 3000);
+    // Build payload
+    const bankDetailsPayload = {
+      id: bankDetails.id,
+      accountHolderName: accountHolderName,
+      accountNumber: accountNumber,
+      createdAt: bankDetails.createdAt,
+      userDto: { id: user.id },
+      bankDto: { id: parseInt(selectedBankId) },
+      branchDto: { id: parseInt(selectedBranchId) },
+      isActive: bankDetails.isActive,
     };
+
+    // Call update API
+    const result = await updateUserBankDetails(bankDetailsPayload);
+
+    if (result && result.status) {
+      setBankDetailsStatus("Bank details updated successfully!");
+      // Refresh bank details from backend
+      const bankDataResponse = await searchUserBankDetails();
+      const userBankDetail = bankDataResponse.find(detail => detail.userDto?.id === user.id);
+      if (userBankDetail) {
+        setBankDetails(userBankDetail);
+        setSelectedBankId(userBankDetail.bankDto?.id || "");
+        setBankSearch(userBankDetail.bankDto?.name || "");
+        setSelectedBranchId(userBankDetail.branchDto?.id || "");
+        setBranchSearch(userBankDetail.branchDto?.branchName || "");
+        setAccountHolderName(userBankDetail.accountHolderName || "");
+        setAccountNumber(userBankDetail.accountNumber || "");
+      }
+      setIsEditingBankDetails(false);
+    } else {
+      setBankDetailsError(result?.errorDescription || "Failed to update bank details.");
+      setBankDetailsStatus("");
+    }
+    setSavingBankDetails(false);
+    setTimeout(() => setBankDetailsStatus(""), 3000);
+    setTimeout(() => setBankDetailsError(null), 3000);
+  };
 
     const handleCancelEdit = () => {
         setIsEditingBankDetails(false);
@@ -1068,11 +1075,15 @@ export const ProfileEdit = () => {
                             className="w-full border rounded-lg px-4 py-2.5 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200" 
                             placeholder="Day" 
                             maxLength="2"
+                            value={birthdayDay}
+                            onChange={e => setBirthdayDay(e.target.value.replace(/[^0-9]/g, ""))}
                           />
                         </div>
                         <div className="flex-[2]">
                           <select 
                             className="w-full border rounded-lg px-4 py-2.5 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200"
+                            value={birthdayMonth}
+                            onChange={e => setBirthdayMonth(e.target.value)}
                           >
                             <option value="">Month</option>
                             <option value="01">January</option>
@@ -1095,6 +1106,8 @@ export const ProfileEdit = () => {
                             className="w-full border rounded-lg px-4 py-2.5 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200" 
                             placeholder="Year" 
                             maxLength="4"
+                            value={birthdayYear}
+                            onChange={e => setBirthdayYear(e.target.value.replace(/[^0-9]/g, ""))}
                           />
                         </div>
                       </div>
@@ -1106,7 +1119,7 @@ export const ProfileEdit = () => {
                       <select 
                         className="w-full border rounded-lg px-4 py-2.5 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200"
                         value={gender}
-                        onChange={(e) => setGender(e.target.value)}
+                        onChange={e => setGender(e.target.value)}
                       >
                         <option value="">Select gender</option>
                         <option value="MALE">Male</option>

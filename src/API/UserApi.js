@@ -139,22 +139,8 @@ export const saveUser = async (userData) => {
 export const updateUser = async (userData) => {
     try {
         const accessToken = localStorage.getItem("accessToken");
-
-        if (!accessToken) {
-            return null;
-        }
-
-        const decodedToken = decodeJwt(accessToken);
-        const userRole = decodedToken?.roles[0]?.authority;
-
-        if (userRole !== "ROLE_ADMIN" && userRole !== "ROLE_MANAGER") {
-            return null;
-        }
-
-        if (!userData.id) {
-            return null;
-        }
-
+        if (!accessToken) return null;
+        if (!userData.id) return null;
         const { ...updateData } = userData;
         const response = await axios.post(`${BASE_BACKEND_URL}/user/update`, updateData, {
             headers: {
@@ -162,7 +148,6 @@ export const updateUser = async (userData) => {
                 "Content-Type": "application/json",
             },
         });
-
         return response.data;
     } catch (error) {
         return null;

@@ -182,3 +182,33 @@ export const verifyEmailToken = async (email, token) => {
     return { error: "Failed to connect to the server. Please try again." };
   }
 };
+
+export const updateUser = async (userData) => {
+    try {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+            return { status: false, errorDescription: "No access token" };
+        }
+        const decodedToken = decodeJwt(accessToken);
+        const userRole = decodedToken?.roles[0]?.authority;
+        if (userRole !== "ROLE_ADMIN" && userRole !== "ROLE_MANAGER") {
+            return { status: false, errorDescription: "Not authorized" };
+        }
+        if (!userData.id) {
+            return { status: false, errorDescription: "Missing user id" };
+        }
+        const response = await axios.post(`${BASE_BACKEND_URL}/user/update`, userData, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json",
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error updating user:', error);
+        return {
+            status: false,
+            errorDescription: error.response?.data?.errorDescription || "An error occurred while updating the user."
+        };
+    }
+};

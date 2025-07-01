@@ -8,7 +8,7 @@ export const saveProductCategory = async (categoryData) => {
             return { errorDescription: "Authentication required." };
         }
 
-        const response = await axios.post(`${BASE_BACKEND_URL}/productCategory/save`, categoryData, {
+        const response = await axios.post(`${BASE_BACKEND_URL}/product-category/save`, categoryData, {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
                 "Content-Type": "application/json",
@@ -28,7 +28,7 @@ export const updateProductCategory = async (categoryData) => {
             return { errorDescription: "Authentication required." };
         }
 
-        const response = await axios.put(`${BASE_BACKEND_URL}/productCategory/update`, categoryData, {
+        const response = await axios.put(`${BASE_BACKEND_URL}/product-category/update`, categoryData, {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
                 "Content-Type": "application/json",
@@ -41,22 +41,27 @@ export const updateProductCategory = async (categoryData) => {
     }
 };
 
-export const getAllProductCategoriesBySearch = async () => {
+export const getAllProductCategoriesBySearch = async (params = {}) => {
     try {
         const accessToken = localStorage.getItem("accessToken");
         if (!accessToken) {
             return [];
         }
-
         const response = await axios.get(
-            `${BASE_BACKEND_URL}/productCategory/getAllBySearch`,
+            `${BASE_BACKEND_URL}/product-category/getAllPageBySearch`,
             {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },
+                params: {
+                    pageNumber: params.pageNumber ?? 0,
+                    pageSize: params.pageSize ?? 100,
+                    ...(params.search ? { search: params.search } : {}),
+                    ...(params.level ? { level: params.level } : {}),
+                    ...(params.parentId ? { parentId: params.parentId } : {}),
+                },
             }
         );
-
         return response.data;
     } catch (error) {
         console.error('Error fetching product categories:', error);
@@ -72,7 +77,7 @@ export const updateProductCategoryStatus = async (productCategoryId, status) => 
         }
 
         const response = await axios.put(
-            `${BASE_BACKEND_URL}/productCategory/updateStatus?productCategoryId=${productCategoryId}&status=${status}`,
+            `${BASE_BACKEND_URL}/product-category/updateStatus?productCategoryId=${productCategoryId}&status=${status}`,
             {},
             {
                 headers: {
@@ -85,5 +90,21 @@ export const updateProductCategoryStatus = async (productCategoryId, status) => 
     } catch (error) {
         console.error('Error updating product category status:', error);
         return { errorDescription: error.response?.data?.errorDescription || "Failed to update product category status." };
+    }
+};
+
+export const getProductCategoryTree = async () => {
+    try {
+        const accessToken = localStorage.getItem("accessToken");
+        // If your API requires authentication, include the token; otherwise, you can remove headers
+        const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+        const response = await axios.get(
+            `${BASE_BACKEND_URL}/product-category/tree`,
+            { headers }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching product category tree:', error);
+        return { errorDescription: error.response?.data?.errorDescription || "Failed to fetch product category tree." };
     }
 }; 

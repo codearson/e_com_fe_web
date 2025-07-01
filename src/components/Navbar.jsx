@@ -113,6 +113,7 @@ export const Navbar = () => {
         if (email) {
           const userData = await getUserByEmail(email);
           setUser(userData);
+          console.log("Fetched user data in Navbar:", userData);
         }
       } else {
         setUser(null);
@@ -449,30 +450,28 @@ export const Navbar = () => {
                       Settings
                     </button>
 
-                    <button
-                      className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer w-full"
-                      onClick={() => {
-                        navigate("/admin/dashboard");
-                        setUserDropdownOpen(false);
-                      }}
-                    >
-                      Dashboard
-                    </button>
+                    {/* Show Dashboard only for admin users */}
+                    {user?.userRoleDto?.userRole === "ADMIN" && (
+                      <button
+                        className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer w-full"
+                        onClick={() => {
+                          navigate("/admin/dashboard");
+                          setUserDropdownOpen(false);
+                        }}
+                      >
+                        Dashboard
+                      </button>
+                    )}
                     {/* Admin Dropdown for Admin Users */}
-                    {user?.userRoleDto?.userRole === "ROLE_ADMIN" && (
+                    {user?.userRoleDto?.userRole === "ADMIN" && (
                       <>
-                        <div className="border-t border-gray-100 my-1"></div>
-                        <div className="px-4 py-2">
-                          <span className="text-xs font-semibold text-gray-500">ADMIN</span>
-                        </div>
                         <button
-                          className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer w-full"
                           onClick={() => {
                             navigate("/admin/users");
                             setUserDropdownOpen(false);
                           }}
                         >
-                          User Management
+                    
                         </button>
                       </>
                     )}

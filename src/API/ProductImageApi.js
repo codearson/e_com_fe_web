@@ -54,3 +54,23 @@ export const updateProduct = async (productData) => {
     };
   }
 };
+
+// Upload product image(s) to local and save
+export const uploadProductImages = async (files, productId) => {
+  const formData = new FormData();
+  for (let i = 0; i < files.length; i++) {
+    formData.append('files', files[i]);
+  }
+  if (productId) formData.append('productId', productId);
+  const accessToken = localStorage.getItem('accessToken');
+  return axios.post(
+    `${BASE_BACKEND_URL}/productImage/uploadToLocal`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+};

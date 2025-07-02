@@ -3,18 +3,16 @@ import { Footer } from "../components/Footer";
 import React, { useState, useEffect } from 'react';
 import { saveProduct } from '../API/productApi';
 import { getAllBrands } from '../API/brandApi';
-import { getAllProductCategoriesBySearch } from '../API/ProductCategoryApi';
+import { getCategoriesByParentAndLevel } from '../API/ProductCategoryApi';
 import { getAllConditions } from '../API/conditionApi';
 import { getAllStatuses } from '../API/statusApi';
 import { extractArray } from '../utils/extractArray';
+import { uploadProductImages } from '../API/ProductImageApi';
 
 const SellProduct = () => {
   // Dropdown data
   const [brands, setBrands] = useState([]);
-  const [allCategories, setAllCategories] = useState([]);
-  const [topLevelCategories, setTopLevelCategories] = useState([]);
-  const [subCategories, setSubCategories] = useState([]);
-  const [thirdLevelCategories, setThirdLevelCategories] = useState([]);
+  const [categoryLevels, setCategoryLevels] = useState([{ options: [], selected: "", level: 1, parentId: null }]);
   const [conditions, setConditions] = useState([]);
   const [statuses, setStatuses] = useState([]);
   const [loadingDropdowns, setLoadingDropdowns] = useState(true);
@@ -22,11 +20,6 @@ const SellProduct = () => {
   // Form state
   const [title, setTitle] = useState("");
   const [brandId, setBrandId] = useState("");
-  const [topLevelCategoryId, setTopLevelCategoryId] = useState("");
-  const [subCategoryId, setSubCategoryId] = useState("");
-  const [thirdLevelCategoryId, setThirdLevelCategoryId] = useState("");
-  const [conditionId, setConditionId] = useState("");
-  const [statusId, setStatusId] = useState("");
   const [price, setPrice] = useState("");
   const [size, setSize] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -34,79 +27,56 @@ const SellProduct = () => {
   const [color, setColor] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [conditionId, setConditionId] = useState("");
+  const [statusId, setStatusId] = useState("");
+  const [imageFiles, setImageFiles] = useState([]);
 
-  // Initial data fetch for all dropdowns
+  // Fetch root categories on mount
   useEffect(() => {
     (async () => {
       setLoadingDropdowns(true);
       try {
         const results = await Promise.allSettled([
           getAllBrands(),
-          getAllProductCategoriesBySearch(),
+          getCategoriesByParentAndLevel({ parentId: null, level: 1 }),
           getAllConditions(),
           getAllStatuses()
         ]);
-
         const [brandsResult, categoriesResult, conditionsResult, statusesResult] = results;
-
         if (brandsResult.status === 'fulfilled') {
           const arr = extractArray(brandsResult.value);
           setBrands(arr);
-          console.log("Brands loaded:", arr);
-        } else {
-          console.error("Error fetching brands:", brandsResult.reason);
         }
-
         if (categoriesResult.status === 'fulfilled') {
-          const allCats = extractArray(categoriesResult.value);
-          setAllCategories(allCats);
-          setTopLevelCategories(allCats.filter(c => c.level === 1));
-        } else {
-          console.error("Error fetching categories:", categoriesResult.reason);
+          const cats = categoriesResult.value.data.responseDto?.payload || [];
+          setCategoryLevels([{ options: cats, selected: "", level: 1, parentId: null }]);
         }
-
         if (conditionsResult.status === 'fulfilled') {
           setConditions(extractArray(conditionsResult.value));
-        } else {
-          console.error("Error fetching conditions:", conditionsResult.reason);
         }
-
         if (statusesResult.status === 'fulfilled') {
           setStatuses(extractArray(statusesResult.value));
-        } else {
-          console.error("Error fetching statuses:", statusesResult.reason);
         }
-
       } catch (err) {
-        console.error("A critical error occurred during dropdown data fetch:", err);
         setMessage({ type: 'error', text: 'Could not load critical dropdown data.' });
       }
       setLoadingDropdowns(false);
     })();
   }, []);
 
-  // Handle dependent sub-category dropdown
-  useEffect(() => {
-    if (topLevelCategoryId) {
-      setSubCategories(allCategories.filter(c => c.parentId === Number(topLevelCategoryId)));
-      setSubCategoryId("");
-      setThirdLevelCategoryId("");
-      setThirdLevelCategories([]);
-    } else {
-      setSubCategories([]);
+  // Handle cascading category selection
+  const handleCategoryChange = async (levelIdx, selectedId) => {
+    const newLevels = categoryLevels.slice(0, levelIdx + 1);
+    newLevels[levelIdx].selected = selectedId;
+    // Fetch children for the next level
+    const nextLevel = newLevels[levelIdx].level + 1;
+    const childrenRes = await getCategoriesByParentAndLevel({ parentId: selectedId, level: nextLevel });
+    const children = childrenRes.data.responseDto?.payload || [];
+    if (children.length > 0) {
+      newLevels.push({ options: children, selected: "", level: nextLevel, parentId: selectedId });
     }
-  }, [topLevelCategoryId, allCategories]);
-
-  // Handle dependent third-level category dropdown
-  useEffect(() => {
-    if (subCategoryId) {
-      setThirdLevelCategories(allCategories.filter(c => c.parentId === Number(subCategoryId)));
-      setThirdLevelCategoryId("");
-    } else {
-      setThirdLevelCategories([]);
-    }
-  }, [subCategoryId, allCategories]);
-
+    setCategoryLevels(newLevels);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -114,8 +84,8 @@ const SellProduct = () => {
     setMessage(null);
 
     // Determine the most specific category ID to send
-    const finalCategoryId = thirdLevelCategoryId || subCategoryId || topLevelCategoryId;
-    const productCategory = allCategories.find(c => c.id === Number(finalCategoryId));
+    const finalCategoryId = categoryLevels.map(l => l.selected).filter(Boolean).pop();
+    const productCategory = finalCategoryId ? { id: Number(finalCategoryId) } : null;
     const brand = brands.find(b => b.id === Number(brandId));
     const condition = conditions.find(c => c.id === Number(conditionId));
 
@@ -126,7 +96,7 @@ const SellProduct = () => {
       color,
       price: parseFloat(price),
       quentity: parseInt(quantity),
-      productCategoryDto: productCategory ? { id: productCategory.id } : null,
+      productCategoryDto: productCategory,
       brandDto: brand ? { id: brand.id } : null,
       conditionsDto: condition ? { id: condition.id } : null,
       statusDto: statusId ? { id: Number(statusId) } : null,
@@ -135,12 +105,28 @@ const SellProduct = () => {
     console.log("Submitting productData:", productData);
 
     try {
+      // 1. Save product first
       const response = await saveProduct(productData);
-      if (response && !response.errorDescription) {
+      if (response && !response.errorDescription && response.responseDto && response.responseDto.id) {
+        const productId = response.responseDto.id;
+        let imageUrl = null;
+        // 2. If image files selected, upload them
+        if (imageFiles.length > 0) {
+          const uploadRes = await uploadProductImages(imageFiles, productId);
+          const uploadedImages = uploadRes.data.responseDto || [];
+          if (uploadedImages.length > 0) {
+            imageUrl = uploadedImages[0].url;
+          }
+        }
+        // 3. If imageUrl is set, update product with image_url
+        if (imageUrl) {
+          await saveProduct({ ...productData, id: productId, imageUrl });
+        }
         setMessage({ type: 'success', text: 'Product saved successfully!' });
         // Reset form
-        setTitle(""); setBrandId(""); setTopLevelCategoryId(""); setSubCategoryId(""); setThirdLevelCategoryId("");
-        setConditionId(""); setPrice(""); setStatusId(""); setSize(""); setQuantity(""); setDescription(""); setColor("");
+        setTitle(""); setBrandId(""); setPrice(""); setSize(""); setQuantity(""); setDescription(""); setColor("");
+        setCategoryLevels([{ options: [], selected: "", level: 1, parentId: null }]);
+        setImageFiles([]);
       } else {
         setMessage({ type: 'error', text: response.errorDescription || 'Failed to save product.' });
       }
@@ -165,7 +151,13 @@ const SellProduct = () => {
       <h1 className="text-3xl font-bold mb-8 text-[#1E90FF] text-center">Sellable Product Details</h1>
         <form className="space-y-6 bg-white p-6 rounded-lg shadow-md" onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input type="file" className="p-3 border border-gray-300 rounded-md" disabled/>
+            <input
+              type="file"
+              className="p-3 border border-gray-300 rounded-md"
+              multiple
+              onChange={e => setImageFiles(Array.from(e.target.files))}
+              required
+            />
             <input type="text" placeholder="Title" className="p-3 border border-gray-300 rounded-md" value={title} onChange={e => setTitle(e.target.value)} required />
             <select className="p-3 border border-gray-300 rounded-md" value={brandId} onChange={e => setBrandId(e.target.value)} required>
               <option value="" disabled>Select Brand</option>
@@ -173,26 +165,19 @@ const SellProduct = () => {
               {brands.map(b => <option key={b.id} value={b.id}>{b.brandName}</option>)}
             </select>
             {/* Category Dropdowns */}
-            <select className="p-3 border border-gray-300 rounded-md" value={topLevelCategoryId} onChange={e => setTopLevelCategoryId(e.target.value)} required>
-              <option value="" disabled>Select Category</option>
-              {topLevelCategories.length === 0 && !loadingDropdowns && <option disabled>No categories found</option>}
-              {topLevelCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-
-            {subCategories.length > 0 && (
-              <select className="p-3 border border-gray-300 rounded-md" value={subCategoryId} onChange={e => setSubCategoryId(e.target.value)}>
-                <option value="" disabled>Select Sub-Category</option>
-                {subCategories.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+            {categoryLevels.map((catLevel, idx) => (
+              <select
+                key={idx}
+                className="p-3 border border-gray-300 rounded-md"
+                value={catLevel.selected}
+                onChange={e => handleCategoryChange(idx, e.target.value)}
+                required={idx === 0}
+              >
+                <option value="" disabled>{idx === 0 ? 'Select Category' : 'Select Sub-Category'}</option>
+                {catLevel.options.length === 0 && !loadingDropdowns && <option disabled>No categories found</option>}
+                {catLevel.options.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
-            )}
-
-            {thirdLevelCategories.length > 0 && (
-              <select className="p-3 border border-gray-300 rounded-md" value={thirdLevelCategoryId} onChange={e => setThirdLevelCategoryId(e.target.value)}>
-                <option value="" disabled>Select Sub-Category</option>
-                {thirdLevelCategories.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            )}
-
+            ))}
             <select className="p-3 border border-gray-300 rounded-md" value={conditionId} onChange={e => setConditionId(e.target.value)} required>
               <option value="" disabled>Select Condition</option>
               {conditions.length === 0 && !loadingDropdowns && <option disabled>No conditions found</option>}

@@ -107,4 +107,13 @@ export const getProductCategoryTree = async () => {
         console.error('Error fetching product category tree:', error);
         return { errorDescription: error.response?.data?.errorDescription || "Failed to fetch product category tree." };
     }
+};
+
+// Get categories by parentId and level (for cascading dropdowns)
+export const getCategoriesByParentAndLevel = async ({ parentId = null, level = null, search = "" }) => {
+    let url = `${BASE_BACKEND_URL}/product-category/getAllPageBySearch?pageNumber=1&pageSize=100`;
+    if (parentId !== null) url += `&parentId=${parentId}`;
+    if (level !== null) url += `&level=${level}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    return axios.get(url);
 }; 

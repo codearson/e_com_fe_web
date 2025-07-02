@@ -12,7 +12,7 @@ import Products from "./pages/Products"
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import CookiePolicy from "./pages/CookiePolicy";
 import CookieSettings from "./pages/CookieSettings";
-import TermsAndConditions from "./pages/TermsAndConditions";
+import TermsAndConditions from "./pages/TermsAndConditions"
 import Selling from "./pages/Selling";
 import Buying from "./pages/Buying";
 import SearchResults from "./pages/SearchResults";
@@ -20,8 +20,7 @@ import { AdminUsers } from "./pages/AdminUsers";
 import { Users } from "./pages/Users";
 import { DashboardAdmin } from "./pages/DashboardAdmin";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import BuyNow from "./pages/BuyNow";
-import Purchase from "./pages/Purchase";
+import CategoryProducts from "./pages/CategoryProducts";
 
 function App() {
   return (
@@ -55,8 +54,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/buyNow/:id" element={<BuyNow />} />
-          <Route path="/purchase/:id" element={<Purchase />} />
+        <Route path="/category/:categoryId" element={<CategoryProducts />} />
         </Routes>
       </BrowserRouter>
     </>

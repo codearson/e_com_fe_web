@@ -8,6 +8,7 @@ import { getAllProductCategoriesBySearch } from "../API/ProductCategoryApi";
 import { searchProducts } from "../API/productApi";
 import { debounce } from "lodash";
 import "../styles/Navbar.css";
+import CategoryDropdownRecursive from "./CategoryDropdownRecursive";
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -28,6 +29,7 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isDashboardPage = location.pathname === '/admin/dashboard';
+  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
 
   // Debounced search function
   const debouncedSearch = useRef(
@@ -526,153 +528,8 @@ export const Navbar = () => {
       {/* Secondary Menu (hidden on mobile) */}
       <div
         className="border-t border-gray-200 hidden lg:flex flex-col px-12 text-black text-base font-normal bg-white z-40 relative"
-        onMouseLeave={() => setHoveredCategoryId(null)}
       >
-        <div className="flex items-center space-x-8 py-2 overflow-x-auto">
-          {/* Render Level 1 Categories */}
-          {getLevel1Categories().map((category) => (
-            <div
-              key={category.id}
-              className="relative group h-full flex items-center"
-              onMouseEnter={() => {
-                console.log('Mouse entered category:', category.name, category.id);
-                setHoveredCategoryId(category.id);
-                // Set the first child as hovered level 2 by default if children exist
-                if (category.children && category.children.length > 0) {
-                     console.log('Setting hoveredLevel2CategoryId to first child:', category.children[0].name, category.children[0].id);
-                    setHoveredLevel2CategoryId(category.children[0].id);
-                } else {
-                    console.log('Level 1 category has no children, setting hoveredLevel2CategoryId to null');
-                    setHoveredLevel2CategoryId(null);
-                }
-              }}
-            >
-            <button
-                className="hover:text-[#1E90FF] transition-colors cursor-pointer whitespace-nowrap py-2 font-medium focus:outline-none"
-            >
-              {category.name}
-            </button>
-            </div>
-          ))}
-           {/* Add "About" and "Our Platform" separately as they don't have dropdowns */}
-           <button
-              className="hover:text-[#1E90FF] transition-colors cursor-pointer whitespace-nowrap py-2 font-medium focus:outline-none"
-              onClick={() => navigate("/about-us")}
-            >
-              About
-            </button>
-            <button
-              className="hover:text-[#1E90FF] transition-colors cursor-pointer whitespace-nowrap py-2 font-medium focus:outline-none"
-              onClick={() => navigate("/our-platform")}
-            >
-              Our Platform
-            </button>
-        </div>
-
-        {/* Render Nested Categories when a Level 1 category is hovered */}
-        {hoveredCategoryId !== null && (
-          <div className="absolute top-full left-0 w-full bg-white shadow-xl rounded-b-lg p-6 z-50 flex border-t border-gray-200">
-            {/* Left Column: Level 2 Categories */}
-            <div className="w-1/4 border-r border-gray-200 pr-6">
-              <div className="mb-3">
-                <span className="block px-2 py-1.5 text-sm font-semibold text-gray-700 hover:text-[#1E90FF] cursor-pointer transition-colors">See all</span>
-              </div>
-              {
-                level2Categories.map(level2Category => (
-                  <div 
-                    key={level2Category.id} 
-                    className={`mb-1 rounded-md ${hoveredLevel2CategoryId === level2Category.id ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} transition-colors`}
-                    onMouseEnter={() => {
-                      console.log('Mouse entered Level 2 category:', level2Category.name, level2Category.id);
-                      setHoveredLevel2CategoryId(level2Category.id);
-                    }}
-                  >
-                    <span 
-                      className="block px-2 py-1.5 text-sm font-semibold cursor-pointer flex items-center"
-                      onClick={() => {
-                        if (!level2Category.children || level2Category.children.length === 0) {
-                          console.log('Clicked Level 2 category:', level2Category.name);
-                          // Add your navigation logic here
-                        }
-                      }}
-                    >
-                      {level2Category.name}
-                      {level2Category.children.length > 0 && (
-                         <svg className="w-4 h-4 ml-auto text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                    )}
-                    </span>
-            </div>
-                     ))
-                 }
-              </div>
-
-            {/* Right Columns: Level 3 and Level 4 Categories (based on hovered Level 2) */}
-            {hoveredLevel2Category && level3Categories.length > 0 && (
-              <div className="w-3/4 pl-6">
-                <div className="flex">
-                  {/* Level 3 Categories Column */}
-                  <div className="w-1/2 pr-4">
-                    <div className="flex flex-col space-y-1">
-                      {level3Categories.map(level3Category => (
-                        <div key={level3Category.id}>
-                          <div 
-                            className={`mb-1 rounded-md ${hoveredLevel3CategoryId === level3Category.id ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} transition-colors`}
-                              onMouseEnter={() => {
-                                console.log('Mouse entered Level 3 category:', level3Category.name, level3Category.id);
-                                setHoveredLevel3CategoryId(level3Category.id);
-                              }}
-                          >
-                            <span 
-                              className="block px-2 py-1.5 text-sm font-semibold cursor-pointer flex items-center"
-                              onClick={() => {
-                                if (!level3Category.children || level3Category.children.length === 0) {
-                                  console.log('Clicked Level 3 category:', level3Category.name);
-                                  // Add your navigation logic here
-                                }
-                              }}
-                            >
-                              {level3Category.name}
-                              {level3Category.children.length > 0 && (
-                                <svg className="w-4 h-4 ml-auto text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Level 4 Categories Column */}
-                  <div className="w-1/2 pl-4 border-l border-gray-200">
-                    {hoveredLevel3CategoryId && (
-                      <div className="flex flex-col space-y-1">
-                        {level3Categories.find(cat => cat.id === hoveredLevel3CategoryId)?.children.map(level4Category => (
-                          <div key={level4Category.id}>
-                            <div className="mb-1 rounded-md text-gray-700 hover:bg-gray-100 transition-colors">
-                              <span 
-                                className="block px-2 py-1.5 text-sm font-semibold cursor-pointer flex items-center"
-                                onClick={() => {
-                                  console.log('Clicked Level 4 category:', level4Category.name);
-                                  // Add your navigation logic here
-                                }}
-                              >
-                                {level4Category.name}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        <CategoryDropdownRecursive />
       </div>
 
       {/* Mobile Sidebar */}
@@ -710,7 +567,6 @@ export const Navbar = () => {
                 </svg>
               </button>
             </div>
-
             <div className="p-4 flex flex-col gap-3 border-b border-gray-200">
               <button
                 onClick={() => {
@@ -728,39 +584,50 @@ export const Navbar = () => {
                 Sign up | Log in
               </button>
             </div>
-
-            <div className="px-4 py-3 text-sm font-semibold text-gray-600 border-b border-gray-200">
+            <button
+              className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 border-b border-gray-200 hover:bg-gray-100 focus:outline-none"
+              onClick={() => setMobileCategoriesOpen(true)}
+            >
               Categories
-            </div>
-
-            <div className="flex-1 overflow-y-auto mobile-sidebar">
-              {getLevel1Categories().map((category) => (
+            </button>
+            {/* Only show the static category list if the drilldown is not open */}
+            {!mobileCategoriesOpen && (
+              <div className="flex-1 overflow-y-auto mobile-sidebar">
+                {getLevel1Categories().map((category) => (
+                  <button
+                    key={category.id}
+                    className="w-full flex items-center px-4 py-3 text-gray-800 hover:text-[#1E90FF] hover:bg-[#e6f3ff] text-base cursor-pointer transition-colors font-medium focus:outline-none"
+                  >
+                    {category.name}
+                  </button>
+                ))}
                 <button
-                  key={category.id}
                   className="w-full flex items-center px-4 py-3 text-gray-800 hover:text-[#1E90FF] hover:bg-[#e6f3ff] text-base cursor-pointer transition-colors font-medium focus:outline-none"
+                  onClick={() => {
+                    navigate("/about-us");
+                    setMenuOpen(false);
+                  }}
                 >
-                  {category.name}
+                  About
                 </button>
-              ))}
-              <button
-                className="w-full flex items-center px-4 py-3 text-gray-800 hover:text-[#1E90FF] hover:bg-[#e6f3ff] text-base cursor-pointer transition-colors font-medium focus:outline-none"
-                onClick={() => {
-                  navigate("/about-us");
-                  setMenuOpen(false);
-                }}
-              >
-                About
-              </button>
-              <button
-                className="w-full flex items-center px-4 py-3 text-gray-800 hover:text-[#1E90FF] hover:bg-[#e6f3ff] text-base cursor-pointer transition-colors font-medium focus:outline-none"
-                onClick={() => {
-                  navigate("/our-platform");
-                  setMenuOpen(false);
-                }}
-              >
-                Our Platform
-              </button>
-            </div>
+                <button
+                  className="w-full flex items-center px-4 py-3 text-gray-800 hover:text-[#1E90FF] hover:bg-[#e6f3ff] text-base cursor-pointer transition-colors font-medium focus:outline-none"
+                  onClick={() => {
+                    navigate("/our-platform");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Our Platform
+                </button>
+              </div>
+            )}
+            {/* Render the mobile category drilldown overlay if open */}
+            {mobileCategoriesOpen && (
+              <CategoryDropdownRecursive
+                mobileMenuOpen={mobileCategoriesOpen}
+                setMobileMenuOpen={setMobileCategoriesOpen}
+              />
+            )}
           </aside>
         </>
       )}

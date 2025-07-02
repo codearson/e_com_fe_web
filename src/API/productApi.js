@@ -258,3 +258,21 @@ export const getProductByCategory = async (category) => {
     }
 };
 
+export const getProductsByCategory = async (categoryId) => {
+    try {
+        const accessToken = localStorage.getItem("accessToken");
+        const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+        const response = await axios.get(
+            `${BASE_BACKEND_URL}/product/by-category/${categoryId}`,
+            { headers }
+        );
+        if (response.data && Array.isArray(response.data.responseDto)) {
+            return response.data.responseDto;
+        } else {
+            return { error: response.data?.errorDescription || "No products found." };
+        }
+    } catch (err) {
+        return { error: "Failed to fetch products." };
+    }
+};
+

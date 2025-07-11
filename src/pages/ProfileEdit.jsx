@@ -32,11 +32,11 @@ const tabs = [
   { key: "security", label: "Security" },
 ];
 
-function ConfirmChange({ onBack }) {
+function ConfirmChange({ onBack, userEmail }) {
   return (
     <div className="flex flex-col items-center justify-center py-12">
       <h2 className="text-2xl font-bold mb-4 text-center">Confirm change</h2>
-      <p className="text-lg text-gray-600 mb-2 text-center">You need to confirm<br /><span className="font-semibold">mrprusothaman@gmail.com</span> is your email address before you can update it.</p>
+      <p className="text-lg text-gray-600 mb-2 text-center">You need to confirm<br /><span className="font-semibold">{userEmail}</span> is your email address before you can update it.</p>
       <button className="px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors mb-4">Send confirmation email</button>
       <button className="text-[#1E90FF] underline mb-8">I don't have access to this email</button>
       <button onClick={onBack} className="mt-4 text-[#1E90FF] font-medium">&larr; Back</button>
@@ -45,6 +45,40 @@ function ConfirmChange({ onBack }) {
 }
 
 function ChangePassword({ onBack }) {
+  const [currentPassword, setCurrentPassword] = React.useState("");
+  const [newPassword, setNewPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [status, setStatus] = React.useState("");
+  const [error, setError] = React.useState("");
+
+  const handleChangePassword = async () => {
+    // Validation
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError("All fields are required.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+    if (newPassword.length < 7) {
+      setError("New password must be at least 7 characters.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("New passwords do not match.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+    // TODO: Call your API to change password, passing currentPassword and newPassword
+    // Example:
+    // const result = await changePasswordApi({ currentPassword, newPassword });
+    // if (result.success) { setStatus("Password updated!"); ... }
+    setStatus("Password updated successfully!"); // Placeholder
+    setTimeout(() => setStatus(""), 3000);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  };
+
   return (
     <div className="py-8">
       <h2 className="text-2xl font-bold mb-6">Change password</h2>
@@ -58,16 +92,42 @@ function ChangePassword({ onBack }) {
         </ul>
       </div>
       <div className="flex flex-col gap-4 max-w-xl">
-        <input type="password" placeholder="New password" className="border rounded px-4 py-2" />
-        <input type="password" placeholder="Re-enter your new password" className="border rounded px-4 py-2" />
-        <button className="px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors">Change password</button>
+        <input
+          type="password"
+          placeholder="Current password"
+          className="border rounded px-4 py-2"
+          value={currentPassword}
+          onChange={e => setCurrentPassword(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="New password"
+          className="border rounded px-4 py-2"
+          value={newPassword}
+          onChange={e => setNewPassword(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Re-enter your new password"
+          className="border rounded px-4 py-2"
+          value={confirmPassword}
+          onChange={e => setConfirmPassword(e.target.value)}
+        />
+        {error && <div className="text-red-500 text-sm">{error}</div>}
+        {status && <div className="text-green-600 text-sm">{status}</div>}
+        <button
+          className="px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors"
+          onClick={handleChangePassword}
+        >
+          Change password
+        </button>
       </div>
       <button onClick={onBack} className="mt-8 text-[#1E90FF] font-medium">&larr; Back</button>
     </div>
   );
 }
 
-function VerifyEmail({ onBack, onSwitchToPhone, userEmail }) {
+function VerifyEmail({ onBack, onSwitchToPhone, userEmail, onEnableTwoStep }) {
   const [email, setEmail] = React.useState("");
   const [step, setStep] = React.useState("send"); // 'send' or 'verify' or 'success'
   const [sentCode, setSentCode] = React.useState("");
@@ -110,6 +170,9 @@ function VerifyEmail({ onBack, onSwitchToPhone, userEmail }) {
         setStep("success");
         setStatusMsg("Two-step verification successful!");
         setErrorMsg("");
+        if (typeof onEnableTwoStep === 'function') {
+          onEnableTwoStep();
+        }
       } else {
         setErrorMsg("Verification failed");
       }
@@ -152,7 +215,7 @@ function VerifyEmail({ onBack, onSwitchToPhone, userEmail }) {
   );
 }
 
-function VerifyPhone({ onBack, onSwitchToEmail }) {
+function VerifyPhone({ onBack, onSwitchToEmail, userEmail, onEnableTwoStep }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 w-full">
       <h2 className="text-2xl font-bold mb-4 text-center">Verify your phone number</h2>
@@ -235,6 +298,8 @@ export const ProfileEdit = () => {
   const [birthdayDay, setBirthdayDay] = useState("");
   const [birthdayMonth, setBirthdayMonth] = useState("");
   const [birthdayYear, setBirthdayYear] = useState("");
+
+  const [shippingAddressStatus, setShippingAddressStatus] = useState("");
 
   const navigate = useNavigate();
 
@@ -826,6 +891,23 @@ export const ProfileEdit = () => {
   };
 
   const handleSaveNewShippingAddress = async () => {
+    // Manual validation for required fields
+    if (!newShippingAddress.address.trim() ||
+        !newShippingAddress.name.trim() ||
+        !newShippingAddress.mobileNumber.trim() ||
+        !newShippingAddress.province.trim() ||
+        !newShippingAddress.district.trim() ||
+        !newShippingAddress.postalCode.trim()) {
+      setShippingAddressStatus("Please fill in all required fields.");
+      setTimeout(() => setShippingAddressStatus(""), 3000);
+      return;
+    }
+    // Mobile number validation: must be exactly 10 digits
+    if (!/^[0-9]{10}$/.test(newShippingAddress.mobileNumber)) {
+      setShippingAddressStatus("Mobile number must be exactly 10 digits.");
+      setTimeout(() => setShippingAddressStatus(""), 3000);
+      return;
+    }
     setSavingShippingAddress(true);
     // First, unset any other primary addresses if the new one is primary
     if (newShippingAddress.isPrimary) {
@@ -854,8 +936,8 @@ export const ProfileEdit = () => {
                     setSavingShippingAddress(false);
                     return; // Stop if unsetting failed critically
                 }
-            } catch (error) {
-                 console.error("Error calling updateShippingAddress to unset primary:", error);
+            } catch (err) {
+                 console.error("Error calling updateShippingAddress to unset primary:", err);
                  setSavingShippingAddress(false);
                  return; // Stop on API error
             }
@@ -893,7 +975,9 @@ export const ProfileEdit = () => {
         mobileNumber: "", // Add mobileNumber field
         isActive: 1
       });
-      await fetchShippingAddresses(); // Refetch to show updated primary status
+      setShippingAddressStatus("Shipping address added successfully!");
+      setTimeout(() => setShippingAddressStatus(""), 3000);
+      await fetchShippingAddresses(user.id); // Refetch to show updated primary status
     } else {
       console.error("Error saving shipping address:", response?.errorDescription || "Failed to save shipping address.");
       // Handle save error
@@ -903,9 +987,24 @@ export const ProfileEdit = () => {
 
   const handleUpdateShippingAddress = async () => {
     if (!editingShippingAddress) return;
-
+    // Manual validation for required fields
+    if (!editingShippingAddress.address.trim() ||
+        !editingShippingAddress.name.trim() ||
+        !editingShippingAddress.mobileNumber.trim() ||
+        !editingShippingAddress.province.trim() ||
+        !editingShippingAddress.district.trim() ||
+        !editingShippingAddress.postalCode.trim()) {
+      setShippingAddressStatus("Please fill in all required fields.");
+      setTimeout(() => setShippingAddressStatus(""), 3000);
+      return;
+    }
+    // Mobile number validation: must be exactly 10 digits
+    if (!/^[0-9]{10}$/.test(editingShippingAddress.mobileNumber)) {
+      setShippingAddressStatus("Mobile number must be exactly 10 digits.");
+      setTimeout(() => setShippingAddressStatus(""), 3000);
+      return;
+    }
     setSavingShippingAddress(true);
-
      // First, unset any other primary addresses if the updated one is primary
     if (editingShippingAddress.isPrimary) {
         const currentlyPrimary = shippingAddresses.find(address => address.isPrimary && address.id !== editingShippingAddress.id);
@@ -933,8 +1032,8 @@ export const ProfileEdit = () => {
                     setSavingShippingAddress(false);
                     return; // Stop if unsetting failed critically
                 }
-            } catch (error) {
-                 console.error("Error calling updateShippingAddress to unset primary on update:", error);
+            } catch (err) {
+                 console.error("Error calling updateShippingAddress to unset primary on update:", err);
                  setSavingShippingAddress(false);
                  return; // Stop on API error
             }
@@ -943,17 +1042,18 @@ export const ProfileEdit = () => {
 
     const payload = {
       ...editingShippingAddress,
+      id: editingShippingAddress.id, // Ensure id is present
       userDto: { id: user.id },
-       // Country field removed as per request and from state
-       country: undefined, // Explicitly set to undefined to ensure it's not sent
+      // Country field removed as per request and from state
+      country: undefined, // Explicitly set to undefined to ensure it's not sent
     };
-     // Ensure name and mobileNumber are included in the payload if they exist in editingShippingAddress
-     if (editingShippingAddress.name) payload.name = editingShippingAddress.name;
-     if (editingShippingAddress.mobileNumber) payload.mobileNumber = editingShippingAddress.mobileNumber;
+    // Ensure name and mobileNumber are included in the payload if they exist in editingShippingAddress
+    if (editingShippingAddress.name) payload.name = editingShippingAddress.name;
+    if (editingShippingAddress.mobileNumber) payload.mobileNumber = editingShippingAddress.mobileNumber;
+    // Also ensure address is not undefined if it was empty string initially
+    if (editingShippingAddress.address) payload.address = editingShippingAddress.address;
 
-     // Also ensure address is not undefined if it was empty string initially
-     if (editingShippingAddress.address) payload.address = editingShippingAddress.address;
-
+    console.log('Shipping address update payload:', payload);
     const response = await updateShippingAddress(payload);
 
     if (response && response.status) {
@@ -961,7 +1061,9 @@ export const ProfileEdit = () => {
       setEditingAddressId(null);
       setEditingShippingAddress(null);
       setIsEditingShippingAddress(false);
-      await fetchShippingAddresses(); // Refetch to show updated primary status
+      setShippingAddressStatus("Shipping address updated successfully!");
+      setTimeout(() => setShippingAddressStatus(""), 3000);
+      await fetchShippingAddresses(user.id); // Refetch to show updated primary status
     } else {
        console.error("Error updating shipping address:", response?.errorDescription || "Failed to update shipping address.");
        // Handle update error
@@ -988,6 +1090,23 @@ export const ProfileEdit = () => {
     setEditingShippingAddress(null);
     setFilteredDistricts(districts);
     setFilteredProvinces(provinces);
+  };
+
+  // Handler to disable two-step verification
+  const handleDisableTwoStep = async () => {
+    if (!window.confirm("Are you sure you want to disable 2-step verification? This will make your account less secure.")) {
+      return;
+    }
+    const updatedUser = { ...user, twoStepVerification: false };
+    const response = await updateUser(updatedUser);
+    if (response && response.status) {
+      setUser(prev => ({ ...prev, twoStepVerification: false }));
+      setShippingAddressStatus("Two-step verification disabled.");
+      setTimeout(() => setShippingAddressStatus(""), 3000);
+    } else {
+      setShippingAddressStatus("Failed to disable two-step verification.");
+      setTimeout(() => setShippingAddressStatus(""), 3000);
+    }
   };
 
   if (loading) {
@@ -1449,7 +1568,11 @@ export const ProfileEdit = () => {
             {activeTab === "shipping-address" && (
                 <div>
                     <h3 className="text-xl font-bold mb-6">Shipping Addresses</h3>
-
+                    {shippingAddressStatus && (
+                      <div className="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-300 text-center font-medium">
+                        {shippingAddressStatus}
+                      </div>
+                    )}
                     {shippingAddresses.length === 0 && !isAddingShippingAddress && !editingAddressId ? (
                         <div className="mt-4">
                             <p className="text-sm text-gray-600">No shipping addresses found.</p>
@@ -1475,7 +1598,7 @@ export const ProfileEdit = () => {
                                         value={isAddingShippingAddress ? newShippingAddress.address : editingShippingAddress?.address || ""}
                                         onChange={handleInputChange}
                                         autoComplete="street-address"
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3" required
                                     />
                                 </div>
                             </div>
@@ -1492,7 +1615,7 @@ export const ProfileEdit = () => {
                                         value={isAddingShippingAddress ? newShippingAddress.name : editingShippingAddress?.name || ""}
                                         onChange={handleInputChange}
                                         autoComplete="name"
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"required
                                     />
                                 </div>
                             </div>
@@ -1509,7 +1632,7 @@ export const ProfileEdit = () => {
                                         value={isAddingShippingAddress ? newShippingAddress.mobileNumber : editingShippingAddress?.mobileNumber || ""}
                                         onChange={handleInputChange}
                                         autoComplete="tel"
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"required
                                     />
                                 </div>
                             </div>
@@ -1526,8 +1649,7 @@ export const ProfileEdit = () => {
                                         value={isAddingShippingAddress ? newShippingAddress.province : editingShippingAddress?.province || ""}
                                         onChange={handleInputChange}
                                         onFocus={() => setShowProvinceDropdown(true)}
-                                        onBlur={() => setTimeout(() => setShowProvinceDropdown(false), 100)}
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"required
                                         autoComplete="address-level1"
                                     />
                                     {showProvinceDropdown && filteredProvinces.length > 0 && (
@@ -1558,8 +1680,7 @@ export const ProfileEdit = () => {
                                         value={isAddingShippingAddress ? newShippingAddress.district : editingShippingAddress?.district || ""}
                                         onChange={handleInputChange}
                                         onFocus={() => setShowDistrictDropdown(true)}
-                                        onBlur={() => setTimeout(() => setShowDistrictDropdown(false), 100)}
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"required
                                         autoComplete="address-level2"
                                     />
                                     {showDistrictDropdown && filteredDistricts.length > 0 && (
@@ -1590,7 +1711,7 @@ export const ProfileEdit = () => {
                                         value={isAddingShippingAddress ? newShippingAddress.postalCode : editingShippingAddress?.postalCode || ""}
                                         onChange={handleInputChange}
                                         autoComplete="postal-code"
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"required
                                     />
                                 </div>
                             </div>
@@ -1802,28 +1923,56 @@ export const ProfileEdit = () => {
                       <span className="block text-base font-semibold text-[#1E90FF] group-hover:underline">2-step verification</span>
                       <span className="block text-gray-500 text-sm">Confirm new logins with a 6-digit code.</span>
                     </span>
-                    <button
-                      onClick={() => setSecurityPage("verify")}
-                      className={`ml-4 px-4 py-2 rounded bg-[#1E90FF] text-white font-semibold transition disabled:opacity-50`}
-                      disabled={user?.twoStepVerification === true}
-                    >
-                      {user?.twoStepVerification === true ? "Enabled" : "Enable"}
-                    </button>
+                    {user?.twoStepVerification === true ? (
+                      <button
+                        onClick={handleDisableTwoStep}
+                        className="ml-4 px-4 py-2 rounded bg-red-500 text-white font-semibold transition"
+                      >
+                        Disable
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => setSecurityPage('verify')}
+                        className="ml-4 px-4 py-2 rounded bg-[#1E90FF] text-white font-semibold transition"
+                      >
+                        Enable
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
             )}
             {activeTab === "security" && securityPage === "confirm" && (
-              <ConfirmChange onBack={() => setSecurityPage(null)} />
+              <ConfirmChange onBack={() => setSecurityPage(null)} userEmail={email} />
             )}
             {activeTab === "security" && securityPage === "password" && (
               <ChangePassword onBack={() => setSecurityPage(null)} />
             )}
             {activeTab === "security" && securityPage === "verify" && !securitySubPage && (
-              <VerifyPhone onBack={() => setSecurityPage(null)} onSwitchToEmail={() => setSecuritySubPage("email")} />
+              <VerifyPhone
+                onBack={() => setSecurityPage(null)}
+                onSwitchToEmail={() => setSecuritySubPage("email")}
+                userEmail={email}
+                onEnableTwoStep={() => {
+                  setUser(prev => ({ ...prev, twoStepVerification: true }));
+                  setShippingAddressStatus("Two-step verification enabled.");
+                  setTimeout(() => setShippingAddressStatus(""), 3000);
+                  setSecurityPage(null);
+                }}
+              />
             )}
             {activeTab === "security" && securityPage === "verify" && securitySubPage === "email" && (
-              <VerifyEmail onBack={() => setSecuritySubPage(null)} onSwitchToPhone={() => setSecuritySubPage(null)} userEmail={email} />
+              <VerifyEmail
+                onBack={() => setSecuritySubPage(null)}
+                onSwitchToPhone={() => setSecuritySubPage(null)}
+                userEmail={email}
+                onEnableTwoStep={() => {
+                  setUser(prev => ({ ...prev, twoStepVerification: true }));
+                  setShippingAddressStatus("Two-step verification enabled.");
+                  setTimeout(() => setShippingAddressStatus(""), 3000);
+                  setSecurityPage(null);
+                }}
+              />
             )}
           </section>
         </div>

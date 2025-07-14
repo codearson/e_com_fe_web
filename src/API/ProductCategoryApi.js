@@ -54,7 +54,7 @@ export const getAllProductCategoriesBySearch = async (params = {}) => {
                     Authorization: `Bearer ${accessToken}`,
                 },
                 params: {
-                    pageNumber: params.pageNumber ?? 0,
+                    pageNumber: params.pageNumber ?? 1,
                     pageSize: params.pageSize ?? 100,
                     ...(params.search ? { search: params.search } : {}),
                     ...(params.level ? { level: params.level } : {}),

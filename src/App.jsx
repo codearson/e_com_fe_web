@@ -21,6 +21,7 @@ import { Users } from "./pages/Users";
 import { DashboardAdmin } from "./pages/DashboardAdmin";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import CategoryProducts from "./pages/CategoryProducts";
+import Checkout from "./pages/Checkout";
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
           <Route path="/selling" element={<Selling />} />
           <Route path="/buying" element={<Buying />} />
           <Route path="/search" element={<SearchResults />} />
+          <Route path="/checkout/:id" element={<Checkout />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/users" element={<Users />} />
           <Route

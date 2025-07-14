@@ -9,19 +9,8 @@ import { getAllBanksBySearch } from "../API/bankApi";
 import { getAllBranchesBySearch } from "../API/branchApi";
 import { getAllShippingAddressesBySearch, saveShippingAddress, updateShippingAddress } from "../API/shippingAddressApi";
 import { sendTwoStepEmailVerification, verifyTwoStepCode } from "../API/UserApi";
+import provinceDistrictData from "../utils/provinceDistrictData";
 window.__BACKEND_URL__ = "http://localhost:8080";
-// Define the provinces and districts data
-const provinceDistrictData = [
-    { province: "Central Province", districts: ["Kandy", "Matale", "Nuwara Eliya"] },
-    { province: "Eastern Province", districts: ["Ampara", "Batticaloa", "Trincomalee"] },
-    { province: "Northern Province", districts: ["Jaffna", "Kilinochchi", "Mannar", "Mullaitivu", "Vavuniya"] },
-    { province: "North Central Province", districts: ["Anuradhapura", "Polonnaruwa"] },
-    { province: "North Western Province", districts: ["Kurunegala", "Puttalam"] },
-    { province: "Sabaragamuwa Province", districts: ["Kegalle", "Ratnapura"] },
-    { province: "Southern Province", districts: ["Galle", "Matara", "Hambantota"] },
-    { province: "Uva Province", districts: ["Badulla", "Monaragala"] },
-    { province: "Western Province", districts: ["Colombo", "Gampaha", "Kalutara"] },
-];
 
 const tabs = [
   { key: "profile", label: "Profile details" },
@@ -226,7 +215,6 @@ export const ProfileEdit = () => {
 
   const [districts, setDistricts] = useState([]);
   const [provinces, setProvinces] = useState([]);
-  const [filteredDistricts, setFilteredDistricts] = useState([]);
   const [filteredProvinces, setFilteredProvinces] = useState([]);
   const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
   const [showProvinceDropdown, setShowProvinceDropdown] = useState(false);
@@ -893,7 +881,9 @@ export const ProfileEdit = () => {
         mobileNumber: "", // Add mobileNumber field
         isActive: 1
       });
-      await fetchShippingAddresses(); // Refetch to show updated primary status
+      if (user && user.id) {
+        await fetchShippingAddresses(user.id);
+      }
     } else {
       console.error("Error saving shipping address:", response?.errorDescription || "Failed to save shipping address.");
       // Handle save error
@@ -961,7 +951,9 @@ export const ProfileEdit = () => {
       setEditingAddressId(null);
       setEditingShippingAddress(null);
       setIsEditingShippingAddress(false);
-      await fetchShippingAddresses(); // Refetch to show updated primary status
+      if (user && user.id) {
+        await fetchShippingAddresses(user.id);
+      }
     } else {
        console.error("Error updating shipping address:", response?.errorDescription || "Failed to update shipping address.");
        // Handle update error
@@ -989,6 +981,22 @@ export const ProfileEdit = () => {
     setFilteredDistricts(districts);
     setFilteredProvinces(provinces);
   };
+
+  // Add state for filteredDistricts in the component
+  const [filteredDistricts, setFilteredDistricts] = useState([]);
+
+  // When province changes in add/edit form, update filteredDistricts
+  useEffect(() => {
+    if (isAddingShippingAddress && newShippingAddress.province) {
+      const found = provinceDistrictData.find(p => p.province === newShippingAddress.province);
+      setFilteredDistricts(found ? found.districts : []);
+    } else if (editingAddressId && editingShippingAddress?.province) {
+      const found = provinceDistrictData.find(p => p.province === editingShippingAddress.province);
+      setFilteredDistricts(found ? found.districts : []);
+    } else {
+      setFilteredDistricts([]);
+    }
+  }, [isAddingShippingAddress, newShippingAddress.province, editingAddressId, editingShippingAddress?.province]);
 
   if (loading) {
     return <div>Loading settings...</div>;
@@ -1518,31 +1526,21 @@ export const ProfileEdit = () => {
                                 <label htmlFor="province" className="block text-sm font-medium leading-6 text-gray-900">
                                     Province
                                 </label>
-                                <div className="mt-2 relative">
-                                    <input
-                                        type="text"
-                                        name="province"
-                                        id="province"
-                                        value={isAddingShippingAddress ? newShippingAddress.province : editingShippingAddress?.province || ""}
-                                        onChange={handleInputChange}
-                                        onFocus={() => setShowProvinceDropdown(true)}
-                                        onBlur={() => setTimeout(() => setShowProvinceDropdown(false), 100)}
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
-                                        autoComplete="address-level1"
-                                    />
-                                    {showProvinceDropdown && filteredProvinces.length > 0 && (
-                                        <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                                            {filteredProvinces.map((province) => (
-                                                <li
-                                                    key={province}
-                                                    className="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-indigo-600 hover:text-white"
-                                                    onClick={() => handleProvinceSelect(province)}
-                                                >
-                                                    {province}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
+                                <div className="mt-2">
+                                    <select
+                                      name="province"
+                                      id="province"
+                                      value={isAddingShippingAddress ? newShippingAddress.province : editingShippingAddress?.province || ""}
+                                      onChange={handleInputChange}
+                                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                      autoComplete="address-level1"
+                                      required
+                                    >
+                                      <option value="" disabled>Select Province</option>
+                                      {provinceDistrictData.map((p) => (
+                                        <option key={p.province} value={p.province}>{p.province}</option>
+                                      ))}
+                                    </select>
                                 </div>
                             </div>
 
@@ -1550,31 +1548,22 @@ export const ProfileEdit = () => {
                                 <label htmlFor="district" className="block text-sm font-medium leading-6 text-gray-900">
                                     District
                                 </label>
-                                <div className="mt-2 relative">
-                                    <input
-                                        type="text"
-                                        name="district"
-                                        id="district"
-                                        value={isAddingShippingAddress ? newShippingAddress.district : editingShippingAddress?.district || ""}
-                                        onChange={handleInputChange}
-                                        onFocus={() => setShowDistrictDropdown(true)}
-                                        onBlur={() => setTimeout(() => setShowDistrictDropdown(false), 100)}
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
-                                        autoComplete="address-level2"
-                                    />
-                                    {showDistrictDropdown && filteredDistricts.length > 0 && (
-                                        <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                                            {filteredDistricts.map((district) => (
-                                                <li
-                                                    key={district}
-                                                    className="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-indigo-600 hover:text-white"
-                                                    onClick={() => handleDistrictSelect(district)}
-                                                >
-                                                    {district}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
+                                <div className="mt-2">
+                                    <select
+                                      name="district"
+                                      id="district"
+                                      value={isAddingShippingAddress ? newShippingAddress.district : editingShippingAddress?.district || ""}
+                                      onChange={handleInputChange}
+                                      className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                                      autoComplete="address-level2"
+                                      required
+                                      disabled={!(isAddingShippingAddress ? newShippingAddress.province : editingShippingAddress?.province)}
+                                    >
+                                      <option value="" disabled>Select District</option>
+                                      {filteredDistricts.map((d) => (
+                                        <option key={d} value={d}>{d}</option>
+                                      ))}
+                                    </select>
                                 </div>
                             </div>
 

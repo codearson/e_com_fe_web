@@ -221,7 +221,7 @@ const ProductView = () => {
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                   disabled={product.quentity <= 0}
-                  onClick={() => navigate(`/buyNow/${id}`, { state: { product } })}
+                  onClick={() => navigate(`/checkout/${id}`, { state: { product } })}
                 >
                   Buy Now
                 </button>

@@ -4,24 +4,24 @@ import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { getUserByEmail } from "../API/config";
 import { decodeJwt, updateUser } from "../API/UserApi";
-import { searchUserBankDetails, saveUserBankDetails, updateUserBankDetails } from "../API/userBankDetailsApi";
+import {
+  searchUserBankDetails,
+  saveUserBankDetails,
+  updateUserBankDetails,
+} from "../API/userBankDetailsApi";
 import { getAllBanksBySearch } from "../API/bankApi";
 import { getAllBranchesBySearch } from "../API/branchApi";
-import { getAllShippingAddressesBySearch, saveShippingAddress, updateShippingAddress } from "../API/shippingAddressApi";
-import { sendTwoStepEmailVerification, verifyTwoStepCode } from "../API/UserApi";
+import {
+  getAllShippingAddressesBySearch,
+  saveShippingAddress,
+  updateShippingAddress,
+} from "../API/shippingAddressApi";
+import {
+  sendTwoStepEmailVerification,
+  verifyTwoStepCode,
+} from "../API/UserApi";
+import provinceDistrictData from "../utils/provinceDistrictData";
 window.__BACKEND_URL__ = "http://localhost:8080";
-// Define the provinces and districts data
-const provinceDistrictData = [
-    { province: "Central Province", districts: ["Kandy", "Matale", "Nuwara Eliya"] },
-    { province: "Eastern Province", districts: ["Ampara", "Batticaloa", "Trincomalee"] },
-    { province: "Northern Province", districts: ["Jaffna", "Kilinochchi", "Mannar", "Mullaitivu", "Vavuniya"] },
-    { province: "North Central Province", districts: ["Anuradhapura", "Polonnaruwa"] },
-    { province: "North Western Province", districts: ["Kurunegala", "Puttalam"] },
-    { province: "Sabaragamuwa Province", districts: ["Kegalle", "Ratnapura"] },
-    { province: "Southern Province", districts: ["Galle", "Matara", "Hambantota"] },
-    { province: "Uva Province", districts: ["Badulla", "Monaragala"] },
-    { province: "Western Province", districts: ["Colombo", "Gampaha", "Kalutara"] },
-];
 
 const tabs = [
   { key: "profile", label: "Profile details" },
@@ -36,10 +36,21 @@ function ConfirmChange({ onBack, userEmail }) {
   return (
     <div className="flex flex-col items-center justify-center py-12">
       <h2 className="text-2xl font-bold mb-4 text-center">Confirm change</h2>
-      <p className="text-lg text-gray-600 mb-2 text-center">You need to confirm<br /><span className="font-semibold">{userEmail}</span> is your email address before you can update it.</p>
-      <button className="px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors mb-4">Send confirmation email</button>
-      <button className="text-[#1E90FF] underline mb-8">I don't have access to this email</button>
-      <button onClick={onBack} className="mt-4 text-[#1E90FF] font-medium">&larr; Back</button>
+      <p className="text-lg text-gray-600 mb-2 text-center">
+        You need to confirm
+        <br />
+        <span className="font-semibold">{userEmail}</span> is your email address
+        before you can update it.
+      </p>
+      <button className="px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors mb-4">
+        Send confirmation email
+      </button>
+      <button className="text-[#1E90FF] underline mb-8">
+        I don't have access to this email
+      </button>
+      <button onClick={onBack} className="mt-4 text-[#1E90FF] font-medium">
+        &larr; Back
+      </button>
     </div>
   );
 }
@@ -85,9 +96,19 @@ function ChangePassword({ onBack }) {
       <div className="bg-gray-100 rounded-xl p-6 mb-8">
         <h3 className="font-semibold mb-2">To create a secure password:</h3>
         <ul className="list-disc pl-6 text-gray-600 space-y-1">
-          <li>When setting up a password, go for something that is not too obvious. It can be a combination of numbers, special characters, capital and lower case letters. The length of the password should be at least 7 characters.</li>
-          <li>Don't use your name or date of birth when setting up a password.</li>
-          <li>Memorize your password. Do not keep any record of it, do not tell other people about it. Try to change it regularly.</li>
+          <li>
+            When setting up a password, go for something that is not too
+            obvious. It can be a combination of numbers, special characters,
+            capital and lower case letters. The length of the password should be
+            at least 7 characters.
+          </li>
+          <li>
+            Don't use your name or date of birth when setting up a password.
+          </li>
+          <li>
+            Memorize your password. Do not keep any record of it, do not tell
+            other people about it. Try to change it regularly.
+          </li>
           <li>Make sure no one can see you entering the password.</li>
         </ul>
       </div>
@@ -97,21 +118,21 @@ function ChangePassword({ onBack }) {
           placeholder="Current password"
           className="border rounded px-4 py-2"
           value={currentPassword}
-          onChange={e => setCurrentPassword(e.target.value)}
+          onChange={(e) => setCurrentPassword(e.target.value)}
         />
         <input
           type="password"
           placeholder="New password"
           className="border rounded px-4 py-2"
           value={newPassword}
-          onChange={e => setNewPassword(e.target.value)}
+          onChange={(e) => setNewPassword(e.target.value)}
         />
         <input
           type="password"
           placeholder="Re-enter your new password"
           className="border rounded px-4 py-2"
           value={confirmPassword}
-          onChange={e => setConfirmPassword(e.target.value)}
+          onChange={(e) => setConfirmPassword(e.target.value)}
         />
         {error && <div className="text-red-500 text-sm">{error}</div>}
         {status && <div className="text-green-600 text-sm">{status}</div>}
@@ -122,7 +143,9 @@ function ChangePassword({ onBack }) {
           Change password
         </button>
       </div>
-      <button onClick={onBack} className="mt-8 text-[#1E90FF] font-medium">&larr; Back</button>
+      <button onClick={onBack} className="mt-8 text-[#1E90FF] font-medium">
+        &larr; Back
+      </button>
     </div>
   );
 }
@@ -141,7 +164,10 @@ function VerifyEmail({ onBack, onSwitchToPhone, userEmail, onEnableTwoStep }) {
       setErrorMsg("Please enter a valid email address.");
       return;
     }
-    if (userEmail && email.trim().toLowerCase() !== userEmail.trim().toLowerCase()) {
+    if (
+      userEmail &&
+      email.trim().toLowerCase() !== userEmail.trim().toLowerCase()
+    ) {
       setErrorMsg("Wrong email: Please enter your account email.");
       return;
     }
@@ -166,11 +192,15 @@ function VerifyEmail({ onBack, onSwitchToPhone, userEmail, onEnableTwoStep }) {
     try {
       const result = await verifyTwoStepCode(inputCode);
       // Check backend response for success
-      if ((result && result.success) || result.status === true || result.verified === true) {
+      if (
+        (result && result.success) ||
+        result.status === true ||
+        result.verified === true
+      ) {
         setStep("success");
         setStatusMsg("Two-step verification successful!");
         setErrorMsg("");
-        if (typeof onEnableTwoStep === 'function') {
+        if (typeof onEnableTwoStep === "function") {
           onEnableTwoStep();
         }
       } else {
@@ -183,34 +213,96 @@ function VerifyEmail({ onBack, onSwitchToPhone, userEmail, onEnableTwoStep }) {
 
   return (
     <div className="flex flex-col items-center justify-center py-12 w-full">
-      <h2 className="text-2xl font-bold mb-4 text-center">Verify your email address</h2>
-      <p className="text-lg text-gray-600 mb-4 text-center">We'll send a confirmation message to your email to verify that this is your address.</p>
+      <h2 className="text-2xl font-bold mb-4 text-center">
+        Verify your email address
+      </h2>
+      <p className="text-lg text-gray-600 mb-4 text-center">
+        We'll send a confirmation message to your email to verify that this is
+        your address.
+      </p>
       {step === "send" && (
-        <form className="w-full max-w-xs flex flex-col items-center gap-4 mb-4" onSubmit={handleSend}>
-          <label className="block text-base font-medium mb-1 w-full text-left">Email address</label>
-          <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="border rounded px-4 py-2 w-full text-center" placeholder="Enter your email" />
-          <button type="submit" className="w-full px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors">Send</button>
-          {errorMsg && <div className="text-red-500 text-sm w-full text-center">{errorMsg}</div>}
+        <form
+          className="w-full max-w-xs flex flex-col items-center gap-4 mb-4"
+          onSubmit={handleSend}
+        >
+          <label className="block text-base font-medium mb-1 w-full text-left">
+            Email address
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="border rounded px-4 py-2 w-full text-center"
+            placeholder="Enter your email"
+          />
+          <button
+            type="submit"
+            className="w-full px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors"
+          >
+            Send
+          </button>
+          {errorMsg && (
+            <div className="text-red-500 text-sm w-full text-center">
+              {errorMsg}
+            </div>
+          )}
         </form>
       )}
       {step === "verify" && (
-        <form className="w-full max-w-xs flex flex-col items-center gap-4 mb-4" onSubmit={handleVerify}>
-          <div className="w-full text-center text-green-600 text-sm mb-2">{statusMsg}</div>
-          <label className="block text-base font-medium mb-1 w-full text-left">Enter verification code</label>
-          <input type="text" value={inputCode} onChange={e => setInputCode(e.target.value)} className="border rounded px-4 py-2 w-full text-center tracking-widest" placeholder="6-digit code" maxLength={6} />
-          <button type="submit" className="w-full px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors">Verify</button>
-          {errorMsg && <div className="text-red-500 text-sm w-full text-center">{errorMsg}</div>}
+        <form
+          className="w-full max-w-xs flex flex-col items-center gap-4 mb-4"
+          onSubmit={handleVerify}
+        >
+          <div className="w-full text-center text-green-600 text-sm mb-2">
+            {statusMsg}
+          </div>
+          <label className="block text-base font-medium mb-1 w-full text-left">
+            Enter verification code
+          </label>
+          <input
+            type="text"
+            value={inputCode}
+            onChange={(e) => setInputCode(e.target.value)}
+            className="border rounded px-4 py-2 w-full text-center tracking-widest"
+            placeholder="6-digit code"
+            maxLength={6}
+          />
+          <button
+            type="submit"
+            className="w-full px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors"
+          >
+            Verify
+          </button>
+          {errorMsg && (
+            <div className="text-red-500 text-sm w-full text-center">
+              {errorMsg}
+            </div>
+          )}
         </form>
       )}
       {step === "success" && (
         <div className="w-full max-w-xs flex flex-col items-center gap-4 mb-4">
-          <div className="w-full text-center text-green-600 text-lg font-semibold mb-2">{statusMsg}</div>
+          <div className="w-full text-center text-green-600 text-lg font-semibold mb-2">
+            {statusMsg}
+          </div>
           <div className="text-5xl mb-2">✅</div>
         </div>
       )}
-      <button onClick={onSwitchToPhone} className="mt-2 text-[#1E90FF] underline">Use phone instead</button>
-      <div className="text-gray-500 text-center">Having trouble? <a href="#" className="underline text-[#1E90FF]">Get help</a></div>
-      <button onClick={onBack} className="mt-8 text-[#1E90FF] font-medium">&larr; Back</button>
+      <button
+        onClick={onSwitchToPhone}
+        className="mt-2 text-[#1E90FF] underline"
+      >
+        Use phone instead
+      </button>
+      <div className="text-gray-500 text-center">
+        Having trouble?{" "}
+        <a href="#" className="underline text-[#1E90FF]">
+          Get help
+        </a>
+      </div>
+      <button onClick={onBack} className="mt-8 text-[#1E90FF] font-medium">
+        &larr; Back
+      </button>
     </div>
   );
 }
@@ -218,17 +310,42 @@ function VerifyEmail({ onBack, onSwitchToPhone, userEmail, onEnableTwoStep }) {
 function VerifyPhone({ onBack, onSwitchToEmail, userEmail, onEnableTwoStep }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 w-full">
-      <h2 className="text-2xl font-bold mb-4 text-center">Verify your phone number</h2>
-      <p className="text-lg text-gray-600 mb-4 text-center">We'll send a confirmation message or give you a call to verify that this is your number.</p>
+      <h2 className="text-2xl font-bold mb-4 text-center">
+        Verify your phone number
+      </h2>
+      <p className="text-lg text-gray-600 mb-4 text-center">
+        We'll send a confirmation message or give you a call to verify that this
+        is your number.
+      </p>
       <form className="w-full max-w-xs flex flex-col items-center gap-4 mb-4">
-        <label className="block text-base font-medium mb-1 w-full text-left">Phone number</label>
-        <input type="text" value="+44" className="border rounded px-4 py-2 w-full text-center" readOnly />
-        <button className="w-full px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors">Send</button>
+        <label className="block text-base font-medium mb-1 w-full text-left">
+          Phone number
+        </label>
+        <input
+          type="text"
+          value="+44"
+          className="border rounded px-4 py-2 w-full text-center"
+          readOnly
+        />
+        <button className="w-full px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors">
+          Send
+        </button>
       </form>
-      <button onClick={onSwitchToEmail} className="mt-2 text-[#1E90FF] underline">Use email instead</button>
-      <div className="text-gray-500 text-center">Having trouble? <a href="#" className="underline text-[#1E90FF]">Get help</a></div>
-      <button onClick={onBack} className="mt-8 text-[#1E90FF] font-medium">&larr; Back</button>
-      
+      <button
+        onClick={onSwitchToEmail}
+        className="mt-2 text-[#1E90FF] underline"
+      >
+        Use email instead
+      </button>
+      <div className="text-gray-500 text-center">
+        Having trouble?{" "}
+        <a href="#" className="underline text-[#1E90FF]">
+          Get help
+        </a>
+      </div>
+      <button onClick={onBack} className="mt-8 text-[#1E90FF] font-medium">
+        &larr; Back
+      </button>
     </div>
   );
 }
@@ -284,12 +401,12 @@ export const ProfileEdit = () => {
   });
   const [editingAddressId, setEditingAddressId] = useState(null);
   const [editingShippingAddress, setEditingShippingAddress] = useState(null);
-  const [isEditingShippingAddress, setIsEditingShippingAddress] = useState(false);
+  const [isEditingShippingAddress, setIsEditingShippingAddress] =
+    useState(false);
   const [savingShippingAddress, setSavingShippingAddress] = useState(false);
 
   const [districts, setDistricts] = useState([]);
   const [provinces, setProvinces] = useState([]);
-  const [filteredDistricts, setFilteredDistricts] = useState([]);
   const [filteredProvinces, setFilteredProvinces] = useState([]);
   const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
   const [showProvinceDropdown, setShowProvinceDropdown] = useState(false);
@@ -305,12 +422,12 @@ export const ProfileEdit = () => {
 
   // Initialize provinces and districts on mount
   useEffect(() => {
-      const allProvinces = provinceDistrictData.map(item => item.province);
-      const allDistricts = provinceDistrictData.flatMap(item => item.districts);
-      setProvinces(allProvinces);
-      setFilteredProvinces(allProvinces);
-      setDistricts(allDistricts);
-      setFilteredDistricts(allDistricts);
+    const allProvinces = provinceDistrictData.map((item) => item.province);
+    const allDistricts = provinceDistrictData.flatMap((item) => item.districts);
+    setProvinces(allProvinces);
+    setFilteredProvinces(allProvinces);
+    setDistricts(allDistricts);
+    setFilteredDistricts(allDistricts);
   }, []);
 
   const fetchShippingAddresses = async (userId) => {
@@ -319,12 +436,16 @@ export const ProfileEdit = () => {
     console.log("All shipping addresses fetched:", addresses);
     // Filter addresses by logged-in user's ID
     if (userId && addresses) {
-        const userAddresses = addresses.filter(address => address.userDto?.id === userId);
-        console.log("Filtered shipping addresses for user:", userAddresses);
-        setShippingAddresses(userAddresses);
+      const userAddresses = addresses.filter(
+        (address) => address.userDto?.id === userId
+      );
+      console.log("Filtered shipping addresses for user:", userAddresses);
+      setShippingAddresses(userAddresses);
     } else {
-        console.log("User ID not available or no addresses fetched, setting empty array.");
-        setShippingAddresses([]);
+      console.log(
+        "User ID not available or no addresses fetched, setting empty array."
+      );
+      setShippingAddresses([]);
     }
   };
 
@@ -340,13 +461,13 @@ export const ProfileEdit = () => {
         if (userEmail) {
           let userData = null;
           try {
-             userData = await getUserByEmail(userEmail);
-             console.log("User data from API:", userData);
+            userData = await getUserByEmail(userEmail);
+            console.log("User data from API:", userData);
           } catch (error) {
-              console.error('Error fetching user data:', error);
-               setLoading(false);
-               setShippingAddresses([]); // Clear addresses on user fetch error
-              return; // Stop execution if user data cannot be fetched
+            console.error("Error fetching user data:", error);
+            setLoading(false);
+            setShippingAddresses([]); // Clear addresses on user fetch error
+            return; // Stop execution if user data cannot be fetched
           }
 
           if (userData) {
@@ -360,43 +481,55 @@ export const ProfileEdit = () => {
 
             // Fetch bank details (add error handling)
             try {
-               console.log("Fetching bank data for account holder:", userData.firstName || "");
-               const bankDataResponse = await searchUserBankDetails();
-               console.log("Bank data response from API:", bankDataResponse);
-               const userBankDetail = bankDataResponse.find(detail => detail.userDto?.id === userData.id);
-               if (userBankDetail) {
-                   setBankDetails(userBankDetail);
-                   setSelectedBankId(userBankDetail.bankDto?.id || "");
-                   setBankSearch(userBankDetail.bankDto?.name || "");
-                   setSelectedBranchId(userBankDetail.branchDto?.id || "");
-                   setBranchSearch(userBankDetail.branchDto?.branchName || "");
-                   setAccountHolderName(userBankDetail.accountHolderName || "");
-                   setAccountNumber(userBankDetail.accountNumber || "");
-                   console.log("Bank details state set:", userBankDetail);
-               } else {
-                   setBankDetails(null);
-                   setSelectedBankId("");
-                   setBankSearch("");
-                   setSelectedBranchId("");
-                   setBranchSearch("");
-                   setAccountHolderName("");
-                   setAccountNumber("");
+              console.log(
+                "Fetching bank data for account holder:",
+                userData.firstName || ""
+              );
+              const bankDataResponse = await searchUserBankDetails();
+              console.log("Bank data response from API:", bankDataResponse);
+              const userBankDetail = bankDataResponse.find(
+                (detail) => detail.userDto?.id === userData.id
+              );
+              if (userBankDetail) {
+                setBankDetails(userBankDetail);
+                setSelectedBankId(userBankDetail.bankDto?.id || "");
+                setBankSearch(userBankDetail.bankDto?.name || "");
+                setSelectedBranchId(userBankDetail.branchDto?.id || "");
+                setBranchSearch(userBankDetail.branchDto?.branchName || "");
+                setAccountHolderName(userBankDetail.accountHolderName || "");
+                setAccountNumber(userBankDetail.accountNumber || "");
+                console.log("Bank details state set:", userBankDetail);
+              } else {
+                setBankDetails(null);
+                setSelectedBankId("");
+                setBankSearch("");
+                setSelectedBranchId("");
+                setBranchSearch("");
+                setAccountHolderName("");
+                setAccountNumber("");
 
-                   console.log("No bank details found for this user.");
-               }
+                console.log("No bank details found for this user.");
+              }
             } catch (error) {
-                console.error('Error fetching bank details:', error);
-                setBankDetails(null); // Ensure bank details state is clear on error
+              console.error("Error fetching bank details:", error);
+              setBankDetails(null); // Ensure bank details state is clear on error
             }
 
-            console.log("User state updated:", { firstName: userData.firstName, lastName: userData.lastName, address: userData.address, about: userData.about, email: userData.emailAddress, mobileNumber: userData.mobileNumber });
+            console.log("User state updated:", {
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              address: userData.address,
+              about: userData.about,
+              email: userData.emailAddress,
+              mobileNumber: userData.mobileNumber,
+            });
 
             // Now that user data is loaded, fetch shipping addresses using the fetched user ID
             if (userData?.id) {
-               await fetchShippingAddresses(userData.id);
+              await fetchShippingAddresses(userData.id);
             } else {
-                console.error("User ID not available after fetching user data.");
-                 setShippingAddresses([]); // Ensure shipping addresses are cleared if user ID is missing
+              console.error("User ID not available after fetching user data.");
+              setShippingAddresses([]); // Ensure shipping addresses are cleared if user ID is missing
             }
 
             // Initialize birthday and gender from userData
@@ -407,19 +540,18 @@ export const ProfileEdit = () => {
               setBirthdayYear(year || "");
             }
             setGender(userData.gender || "");
-
           }
         } else {
-             console.log("No userEmail from decoded token.");
-             setShippingAddresses([]); // Clear shipping addresses if no user email
-             setLoading(false);
-             return; // Stop execution if no user email
+          console.log("No userEmail from decoded token.");
+          setShippingAddresses([]); // Clear shipping addresses if no user email
+          setLoading(false);
+          return; // Stop execution if no user email
         }
       } else {
-           console.log("No accessToken found.");
-           setShippingAddresses([]); // Clear shipping addresses if no access token
-           setLoading(false);
-           return; // Stop execution if no access token
+        console.log("No accessToken found.");
+        setShippingAddresses([]); // Clear shipping addresses if no access token
+        setLoading(false);
+        return; // Stop execution if no access token
       }
 
       // Fetch banks and branches (add error handling)
@@ -434,13 +566,12 @@ export const ProfileEdit = () => {
         setBranches(branchesData);
         setFilteredBranches(branchesData);
         console.log("Branches fetched:", branchesData.length);
-
       } catch (error) {
-        console.error('Error fetching initial data (banks/branches):', error);
-         setBanks([]); // Clear banks/branches state on error
-         setFilteredBanks([]);
-         setBranches([]);
-         setFilteredBranches([]);
+        console.error("Error fetching initial data (banks/branches):", error);
+        setBanks([]); // Clear banks/branches state on error
+        setFilteredBanks([]);
+        setBranches([]);
+        setFilteredBranches([]);
       }
 
       setLoading(false);
@@ -454,10 +585,10 @@ export const ProfileEdit = () => {
     if (bankSearch.trim() === "") {
       setFilteredBanks(banks);
       if (!bankDetails) {
-         setSelectedBankId("");
+        setSelectedBankId("");
       }
     } else {
-      const filtered = banks.filter(bank => 
+      const filtered = banks.filter((bank) =>
         bank.name.toLowerCase().includes(bankSearch.toLowerCase())
       );
       setFilteredBanks(filtered);
@@ -468,11 +599,11 @@ export const ProfileEdit = () => {
   useEffect(() => {
     if (branchSearch.trim() === "") {
       setFilteredBranches(branches);
-       if (!bankDetails) {
-         setSelectedBranchId("");
+      if (!bankDetails) {
+        setSelectedBranchId("");
       }
     } else {
-      const filtered = branches.filter(branch => 
+      const filtered = branches.filter((branch) =>
         branch.branchName.toLowerCase().includes(branchSearch.toLowerCase())
       );
       setFilteredBranches(filtered);
@@ -484,7 +615,10 @@ export const ProfileEdit = () => {
     // Compose dateOfBirth string if all fields are present
     let dateOfBirth = null;
     if (birthdayYear && birthdayMonth && birthdayDay) {
-      dateOfBirth = `${birthdayYear}-${birthdayMonth.padStart(2, "0")}-${birthdayDay.padStart(2, "0")}`;
+      dateOfBirth = `${birthdayYear}-${birthdayMonth.padStart(
+        2,
+        "0"
+      )}-${birthdayDay.padStart(2, "0")}`;
     }
     const updatedUserData = {
       ...user,
@@ -512,7 +646,7 @@ export const ProfileEdit = () => {
     setBankSearch(bank.name);
     setIsBankDropdownOpen(false);
     if (bankDetailsError && bankDetailsError.includes("bank")) {
-        setBankDetailsError(null);
+      setBankDetailsError(null);
     }
   };
 
@@ -520,13 +654,13 @@ export const ProfileEdit = () => {
     const value = e.target.value;
     setBankSearch(value);
     if (!isBankDropdownOpen && value.length > 0) {
-        setIsBankDropdownOpen(true);
+      setIsBankDropdownOpen(true);
     }
-    if (banks.find(b => b.id === parseInt(selectedBankId))?.name !== value) {
-        setSelectedBankId("");
+    if (banks.find((b) => b.id === parseInt(selectedBankId))?.name !== value) {
+      setSelectedBankId("");
     }
     if (bankDetailsError && bankDetailsError.includes("bank")) {
-        setBankDetailsError(null);
+      setBankDetailsError(null);
     }
   };
 
@@ -535,7 +669,7 @@ export const ProfileEdit = () => {
     setBankSearch("");
     setFilteredBanks(banks);
     if (bankDetailsError && bankDetailsError.includes("bank")) {
-        setBankDetailsError(null);
+      setBankDetailsError(null);
     }
   };
 
@@ -545,7 +679,7 @@ export const ProfileEdit = () => {
     setBranchSearch(branch.branchName);
     setIsBranchDropdownOpen(false);
     if (bankDetailsError && bankDetailsError.includes("branch")) {
-        setBankDetailsError(null);
+      setBankDetailsError(null);
     }
   };
 
@@ -553,85 +687,111 @@ export const ProfileEdit = () => {
     const value = e.target.value;
     setBranchSearch(value);
     if (!isBranchDropdownOpen && value.length > 0) {
-        setIsBranchDropdownOpen(true);
+      setIsBranchDropdownOpen(true);
     }
-    if (branches.find(b => b.id === parseInt(selectedBranchId))?.branchName !== value) {
-        setSelectedBranchId("");
+    if (
+      branches.find((b) => b.id === parseInt(selectedBranchId))?.branchName !==
+      value
+    ) {
+      setSelectedBranchId("");
     }
     if (bankDetailsError && bankDetailsError.includes("branch")) {
-        setBankDetailsError(null);
+      setBankDetailsError(null);
     }
   };
 
-    const handleClearBranchSelection = () => {
+  const handleClearBranchSelection = () => {
     setSelectedBranchId("");
     setBranchSearch("");
     setFilteredBranches(branches);
     if (bankDetailsError && bankDetailsError.includes("branch")) {
-        setBankDetailsError(null);
+      setBankDetailsError(null);
     }
   };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isBankDropdownOpen && event.target.closest('.bank-dropdown-container') === null) {
+      if (
+        isBankDropdownOpen &&
+        event.target.closest(".bank-dropdown-container") === null
+      ) {
         setIsBankDropdownOpen(false);
-        if (selectedBankId && banks.find(b => b.id === parseInt(selectedBankId))?.name !== bankSearch) {
-             setBankSearch("");
-             setSelectedBankId("");
+        if (
+          selectedBankId &&
+          banks.find((b) => b.id === parseInt(selectedBankId))?.name !==
+            bankSearch
+        ) {
+          setBankSearch("");
+          setSelectedBankId("");
         }
       }
-       if (isBranchDropdownOpen && event.target.closest('.branch-dropdown-container') === null) {
+      if (
+        isBranchDropdownOpen &&
+        event.target.closest(".branch-dropdown-container") === null
+      ) {
         setIsBranchDropdownOpen(false);
-         if (selectedBranchId && branches.find(b => b.id === parseInt(selectedBranchId))?.branchName !== branchSearch) {
-             setBranchSearch("");
-             setSelectedBranchId("");
-         }
+        if (
+          selectedBranchId &&
+          branches.find((b) => b.id === parseInt(selectedBranchId))
+            ?.branchName !== branchSearch
+        ) {
+          setBranchSearch("");
+          setSelectedBranchId("");
+        }
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isBankDropdownOpen, selectedBankId, bankSearch, isBranchDropdownOpen, selectedBranchId, branchSearch, banks, branches]);
+  }, [
+    isBankDropdownOpen,
+    selectedBankId,
+    bankSearch,
+    isBranchDropdownOpen,
+    selectedBranchId,
+    branchSearch,
+    banks,
+    branches,
+  ]);
 
-    // Set initial search values and selected IDs when bankDetails is loaded or updated
-    useEffect(() => {
-        if (bankDetails) {
-             setBankSearch(bankDetails.bankDto?.name || "");
-             setSelectedBankId(bankDetails.bankDto?.id || "");
-             setBranchSearch(bankDetails.branchDto?.branchName || "");
-             setSelectedBranchId(bankDetails.branchDto?.id || "");
-             setAccountHolderName(bankDetails.accountHolderName || "");
-             setAccountNumber(bankDetails.accountNumber || "");
-        } else {
-             setBankSearch("");
-             setSelectedBankId("");
-             setBranchSearch("");
-             setSelectedBranchId("");
-             setAccountHolderName("");
-             setAccountNumber("");
-        }
-         setBankDetailsError(null);
-         setBankDetailsStatus("");
-    }, [bankDetails]);
+  // Set initial search values and selected IDs when bankDetails is loaded or updated
+  useEffect(() => {
+    if (bankDetails) {
+      setBankSearch(bankDetails.bankDto?.name || "");
+      setSelectedBankId(bankDetails.bankDto?.id || "");
+      setBranchSearch(bankDetails.branchDto?.branchName || "");
+      setSelectedBranchId(bankDetails.branchDto?.id || "");
+      setAccountHolderName(bankDetails.accountHolderName || "");
+      setAccountNumber(bankDetails.accountNumber || "");
+    } else {
+      setBankSearch("");
+      setSelectedBankId("");
+      setBranchSearch("");
+      setSelectedBranchId("");
+      setAccountHolderName("");
+      setAccountNumber("");
+    }
+    setBankDetailsError(null);
+    setBankDetailsStatus("");
+  }, [bankDetails]);
 
-     // Clear search and selection when switching away from bank tab or when bankDetails becomes null
-    useEffect(() => {
-        if (activeTab !== "bank" || !bankDetails) {
-            setBankSearch("");
-            setSelectedBankId("");
-            setBranchSearch("");
-            setSelectedBranchId("");
-            setIsBankDropdownOpen(false);
-            setIsBranchDropdownOpen(false);
-             setBankDetailsError(null);
-            setBankDetailsStatus("");
-            setSavingBankDetails(false);
-            setIsEditingBankDetails(false);
-        }
-    }, [activeTab, bankDetails]);
+  // Clear search and selection when switching away from bank tab or when bankDetails becomes null
+  useEffect(() => {
+    if (activeTab !== "bank" || !bankDetails) {
+      setBankSearch("");
+      setSelectedBankId("");
+      setBranchSearch("");
+      setSelectedBranchId("");
+      setIsBankDropdownOpen(false);
+      setIsBranchDropdownOpen(false);
+      setBankDetailsError(null);
+      setBankDetailsStatus("");
+      setSavingBankDetails(false);
+      setIsEditingBankDetails(false);
+    }
+  }, [activeTab, bankDetails]);
 
   const handleSaveBankDetails = async () => {
     setSavingBankDetails(true);
@@ -682,7 +842,9 @@ export const ProfileEdit = () => {
       setBankDetailsStatus("Bank details saved successfully!");
       // Refresh bank details from backend
       const bankDataResponse = await searchUserBankDetails();
-      const userBankDetail = bankDataResponse.find(detail => detail.userDto?.id === user.id);
+      const userBankDetail = bankDataResponse.find(
+        (detail) => detail.userDto?.id === user.id
+      );
       if (userBankDetail) {
         setBankDetails(userBankDetail);
         setSelectedBankId(userBankDetail.bankDto?.id || "");
@@ -693,7 +855,9 @@ export const ProfileEdit = () => {
         setAccountNumber(userBankDetail.accountNumber || "");
       }
     } else {
-      setBankDetailsError(result?.errorDescription || "Failed to save bank details.");
+      setBankDetailsError(
+        result?.errorDescription || "Failed to save bank details."
+      );
       setBankDetailsStatus("");
     }
     setSavingBankDetails(false);
@@ -751,7 +915,9 @@ export const ProfileEdit = () => {
       setBankDetailsStatus("Bank details updated successfully!");
       // Refresh bank details from backend
       const bankDataResponse = await searchUserBankDetails();
-      const userBankDetail = bankDataResponse.find(detail => detail.userDto?.id === user.id);
+      const userBankDetail = bankDataResponse.find(
+        (detail) => detail.userDto?.id === user.id
+      );
       if (userBankDetail) {
         setBankDetails(userBankDetail);
         setSelectedBankId(userBankDetail.bankDto?.id || "");
@@ -763,7 +929,9 @@ export const ProfileEdit = () => {
       }
       setIsEditingBankDetails(false);
     } else {
-      setBankDetailsError(result?.errorDescription || "Failed to update bank details.");
+      setBankDetailsError(
+        result?.errorDescription || "Failed to update bank details."
+      );
       setBankDetailsStatus("");
     }
     setSavingBankDetails(false);
@@ -771,20 +939,20 @@ export const ProfileEdit = () => {
     setTimeout(() => setBankDetailsError(null), 3000);
   };
 
-    const handleCancelEdit = () => {
-        setIsEditingBankDetails(false);
-        if (bankDetails) {
-            setAccountHolderName(bankDetails.accountHolderName || "");
-            setAccountNumber(bankDetails.accountNumber || "");
-            setSelectedBankId(bankDetails.bankDto?.id || "");
-            setBankSearch(bankDetails.bankDto?.name || "");
-            setSelectedBranchId(bankDetails.branchDto?.id || "");
-            setBranchSearch(bankDetails.branchDto?.branchName || "");
-        }
-        setBankDetailsError(null);
-        setBankDetailsStatus("");
-        setSavingBankDetails(false);
-    };
+  const handleCancelEdit = () => {
+    setIsEditingBankDetails(false);
+    if (bankDetails) {
+      setAccountHolderName(bankDetails.accountHolderName || "");
+      setAccountNumber(bankDetails.accountNumber || "");
+      setSelectedBankId(bankDetails.bankDto?.id || "");
+      setBankSearch(bankDetails.bankDto?.name || "");
+      setSelectedBranchId(bankDetails.branchDto?.id || "");
+      setBranchSearch(bankDetails.branchDto?.branchName || "");
+    }
+    setBankDetailsError(null);
+    setBankDetailsStatus("");
+    setSavingBankDetails(false);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -794,7 +962,7 @@ export const ProfileEdit = () => {
         [name]: value,
       });
     } else if (editingAddressId) {
-       setEditingShippingAddress({
+      setEditingShippingAddress({
         ...editingShippingAddress,
         [name]: value,
       });
@@ -802,14 +970,14 @@ export const ProfileEdit = () => {
 
     if (name === "district") {
       const filtered = districts.filter((d) =>
-          d.toLowerCase().includes(value.toLowerCase())
-        );
+        d.toLowerCase().includes(value.toLowerCase())
+      );
       setFilteredDistricts(filtered);
       setShowDistrictDropdown(true);
     } else if (name === "province") {
-       const filtered = provinces.filter((p) =>
-          p.toLowerCase().includes(value.toLowerCase())
-        );
+      const filtered = provinces.filter((p) =>
+        p.toLowerCase().includes(value.toLowerCase())
+      );
       setFilteredProvinces(filtered);
       setShowProvinceDropdown(true);
     }
@@ -817,50 +985,62 @@ export const ProfileEdit = () => {
 
   const handleCheckboxChange = (e) => {
     const { name, checked } = e.target;
-     if (isAddingShippingAddress) {
-        setNewShippingAddress({
-          ...newShippingAddress,
-          [name]: checked,
-        });
-      } else if (editingAddressId) {
-         setEditingShippingAddress({
-          ...editingShippingAddress,
-          [name]: checked,
-        });
-      }
+    if (isAddingShippingAddress) {
+      setNewShippingAddress({
+        ...newShippingAddress,
+        [name]: checked,
+      });
+    } else if (editingAddressId) {
+      setEditingShippingAddress({
+        ...editingShippingAddress,
+        [name]: checked,
+      });
+    }
   };
 
   const handleDistrictSelect = (district) => {
-     if (isAddingShippingAddress) {
-        setNewShippingAddress({
-          ...newShippingAddress,
-          district: district,
-        });
-      } else if (editingAddressId) {
-         setEditingShippingAddress({
-          ...editingShippingAddress,
-          district: district,
-        });
-      }
+    if (isAddingShippingAddress) {
+      setNewShippingAddress({
+        ...newShippingAddress,
+        district: district,
+      });
+    } else if (editingAddressId) {
+      setEditingShippingAddress({
+        ...editingShippingAddress,
+        district: district,
+      });
+    }
     setShowDistrictDropdown(false);
   };
 
   const handleProvinceSelect = (province) => {
-     if (isAddingShippingAddress) {
-        setNewShippingAddress(prev => ({ ...prev, province: province, district: "" })); // Clear district when province changes
-         // Filter districts based on selected province
-         const relatedDistricts = provinceDistrictData.find(item => item.province === province)?.districts || [];
-         setFilteredDistricts(relatedDistricts);
-+        setShowDistrictDropdown(false); // Close district dropdown after province selection
-      } else if (editingAddressId) {
-         setEditingShippingAddress(prev => ({ ...prev, province: province, district: "" })); // Clear district when province changes
-         // Filter districts based on selected province
-         const relatedDistricts = provinceDistrictData.find(item => item.province === province)?.districts || [];
-         setFilteredDistricts(relatedDistricts);
-+        setShowDistrictDropdown(false); // Close district dropdown after province selection
-      }
+    if (isAddingShippingAddress) {
+      setNewShippingAddress((prev) => ({
+        ...prev,
+        province: province,
+        district: "",
+      })); // Clear district when province changes
+      // Filter districts based on selected province
+      const relatedDistricts =
+        provinceDistrictData.find((item) => item.province === province)
+          ?.districts || [];
+      setFilteredDistricts(relatedDistricts);
+      +setShowDistrictDropdown(false); // Close district dropdown after province selection
+    } else if (editingAddressId) {
+      setEditingShippingAddress((prev) => ({
+        ...prev,
+        province: province,
+        district: "",
+      })); // Clear district when province changes
+      // Filter districts based on selected province
+      const relatedDistricts =
+        provinceDistrictData.find((item) => item.province === province)
+          ?.districts || [];
+      setFilteredDistricts(relatedDistricts);
+      +setShowDistrictDropdown(false); // Close district dropdown after province selection
+    }
     setShowProvinceDropdown(false);
-     setFilteredProvinces(provinces); // Reset province filter
+    setFilteredProvinces(provinces); // Reset province filter
   };
 
   const handleAddShippingAddressClick = () => {
@@ -885,19 +1065,21 @@ export const ProfileEdit = () => {
     setIsAddingShippingAddress(false);
     setIsEditingShippingAddress(true);
     setEditingAddressId(address.id);
-    setEditingShippingAddress({...address});
+    setEditingShippingAddress({ ...address });
     setFilteredDistricts(districts);
     setFilteredProvinces(provinces);
   };
 
   const handleSaveNewShippingAddress = async () => {
     // Manual validation for required fields
-    if (!newShippingAddress.address.trim() ||
-        !newShippingAddress.name.trim() ||
-        !newShippingAddress.mobileNumber.trim() ||
-        !newShippingAddress.province.trim() ||
-        !newShippingAddress.district.trim() ||
-        !newShippingAddress.postalCode.trim()) {
+    if (
+      !newShippingAddress.address.trim() ||
+      !newShippingAddress.name.trim() ||
+      !newShippingAddress.mobileNumber.trim() ||
+      !newShippingAddress.province.trim() ||
+      !newShippingAddress.district.trim() ||
+      !newShippingAddress.postalCode.trim()
+    ) {
       setShippingAddressStatus("Please fill in all required fields.");
       setTimeout(() => setShippingAddressStatus(""), 3000);
       return;
@@ -911,53 +1093,68 @@ export const ProfileEdit = () => {
     setSavingShippingAddress(true);
     // First, unset any other primary addresses if the new one is primary
     if (newShippingAddress.isPrimary) {
-        const currentlyPrimary = shippingAddresses.find(address => address.isPrimary);
-        if (currentlyPrimary) {
-            console.log("Unsetting previous primary address:", currentlyPrimary.id);
-            // Create a payload to unset isPrimary
-            const unsetPrimaryPayload = {
-                 ...currentlyPrimary,
-                 isPrimary: false,
-                 // Ensure userDto is included for the update API
-                 userDto: { id: user.id },
-                 // Explicitly set country to undefined if it exists in the original data
-                 country: undefined
-            };
-             // Explicitly include name, mobileNumber, and address if they exist in the original data
-            if (currentlyPrimary.name) unsetPrimaryPayload.name = currentlyPrimary.name;
-            if (currentlyPrimary.mobileNumber) unsetPrimaryPayload.mobileNumber = currentlyPrimary.mobileNumber;
-            if (currentlyPrimary.address) unsetPrimaryPayload.address = currentlyPrimary.address;
+      const currentlyPrimary = shippingAddresses.find(
+        (address) => address.isPrimary
+      );
+      if (currentlyPrimary) {
+        console.log("Unsetting previous primary address:", currentlyPrimary.id);
+        // Create a payload to unset isPrimary
+        const unsetPrimaryPayload = {
+          ...currentlyPrimary,
+          isPrimary: false,
+          // Ensure userDto is included for the update API
+          userDto: { id: user.id },
+          // Explicitly set country to undefined if it exists in the original data
+          country: undefined,
+        };
+        // Explicitly include name, mobileNumber, and address if they exist in the original data
+        if (currentlyPrimary.name)
+          unsetPrimaryPayload.name = currentlyPrimary.name;
+        if (currentlyPrimary.mobileNumber)
+          unsetPrimaryPayload.mobileNumber = currentlyPrimary.mobileNumber;
+        if (currentlyPrimary.address)
+          unsetPrimaryPayload.address = currentlyPrimary.address;
 
-            try {
-                const updateResponse = await updateShippingAddress(unsetPrimaryPayload);
-                if (updateResponse && !updateResponse.status) {
-                    console.error("Failed to unset previous primary address:", updateResponse.errorDescription);
-                    // Decide how to handle this error - perhaps stop the save process or warn the user
-                    setSavingShippingAddress(false);
-                    return; // Stop if unsetting failed critically
-                }
-            } catch (err) {
-                 console.error("Error calling updateShippingAddress to unset primary:", err);
-                 setSavingShippingAddress(false);
-                 return; // Stop on API error
-            }
+        try {
+          const updateResponse = await updateShippingAddress(
+            unsetPrimaryPayload
+          );
+          if (updateResponse && !updateResponse.status) {
+            console.error(
+              "Failed to unset previous primary address:",
+              updateResponse.errorDescription
+            );
+            // Decide how to handle this error - perhaps stop the save process or warn the user
+            setSavingShippingAddress(false);
+            return; // Stop if unsetting failed critically
+          }
+        } catch (err) {
+          console.error(
+            "Error calling updateShippingAddress to unset primary:",
+            err
+          );
+          setSavingShippingAddress(false);
+          return; // Stop on API error
         }
+      }
     }
 
     const payload = {
       ...newShippingAddress,
       createdAt: new Date().toISOString(),
-       userDto: { id: user.id },
-       // Country field removed as per request and from state
-       country: undefined, // Explicitly set to undefined to ensure it's not sent
-       isActive: 1 // Add isActive field with value 1
+      userDto: { id: user.id },
+      // Country field removed as per request and from state
+      country: undefined, // Explicitly set to undefined to ensure it's not sent
+      isActive: 1, // Add isActive field with value 1
     };
     // Ensure name and mobileNumber are included in the payload if they exist in newShippingAddress
     if (newShippingAddress.name) payload.name = newShippingAddress.name;
-    if (newShippingAddress.mobileNumber) payload.mobileNumber = newShippingAddress.mobileNumber;
+    if (newShippingAddress.mobileNumber)
+      payload.mobileNumber = newShippingAddress.mobileNumber;
 
     // Also ensure address is not undefined if it was empty string initially
-     if (newShippingAddress.address) payload.address = newShippingAddress.address;
+    if (newShippingAddress.address)
+      payload.address = newShippingAddress.address;
 
     const response = await saveShippingAddress(payload);
     if (response && response.status) {
@@ -973,13 +1170,16 @@ export const ProfileEdit = () => {
         isPrimary: shippingAddresses.length === 0 ? true : false, // Set as primary by default if it's the first address
         name: "", // Add name field
         mobileNumber: "", // Add mobileNumber field
-        isActive: 1
+        isActive: 1,
       });
-      setShippingAddressStatus("Shipping address added successfully!");
-      setTimeout(() => setShippingAddressStatus(""), 3000);
-      await fetchShippingAddresses(user.id); // Refetch to show updated primary status
+      if (user && user.id) {
+        await fetchShippingAddresses(user.id);
+      }
     } else {
-      console.error("Error saving shipping address:", response?.errorDescription || "Failed to save shipping address.");
+      console.error(
+        "Error saving shipping address:",
+        response?.errorDescription || "Failed to save shipping address."
+      );
       // Handle save error
     }
     setSavingShippingAddress(false);
@@ -988,12 +1188,14 @@ export const ProfileEdit = () => {
   const handleUpdateShippingAddress = async () => {
     if (!editingShippingAddress) return;
     // Manual validation for required fields
-    if (!editingShippingAddress.address.trim() ||
-        !editingShippingAddress.name.trim() ||
-        !editingShippingAddress.mobileNumber.trim() ||
-        !editingShippingAddress.province.trim() ||
-        !editingShippingAddress.district.trim() ||
-        !editingShippingAddress.postalCode.trim()) {
+    if (
+      !editingShippingAddress.address.trim() ||
+      !editingShippingAddress.name.trim() ||
+      !editingShippingAddress.mobileNumber.trim() ||
+      !editingShippingAddress.province.trim() ||
+      !editingShippingAddress.district.trim() ||
+      !editingShippingAddress.postalCode.trim()
+    ) {
       setShippingAddressStatus("Please fill in all required fields.");
       setTimeout(() => setShippingAddressStatus(""), 3000);
       return;
@@ -1005,39 +1207,56 @@ export const ProfileEdit = () => {
       return;
     }
     setSavingShippingAddress(true);
-     // First, unset any other primary addresses if the updated one is primary
+    // First, unset any other primary addresses if the updated one is primary
     if (editingShippingAddress.isPrimary) {
-        const currentlyPrimary = shippingAddresses.find(address => address.isPrimary && address.id !== editingShippingAddress.id);
-        if (currentlyPrimary) {
-             console.log("Unsetting previous primary address on update:", currentlyPrimary.id);
-             // Create a payload to unset isPrimary
-            const unsetPrimaryPayload = {
-                 ...currentlyPrimary,
-                 isPrimary: false,
-                 // Ensure userDto is included for the update API
-                 userDto: { id: user.id },
-                 // Explicitly set country to undefined if it exists in the original data
-                 country: undefined
-            };
-             // Explicitly include name, mobileNumber, and address if they exist in the original data
-            if (currentlyPrimary.name) unsetPrimaryPayload.name = currentlyPrimary.name;
-            if (currentlyPrimary.mobileNumber) unsetPrimaryPayload.mobileNumber = currentlyPrimary.mobileNumber;
-            if (currentlyPrimary.address) unsetPrimaryPayload.address = currentlyPrimary.address;
+      const currentlyPrimary = shippingAddresses.find(
+        (address) =>
+          address.isPrimary && address.id !== editingShippingAddress.id
+      );
+      if (currentlyPrimary) {
+        console.log(
+          "Unsetting previous primary address on update:",
+          currentlyPrimary.id
+        );
+        // Create a payload to unset isPrimary
+        const unsetPrimaryPayload = {
+          ...currentlyPrimary,
+          isPrimary: false,
+          // Ensure userDto is included for the update API
+          userDto: { id: user.id },
+          // Explicitly set country to undefined if it exists in the original data
+          country: undefined,
+        };
+        // Explicitly include name, mobileNumber, and address if they exist in the original data
+        if (currentlyPrimary.name)
+          unsetPrimaryPayload.name = currentlyPrimary.name;
+        if (currentlyPrimary.mobileNumber)
+          unsetPrimaryPayload.mobileNumber = currentlyPrimary.mobileNumber;
+        if (currentlyPrimary.address)
+          unsetPrimaryPayload.address = currentlyPrimary.address;
 
-            try {
-                const updateResponse = await updateShippingAddress(unsetPrimaryPayload);
-                 if (updateResponse && !updateResponse.status) {
-                    console.error("Failed to unset previous primary address on update:", updateResponse.errorDescription);
-                     // Decide how to handle this error
-                    setSavingShippingAddress(false);
-                    return; // Stop if unsetting failed critically
-                }
-            } catch (err) {
-                 console.error("Error calling updateShippingAddress to unset primary on update:", err);
-                 setSavingShippingAddress(false);
-                 return; // Stop on API error
-            }
+        try {
+          const updateResponse = await updateShippingAddress(
+            unsetPrimaryPayload
+          );
+          if (updateResponse && !updateResponse.status) {
+            console.error(
+              "Failed to unset previous primary address on update:",
+              updateResponse.errorDescription
+            );
+            // Decide how to handle this error
+            setSavingShippingAddress(false);
+            return; // Stop if unsetting failed critically
+          }
+        } catch (err) {
+          console.error(
+            "Error calling updateShippingAddress to unset primary on update:",
+            err
+          );
+          setSavingShippingAddress(false);
+          return; // Stop on API error
         }
+      }
     }
 
     const payload = {
@@ -1049,11 +1268,13 @@ export const ProfileEdit = () => {
     };
     // Ensure name and mobileNumber are included in the payload if they exist in editingShippingAddress
     if (editingShippingAddress.name) payload.name = editingShippingAddress.name;
-    if (editingShippingAddress.mobileNumber) payload.mobileNumber = editingShippingAddress.mobileNumber;
+    if (editingShippingAddress.mobileNumber)
+      payload.mobileNumber = editingShippingAddress.mobileNumber;
     // Also ensure address is not undefined if it was empty string initially
-    if (editingShippingAddress.address) payload.address = editingShippingAddress.address;
+    if (editingShippingAddress.address)
+      payload.address = editingShippingAddress.address;
 
-    console.log('Shipping address update payload:', payload);
+    console.log("Shipping address update payload:", payload);
     const response = await updateShippingAddress(payload);
 
     if (response && response.status) {
@@ -1061,14 +1282,17 @@ export const ProfileEdit = () => {
       setEditingAddressId(null);
       setEditingShippingAddress(null);
       setIsEditingShippingAddress(false);
-      setShippingAddressStatus("Shipping address updated successfully!");
-      setTimeout(() => setShippingAddressStatus(""), 3000);
-      await fetchShippingAddresses(user.id); // Refetch to show updated primary status
+      if (user && user.id) {
+        await fetchShippingAddresses(user.id);
+      }
     } else {
-       console.error("Error updating shipping address:", response?.errorDescription || "Failed to update shipping address.");
-       // Handle update error
+      console.error(
+        "Error updating shipping address:",
+        response?.errorDescription || "Failed to update shipping address."
+      );
+      // Handle update error
     }
-     setSavingShippingAddress(false);
+    setSavingShippingAddress(false);
   };
 
   const handleCancelAddShippingAddress = () => {
@@ -1085,22 +1309,50 @@ export const ProfileEdit = () => {
     });
   };
 
-   const handleCancelEditShippingAddress = () => {
+  const handleCancelEditShippingAddress = () => {
     setEditingAddressId(null);
     setEditingShippingAddress(null);
     setFilteredDistricts(districts);
     setFilteredProvinces(provinces);
   };
 
+  // Add state for filteredDistricts in the component
+  const [filteredDistricts, setFilteredDistricts] = useState([]);
+
+  // When province changes in add/edit form, update filteredDistricts
+  useEffect(() => {
+    if (isAddingShippingAddress && newShippingAddress.province) {
+      const found = provinceDistrictData.find(
+        (p) => p.province === newShippingAddress.province
+      );
+      setFilteredDistricts(found ? found.districts : []);
+    } else if (editingAddressId && editingShippingAddress?.province) {
+      const found = provinceDistrictData.find(
+        (p) => p.province === editingShippingAddress.province
+      );
+      setFilteredDistricts(found ? found.districts : []);
+    } else {
+      setFilteredDistricts([]);
+    }
+  }, [
+    isAddingShippingAddress,
+    newShippingAddress.province,
+    editingAddressId,
+    editingShippingAddress?.province,
+  ]);
   // Handler to disable two-step verification
   const handleDisableTwoStep = async () => {
-    if (!window.confirm("Are you sure you want to disable 2-step verification? This will make your account less secure.")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to disable 2-step verification? This will make your account less secure."
+      )
+    ) {
       return;
     }
     const updatedUser = { ...user, twoStepVerification: false };
     const response = await updateUser(updatedUser);
     if (response && response.status) {
-      setUser(prev => ({ ...prev, twoStepVerification: false }));
+      setUser((prev) => ({ ...prev, twoStepVerification: false }));
       setShippingAddressStatus("Two-step verification disabled.");
       setTimeout(() => setShippingAddressStatus(""), 3000);
     } else {
@@ -1114,7 +1366,11 @@ export const ProfileEdit = () => {
   }
 
   if (error && !user) {
-    return <div className="text-red-500 text-center">Error loading profile: {error}</div>;
+    return (
+      <div className="text-red-500 text-center">
+        Error loading profile: {error}
+      </div>
+    );
   }
 
   if (!user) {
@@ -1131,14 +1387,19 @@ export const ProfileEdit = () => {
             <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 flex flex-col items-center">
               <h2 className="text-2xl font-bold mb-6 self-start">Settings</h2>
               <nav className="flex flex-col gap-2 w-full">
-                {tabs.map(tab => (
+                {tabs.map((tab) => (
                   <button
                     key={tab.key}
-                    onClick={() => { setActiveTab(tab.key); setSecurityPage && setSecurityPage(null); }}
+                    onClick={() => {
+                      setActiveTab(tab.key);
+                      setSecurityPage && setSecurityPage(null);
+                    }}
                     className={`w-full px-5 py-2 text-base font-semibold transition rounded-full text-left
-                      ${activeTab === tab.key
-                        ? 'bg-[#1E90FF] text-white shadow-md'
-                        : 'bg-transparent text-gray-700 hover:bg-[#eaf1fb] hover:text-[#1E90FF]'}
+                      ${
+                        activeTab === tab.key
+                          ? "bg-[#1E90FF] text-white shadow-md"
+                          : "bg-transparent text-gray-700 hover:bg-[#eaf1fb] hover:text-[#1E90FF]"
+                      }
                     `}
                   >
                     {tab.label}
@@ -1154,55 +1415,95 @@ export const ProfileEdit = () => {
                 <h3 className="text-xl font-bold mb-4">Profile details</h3>
                 <div className="mb-6 flex flex-col md:flex-row md:items-center gap-6">
                   <div className="flex flex-col items-center md:items-start">
-                    <span className="text-base font-medium mb-2">Your photo</span>
-                    <img src={`https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random&color=fff&size=160`} alt="Profile" className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 mb-2" />
-                    <button className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition">Choose photo</button>
+                    <span className="text-base font-medium mb-2">
+                      Your photo
+                    </span>
+                    <img
+                      src={`https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random&color=fff&size=160`}
+                      alt="Profile"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 mb-2"
+                    />
+                    <button className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition">
+                      Choose photo
+                    </button>
                   </div>
                   <div className="flex-1 flex flex-col gap-4">
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="flex-1">
-                        <span className="block font-medium mb-1">First Name</span>
-                        <input type="text" className="border rounded px-3 py-2 w-full" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                        <span className="block font-medium mb-1">
+                          First Name
+                        </span>
+                        <input
+                          type="text"
+                          className="border rounded px-3 py-2 w-full"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                        />
                       </div>
                       <div className="flex-1">
-                        <span className="block font-medium mb-1">Last Name</span>
-                        <input type="text" className="border rounded px-3 py-2 w-full" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                        <span className="block font-medium mb-1">
+                          Last Name
+                        </span>
+                        <input
+                          type="text"
+                          className="border rounded px-3 py-2 w-full"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                        />
                       </div>
                     </div>
                     <div>
                       <span className="block font-medium mb-1">About you</span>
-                      <textarea className="border rounded px-3 py-2 w-full min-h-[60px]" placeholder="Tell us more about yourself and your style" value={about} onChange={(e) => setAbout(e.target.value)} />
+                      <textarea
+                        className="border rounded px-3 py-2 w-full min-h-[60px]"
+                        placeholder="Tell us more about yourself and your style"
+                        value={about}
+                        onChange={(e) => setAbout(e.target.value)}
+                      />
                     </div>
                   </div>
                 </div>
-                <h4 className="text-lg font-semibold mb-2 text-gray-700">Address</h4>
+                <h4 className="text-lg font-semibold mb-2 text-gray-700">
+                  Address
+                </h4>
                 <div className="bg-gray-50 rounded-xl p-4 mb-6 flex flex-col gap-4">
                   <div>
                     {/* <span className="block font-medium mb-1">Address</span> */}
-                    <input type="text" className="border rounded px-3 py-2 w-full max-w-xs" value={address} onChange={(e) => setAddress(e.target.value)} />
+                    <input
+                      type="text"
+                      className="border rounded px-3 py-2 w-full max-w-xs"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                    />
                   </div>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-6 mb-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Birthday Section */}
                     <div className="flex-1">
-                      <span className="block font-medium mb-2 text-gray-700">Birthday</span>
+                      <span className="block font-medium mb-2 text-gray-700">
+                        Birthday
+                      </span>
                       <div className="flex gap-3">
                         <div className="flex-1">
-                          <input 
-                            type="text" 
-                            className="w-full border rounded-lg px-4 py-2.5 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200" 
-                            placeholder="Day" 
+                          <input
+                            type="text"
+                            className="w-full border rounded-lg px-4 py-2.5 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200"
+                            placeholder="Day"
                             maxLength="2"
                             value={birthdayDay}
-                            onChange={e => setBirthdayDay(e.target.value.replace(/[^0-9]/g, ""))}
+                            onChange={(e) =>
+                              setBirthdayDay(
+                                e.target.value.replace(/[^0-9]/g, "")
+                              )
+                            }
                           />
                         </div>
                         <div className="flex-[2]">
-                          <select 
+                          <select
                             className="w-full border rounded-lg px-4 py-2.5 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200"
                             value={birthdayMonth}
-                            onChange={e => setBirthdayMonth(e.target.value)}
+                            onChange={(e) => setBirthdayMonth(e.target.value)}
                           >
                             <option value="">Month</option>
                             <option value="01">January</option>
@@ -1220,13 +1521,17 @@ export const ProfileEdit = () => {
                           </select>
                         </div>
                         <div className="flex-[1.5]">
-                          <input 
-                            type="text" 
-                            className="w-full border rounded-lg px-4 py-2.5 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200" 
-                            placeholder="Year" 
+                          <input
+                            type="text"
+                            className="w-full border rounded-lg px-4 py-2.5 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200"
+                            placeholder="Year"
                             maxLength="4"
                             value={birthdayYear}
-                            onChange={e => setBirthdayYear(e.target.value.replace(/[^0-9]/g, ""))}
+                            onChange={(e) =>
+                              setBirthdayYear(
+                                e.target.value.replace(/[^0-9]/g, "")
+                              )
+                            }
                           />
                         </div>
                       </div>
@@ -1234,11 +1539,13 @@ export const ProfileEdit = () => {
 
                     {/* Gender Section */}
                     <div className="flex-1">
-                      <span className="block font-medium mb-2 text-gray-700">Gender</span>
-                      <select 
+                      <span className="block font-medium mb-2 text-gray-700">
+                        Gender
+                      </span>
+                      <select
                         className="w-full border rounded-lg px-4 py-2.5 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:border-transparent transition-all duration-200"
                         value={gender}
-                        onChange={e => setGender(e.target.value)}
+                        onChange={(e) => setGender(e.target.value)}
                       >
                         <option value="">Select gender</option>
                         <option value="MALE">Male</option>
@@ -1249,9 +1556,20 @@ export const ProfileEdit = () => {
                   </div>
                 </div>
                 <div className="flex justify-end">
-                  {updateStatus && <span className="mr-4 text-sm text-green-600">{updateStatus}</span>}
-                  {error && <span className="mr-4 text-sm text-red-500">{error}</span>}
-                  <button className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition" onClick={handleProfileUpdate}>Update profile</button>
+                  {updateStatus && (
+                    <span className="mr-4 text-sm text-green-600">
+                      {updateStatus}
+                    </span>
+                  )}
+                  {error && (
+                    <span className="mr-4 text-sm text-red-500">{error}</span>
+                  )}
+                  <button
+                    className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition"
+                    onClick={handleProfileUpdate}
+                  >
+                    Update profile
+                  </button>
                 </div>
               </div>
             )}
@@ -1262,21 +1580,40 @@ export const ProfileEdit = () => {
                   <div>
                     <span className="block font-medium mb-1">Email</span>
                     <div className="flex gap-2 items-center">
-                      <input type="email" className="border rounded px-3 py-2 w-full max-w-xs" value={email} readOnly />
+                      <input
+                        type="email"
+                        className="border rounded px-3 py-2 w-full max-w-xs"
+                        value={email}
+                        readOnly
+                      />
                       {/* <button className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition">Change</button> */}
                     </div>
                   </div>
                   <div>
                     <span className="block font-medium mb-1">Phone number</span>
                     <div className="flex gap-2 items-center">
-                      <input type="tel" className="border rounded px-3 py-2 w-full max-w-xs" value={mobileNumber} readOnly />
-                      <button className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition">Verify</button>
+                      <input
+                        type="tel"
+                        className="border rounded px-3 py-2 w-full max-w-xs"
+                        value={mobileNumber}
+                        readOnly
+                      />
+                      <button className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition">
+                        Verify
+                      </button>
                     </div>
                   </div>
                   <div>
-                    <span className="block font-medium mb-1">Whatsapp Number</span>
+                    <span className="block font-medium mb-1">
+                      Whatsapp Number
+                    </span>
                     <div className="flex gap-2 items-center">
-                      <input type="text" className="border rounded px-3 py-2 w-full max-w-xs" value={user.whatsappNumber || ""} readOnly />
+                      <input
+                        type="text"
+                        className="border rounded px-3 py-2 w-full max-w-xs"
+                        value={user.whatsappNumber || ""}
+                        readOnly
+                      />
                     </div>
                   </div>
                 </div>
@@ -1284,12 +1621,19 @@ export const ProfileEdit = () => {
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex-1">
                       <span className="block font-medium mb-1">Full name</span>
-                      <input type="text" className="border rounded px-3 py-2 w-full max-w-xs" value={`${firstName} ${lastName}`} readOnly />
+                      <input
+                        type="text"
+                        className="border rounded px-3 py-2 w-full max-w-xs"
+                        value={`${firstName} ${lastName}`}
+                        readOnly
+                      />
                     </div>
                   </div>
                 </div>
                 <div className="flex justify-end">
-                  <button className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition">Save</button>
+                  <button className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition">
+                    Save
+                  </button>
                 </div>
               </div>
             )}
@@ -1298,170 +1642,295 @@ export const ProfileEdit = () => {
                 <h3 className="text-xl font-bold mb-4">Bank Details</h3>
                 {bankDetails ? (
                   isEditingBankDetails ? (
-                     <div className="bg-gray-50 rounded-xl p-4 mb-6 flex flex-col gap-4">
-                        <p className="text-gray-700">Edit your bank details below.</p>
+                    <div className="bg-gray-50 rounded-xl p-4 mb-6 flex flex-col gap-4">
+                      <p className="text-gray-700">
+                        Edit your bank details below.
+                      </p>
 
-                        <div className="flex flex-col md:flex-row gap-4">
-                            <div className="flex-1">
-                                <span className="block font-medium mb-1">Account Holder Name</span>
-                                <input type="text" className="border rounded px-3 py-2 w-full" value={accountHolderName} onChange={(e) => setAccountHolderName(e.target.value)} placeholder="Enter account holder name" />
-                            </div>
-                            <div className="flex-1">
-                                <span className="block font-medium mb-1">Account Number</span>
-                                <input type="text" className="border rounded px-3 py-2 w-full" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Enter account number" />
-                            </div>
+                      <div className="flex flex-col md:flex-row gap-4">
+                        <div className="flex-1">
+                          <span className="block font-medium mb-1">
+                            Account Holder Name
+                          </span>
+                          <input
+                            type="text"
+                            className="border rounded px-3 py-2 w-full"
+                            value={accountHolderName}
+                            onChange={(e) =>
+                              setAccountHolderName(e.target.value)
+                            }
+                            placeholder="Enter account holder name"
+                          />
                         </div>
-
-                        <div className="flex flex-col md:flex-row gap-4">
-                            <div className="flex-1">
-                                <span className="block font-medium mb-1">Bank</span>
-                                <div className="relative bank-dropdown-container flex items-center w-full">
-                                    <input
-                                        type="text"
-                                        className="border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#1E90FF] pr-8"
-                                        value={bankSearch}
-                                        onChange={handleBankInputChange}
-                                        placeholder="Select a bank"
-                                        onFocus={() => setIsBankDropdownOpen(true)}
-                                    />
-                                    {(bankSearch || selectedBankId) && (
-                                        <button
-                                            className="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
-                                            onClick={handleClearBankSelection}
-                                            type="button"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                        </button>
-                                    )}
-                                    {isBankDropdownOpen && filteredBanks.length > 0 && (
-                                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
-                                            <div className="max-h-60 overflow-y-auto">
-                                                {filteredBanks.map((bank) => (
-                                                    <div
-                                                        key={bank.id}
-                                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                                        onClick={() => handleBankSelect(bank)}
-                                                    >
-                                                        {bank.name}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {isBankDropdownOpen && filteredBanks.length === 0 && bankSearch.length > 0 && (
-                                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
-                                            <div className="px-4 py-2 text-gray-500">No banks found</div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="flex-1">
-                                <span className="block font-medium mb-1">Branch</span>
-                                <div className="relative branch-dropdown-container flex items-center w-full">
-                                    <input
-                                        type="text"
-                                        className="border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#1E90FF] pr-8"
-                                        value={branchSearch}
-                                        onChange={handleBranchInputChange}
-                                        placeholder="Select a branch"
-                                        onFocus={() => setIsBranchDropdownOpen(true)}
-                                    />
-                                     {(branchSearch || selectedBranchId) && (
-                                        <button
-                                            className="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
-                                            onClick={handleClearBranchSelection}
-                                            type="button"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                        </button>
-                                     )}
-                                     {isBranchDropdownOpen && filteredBranches.length > 0 && (
-                                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
-                                            <div className="max-h-60 overflow-y-auto">
-                                                {filteredBranches.map((branch) => (
-                                                    <div
-                                                        key={branch.id}
-                                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                                        onClick={() => handleBranchSelect(branch)}
-                                                    >
-                                                        {branch.branchName}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                    {isBranchDropdownOpen && filteredBranches.length === 0 && branchSearch.length > 0 && (
-                                        <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
-                                            <div className="px-4 py-2 text-gray-500">No branches found</div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+                        <div className="flex-1">
+                          <span className="block font-medium mb-1">
+                            Account Number
+                          </span>
+                          <input
+                            type="text"
+                            className="border rounded px-3 py-2 w-full"
+                            value={accountNumber}
+                            onChange={(e) => setAccountNumber(e.target.value)}
+                            placeholder="Enter account number"
+                          />
                         </div>
+                      </div>
 
-                        {bankDetailsError && <span className="text-red-500 text-sm">{bankDetailsError}</span>}
-                        {bankDetailsStatus && <span className="text-green-600 text-sm">{bankDetailsStatus}</span>}
-                         <div className="flex justify-end gap-4 mt-4">
-                            <button
-                                className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition"
-                                onClick={handleCancelEdit}
-                                disabled={savingBankDetails}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition"
-                                onClick={handleUpdateBankDetails}
-                                disabled={savingBankDetails}
-                            >
-                                {savingBankDetails ? "Updating..." : "Update Bank Details"}
-                            </button>
-                         </div>
-                     </div>
+                      <div className="flex flex-col md:flex-row gap-4">
+                        <div className="flex-1">
+                          <span className="block font-medium mb-1">Bank</span>
+                          <div className="relative bank-dropdown-container flex items-center w-full">
+                            <input
+                              type="text"
+                              className="border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#1E90FF] pr-8"
+                              value={bankSearch}
+                              onChange={handleBankInputChange}
+                              placeholder="Select a bank"
+                              onFocus={() => setIsBankDropdownOpen(true)}
+                            />
+                            {(bankSearch || selectedBankId) && (
+                              <button
+                                className="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
+                                onClick={handleClearBankSelection}
+                                type="button"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                  ></path>
+                                </svg>
+                              </button>
+                            )}
+                            {isBankDropdownOpen && filteredBanks.length > 0 && (
+                              <div
+                                className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg"
+                                style={{ top: "100%" }}
+                              >
+                                <div className="max-h-60 overflow-y-auto">
+                                  {filteredBanks.map((bank) => (
+                                    <div
+                                      key={bank.id}
+                                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                      onClick={() => handleBankSelect(bank)}
+                                    >
+                                      {bank.name}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {isBankDropdownOpen &&
+                              filteredBanks.length === 0 &&
+                              bankSearch.length > 0 && (
+                                <div
+                                  className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg"
+                                  style={{ top: "100%" }}
+                                >
+                                  <div className="px-4 py-2 text-gray-500">
+                                    No banks found
+                                  </div>
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <span className="block font-medium mb-1">Branch</span>
+                          <div className="relative branch-dropdown-container flex items-center w-full">
+                            <input
+                              type="text"
+                              className="border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#1E90FF] pr-8"
+                              value={branchSearch}
+                              onChange={handleBranchInputChange}
+                              placeholder="Select a branch"
+                              onFocus={() => setIsBranchDropdownOpen(true)}
+                            />
+                            {(branchSearch || selectedBranchId) && (
+                              <button
+                                className="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
+                                onClick={handleClearBranchSelection}
+                                type="button"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                  ></path>
+                                </svg>
+                              </button>
+                            )}
+                            {isBranchDropdownOpen &&
+                              filteredBranches.length > 0 && (
+                                <div
+                                  className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg"
+                                  style={{ top: "100%" }}
+                                >
+                                  <div className="max-h-60 overflow-y-auto">
+                                    {filteredBranches.map((branch) => (
+                                      <div
+                                        key={branch.id}
+                                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                        onClick={() =>
+                                          handleBranchSelect(branch)
+                                        }
+                                      >
+                                        {branch.branchName}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            {isBranchDropdownOpen &&
+                              filteredBranches.length === 0 &&
+                              branchSearch.length > 0 && (
+                                <div
+                                  className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg"
+                                  style={{ top: "100%" }}
+                                >
+                                  <div className="px-4 py-2 text-gray-500">
+                                    No branches found
+                                  </div>
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {bankDetailsError && (
+                        <span className="text-red-500 text-sm">
+                          {bankDetailsError}
+                        </span>
+                      )}
+                      {bankDetailsStatus && (
+                        <span className="text-green-600 text-sm">
+                          {bankDetailsStatus}
+                        </span>
+                      )}
+                      <div className="flex justify-end gap-4 mt-4">
+                        <button
+                          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition"
+                          onClick={handleCancelEdit}
+                          disabled={savingBankDetails}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition"
+                          onClick={handleUpdateBankDetails}
+                          disabled={savingBankDetails}
+                        >
+                          {savingBankDetails
+                            ? "Updating..."
+                            : "Update Bank Details"}
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     <div className="bg-gray-50 rounded-xl p-4 mb-6 flex flex-col gap-4">
                       <div className="flex flex-col md:flex-row gap-4">
                         <div className="flex-1">
-                          <span className="block font-medium mb-1">Account Holder Name</span>
-                          <input type="text" className="border rounded px-3 py-2 w-full" value={bankDetails.accountHolderName} readOnly />
+                          <span className="block font-medium mb-1">
+                            Account Holder Name
+                          </span>
+                          <input
+                            type="text"
+                            className="border rounded px-3 py-2 w-full"
+                            value={bankDetails.accountHolderName}
+                            readOnly
+                          />
                         </div>
                         <div className="flex-1">
-                          <span className="block font-medium mb-1">Account Number</span>
-                          <input type="text" className="border rounded px-3 py-2 w-full" value={bankDetails.accountNumber} readOnly />
+                          <span className="block font-medium mb-1">
+                            Account Number
+                          </span>
+                          <input
+                            type="text"
+                            className="border rounded px-3 py-2 w-full"
+                            value={bankDetails.accountNumber}
+                            readOnly
+                          />
                         </div>
                       </div>
                       <div className="flex flex-col md:flex-row gap-4">
                         <div className="flex-1">
-                          <span className="block font-medium mb-1">Bank Name</span>
-                          <input type="text" className="border rounded px-3 py-2 w-full" value={bankDetails.bankDto?.name || "N/A"} readOnly />
+                          <span className="block font-medium mb-1">
+                            Bank Name
+                          </span>
+                          <input
+                            type="text"
+                            className="border rounded px-3 py-2 w-full"
+                            value={bankDetails.bankDto?.name || "N/A"}
+                            readOnly
+                          />
                         </div>
                         <div className="flex-1">
-                          <span className="block font-medium mb-1">Branch Name</span>
-                          <input type="text" className="border rounded px-3 py-2 w-full" value={bankDetails.branchDto?.branchName || "N/A"} readOnly />
+                          <span className="block font-medium mb-1">
+                            Branch Name
+                          </span>
+                          <input
+                            type="text"
+                            className="border rounded px-3 py-2 w-full"
+                            value={bankDetails.branchDto?.branchName || "N/A"}
+                            readOnly
+                          />
                         </div>
                       </div>
-                       <div className="flex justify-end">
-                           <button
-                               className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition"
-                               onClick={() => setIsEditingBankDetails(true)}
-                           >
-                               Edit
-                           </button>
-                       </div>
+                      <div className="flex justify-end">
+                        <button
+                          className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition"
+                          onClick={() => setIsEditingBankDetails(true)}
+                        >
+                          Edit
+                        </button>
+                      </div>
                     </div>
                   )
                 ) : (
                   <div className="bg-gray-50 rounded-xl p-4 mb-6 flex flex-col gap-4">
-                    <p className="text-gray-700">No bank details found. Please add your bank details.</p>
+                    <p className="text-gray-700">
+                      No bank details found. Please add your bank details.
+                    </p>
 
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="flex-1">
-                        <span className="block font-medium mb-1">Account Holder Name</span>
-                        <input type="text" className="border rounded px-3 py-2 w-full" value={accountHolderName} onChange={(e) => setAccountHolderName(e.target.value)} placeholder="Enter account holder name" />
+                        <span className="block font-medium mb-1">
+                          Account Holder Name
+                        </span>
+                        <input
+                          type="text"
+                          className="border rounded px-3 py-2 w-full"
+                          value={accountHolderName}
+                          onChange={(e) => setAccountHolderName(e.target.value)}
+                          placeholder="Enter account holder name"
+                        />
                       </div>
                       <div className="flex-1">
-                        <span className="block font-medium mb-1">Account Number</span>
-                        <input type="text" className="border rounded px-3 py-2 w-full" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Enter account number" />
+                        <span className="block font-medium mb-1">
+                          Account Number
+                        </span>
+                        <input
+                          type="text"
+                          className="border rounded px-3 py-2 w-full"
+                          value={accountNumber}
+                          onChange={(e) => setAccountNumber(e.target.value)}
+                          placeholder="Enter account number"
+                        />
                       </div>
                     </div>
 
@@ -1483,11 +1952,22 @@ export const ProfileEdit = () => {
                               onClick={handleClearBankSelection}
                               type="button"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                viewBox="0 0 24 24"
+                              >
+                                <path d="M6 18L18 6M6 6l12 12"></path>
+                              </svg>
                             </button>
                           )}
                           {isBankDropdownOpen && filteredBanks.length > 0 && (
-                            <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
+                            <div
+                              className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg"
+                              style={{ top: "100%" }}
+                            >
                               <div className="max-h-60 overflow-y-auto">
                                 {filteredBanks.map((bank) => (
                                   <div
@@ -1501,59 +1981,98 @@ export const ProfileEdit = () => {
                               </div>
                             </div>
                           )}
-                            {isBankDropdownOpen && filteredBanks.length === 0 && bankSearch.length > 0 && (
-                                 <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
-                                      <div className="px-4 py-2 text-gray-500">No banks found</div>
-                                 </div>
+                          {isBankDropdownOpen &&
+                            filteredBanks.length === 0 &&
+                            bankSearch.length > 0 && (
+                              <div
+                                className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg"
+                                style={{ top: "100%" }}
+                              >
+                                <div className="px-4 py-2 text-gray-500">
+                                  No banks found
+                                </div>
+                              </div>
                             )}
                         </div>
                       </div>
                       <div className="flex-1">
                         <span className="block font-medium mb-1">Branch</span>
-                         <div className="relative branch-dropdown-container flex items-center w-full">
-                            <input
-                                type="text"
-                                className="border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#1E90FF] pr-8"
-                                value={branchSearch}
-                                onChange={handleBranchInputChange}
-                                placeholder="Select a branch"
-                                onFocus={() => setIsBranchDropdownOpen(true)}
-                             />
-                             {(branchSearch || selectedBranchId) && (
-                                <button
-                                    className="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
-                                    onClick={handleClearBranchSelection}
-                                    type="button"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                </button>
-                             )}
-                             {isBranchDropdownOpen && filteredBranches.length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
-                                    <div className="max-h-60 overflow-y-auto">
-                                        {filteredBranches.map((branch) => (
-                                            <div
-                                                key={branch.id}
-                                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                                onClick={() => handleBranchSelect(branch)}
-                                            >
-                                                {branch.branchName}
-                                            </div>
-                                        ))}
+                        <div className="relative branch-dropdown-container flex items-center w-full">
+                          <input
+                            type="text"
+                            className="border rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#1E90FF] pr-8"
+                            value={branchSearch}
+                            onChange={handleBranchInputChange}
+                            placeholder="Select a branch"
+                            onFocus={() => setIsBranchDropdownOpen(true)}
+                          />
+                          {(branchSearch || selectedBranchId) && (
+                            <button
+                              className="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
+                              onClick={handleClearBranchSelection}
+                              type="button"
+                            >
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M6 18L18 6M6 6l12 12"
+                                ></path>
+                              </svg>
+                            </button>
+                          )}
+                          {isBranchDropdownOpen &&
+                            filteredBranches.length > 0 && (
+                              <div
+                                className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg"
+                                style={{ top: "100%" }}
+                              >
+                                <div className="max-h-60 overflow-y-auto">
+                                  {filteredBranches.map((branch) => (
+                                    <div
+                                      key={branch.id}
+                                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                      onClick={() => handleBranchSelect(branch)}
+                                    >
+                                      {branch.branchName}
                                     </div>
+                                  ))}
                                 </div>
+                              </div>
                             )}
-                            {isBranchDropdownOpen && filteredBranches.length === 0 && branchSearch.length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg" style={{ top: '100%' }}>
-                                    <div className="px-4 py-2 text-gray-500">No branches found</div>
+                          {isBranchDropdownOpen &&
+                            filteredBranches.length === 0 &&
+                            branchSearch.length > 0 && (
+                              <div
+                                className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg"
+                                style={{ top: "100%" }}
+                              >
+                                <div className="px-4 py-2 text-gray-500">
+                                  No branches found
                                 </div>
+                              </div>
                             )}
-                         </div>
+                        </div>
                       </div>
                     </div>
 
-                    {bankDetailsError && <span className="text-red-500 text-sm">{bankDetailsError}</span>}
-                    {bankDetailsStatus && <span className="text-green-600 text-sm">{bankDetailsStatus}</span>}
+                    {bankDetailsError && (
+                      <span className="text-red-500 text-sm">
+                        {bankDetailsError}
+                      </span>
+                    )}
+                    {bankDetailsStatus && (
+                      <span className="text-green-600 text-sm">
+                        {bankDetailsStatus}
+                      </span>
+                    )}
                     <button
                       className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition"
                       onClick={handleSaveBankDetails}
@@ -1566,246 +2085,317 @@ export const ProfileEdit = () => {
               </div>
             )}
             {activeTab === "shipping-address" && (
-                <div>
-                    <h3 className="text-xl font-bold mb-6">Shipping Addresses</h3>
-                    {shippingAddressStatus && (
-                      <div className="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-300 text-center font-medium">
-                        {shippingAddressStatus}
+              <div>
+                <h3 className="text-xl font-bold mb-6">Shipping Addresses</h3>
+                {shippingAddressStatus && (
+                  <div className="mb-4 p-3 rounded bg-green-100 text-green-800 border border-green-300 text-center font-medium">
+                    {shippingAddressStatus}
+                  </div>
+                )}
+                {shippingAddresses.length === 0 &&
+                !isAddingShippingAddress &&
+                !editingAddressId ? (
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-600">
+                      No shipping addresses found.
+                    </p>
+                    <button
+                      type="button"
+                      className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mt-2"
+                      onClick={handleAddShippingAddressClick}
+                    >
+                      Add Shipping Address
+                    </button>
+                  </div>
+                ) : isAddingShippingAddress || editingAddressId ? (
+                  <div className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
+                    <div className="sm:col-span-6">
+                      <label
+                        htmlFor="address"
+                        className="block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Street address
+                      </label>
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          name="address"
+                          id="address"
+                          value={
+                            isAddingShippingAddress
+                              ? newShippingAddress.address
+                              : editingShippingAddress?.address || ""
+                          }
+                          onChange={handleInputChange}
+                          autoComplete="street-address"
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                          required
+                        />
                       </div>
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label
+                        htmlFor="name"
+                        className="block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Name
+                      </label>
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          name="name"
+                          id="name"
+                          value={
+                            isAddingShippingAddress
+                              ? newShippingAddress.name
+                              : editingShippingAddress?.name || ""
+                          }
+                          onChange={handleInputChange}
+                          autoComplete="name"
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label
+                        htmlFor="mobileNumber"
+                        className="block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Mobile Number
+                      </label>
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          name="mobileNumber"
+                          id="mobileNumber"
+                          value={
+                            isAddingShippingAddress
+                              ? newShippingAddress.mobileNumber
+                              : editingShippingAddress?.mobileNumber || ""
+                          }
+                          onChange={handleInputChange}
+                          autoComplete="tel"
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-3 sm:col-start-1">
+                      <label
+                        htmlFor="province"
+                        className="block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        Province
+                      </label>
+                      <div className="mt-2">
+                        <select
+                          name="province"
+                          id="province"
+                          value={
+                            isAddingShippingAddress
+                              ? newShippingAddress.province
+                              : editingShippingAddress?.province || ""
+                          }
+                          onChange={handleInputChange}
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                          autoComplete="address-level1"
+                          required
+                        >
+                          <option value="" disabled>
+                            Select Province
+                          </option>
+                          {provinceDistrictData.map((p) => (
+                            <option key={p.province} value={p.province}>
+                              {p.province}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label
+                        htmlFor="district"
+                        className="block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        District
+                      </label>
+                      <div className="mt-2">
+                        <select
+                          name="district"
+                          id="district"
+                          value={
+                            isAddingShippingAddress
+                              ? newShippingAddress.district
+                              : editingShippingAddress?.district || ""
+                          }
+                          onChange={handleInputChange}
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                          autoComplete="address-level2"
+                          required
+                          disabled={
+                            !(isAddingShippingAddress
+                              ? newShippingAddress.province
+                              : editingShippingAddress?.province)
+                          }
+                        >
+                          <option value="" disabled>
+                            Select District
+                          </option>
+                          {filteredDistricts.map((d) => (
+                            <option key={d} value={d}>
+                              {d}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-2 sm:col-start-1">
+                      <label
+                        htmlFor="postal-code"
+                        className="block text-sm font-medium leading-6 text-gray-900"
+                      >
+                        ZIP / Postal code
+                      </label>
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          name="postalCode"
+                          id="postal-code"
+                          value={
+                            isAddingShippingAddress
+                              ? newShippingAddress.postalCode
+                              : editingShippingAddress?.postalCode || ""
+                          }
+                          onChange={handleInputChange}
+                          autoComplete="postal-code"
+                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-6">
+                      <div className="relative flex items-start">
+                        <div className="flex h-6 items-center">
+                          <input
+                            id="isPrimary"
+                            name="isPrimary"
+                            type="checkbox"
+                            checked={
+                              isAddingShippingAddress
+                                ? newShippingAddress.isPrimary
+                                : editingShippingAddress?.isPrimary || false
+                            }
+                            onChange={handleCheckboxChange}
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                          />
+                        </div>
+                        <div className="ml-3 text-sm leading-6">
+                          <label
+                            htmlFor="isPrimary"
+                            className="font-medium text-gray-900"
+                          >
+                            Set as Primary Address
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-6 mt-4">
+                      {isAddingShippingAddress ? (
+                        <button
+                          type="button"
+                          className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2"
+                          onClick={handleSaveNewShippingAddress}
+                        >
+                          Save Shipping Address
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2"
+                          onClick={handleUpdateShippingAddress}
+                        >
+                          Update Shipping Address
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="rounded-md bg-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-400"
+                        onClick={
+                          isAddingShippingAddress
+                            ? handleCancelAddShippingAddress
+                            : handleCancelEditShippingAddress
+                        }
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // Display list of addresses
+                  <div className="mt-4">
+                    {shippingAddresses.map((address) => (
+                      <div
+                        key={address.id}
+                        className="border rounded-md p-3 mb-4"
+                      >
+                        <p className="text-base font-semibold text-gray-900">
+                          {address.name}
+                        </p>
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-4 flex-wrap">
+                            <div>
+                              <p className="text-sm text-gray-700">
+                                {address.address}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {address.district}, {address.province},{" "}
+                                {address.postalCode}
+                              </p>
+                            </div>
+                            {address.isPrimary && (
+                              <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                Primary
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ml-4 flex-shrink-0"
+                            onClick={() =>
+                              handleEditShippingAddressClick(address)
+                            }
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {!isAddingShippingAddress && !editingAddressId && (
+                      <button
+                        type="button"
+                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mt-2"
+                        onClick={handleAddShippingAddressClick}
+                      >
+                        Add New Shipping Address
+                      </button>
                     )}
-                    {shippingAddresses.length === 0 && !isAddingShippingAddress && !editingAddressId ? (
-                        <div className="mt-4">
-                            <p className="text-sm text-gray-600">No shipping addresses found.</p>
-                            <button
-                                type="button"
-                                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mt-2"
-                                onClick={handleAddShippingAddressClick}
-                            >
-                                Add Shipping Address
-                            </button>
-                        </div>
-                    ) : isAddingShippingAddress || editingAddressId ? (
-                        <div className="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
-                            <div className="sm:col-span-6">
-                                <label htmlFor="address" className="block text-sm font-medium leading-6 text-gray-900">
-                                    Street address
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        type="text"
-                                        name="address"
-                                        id="address"
-                                        value={isAddingShippingAddress ? newShippingAddress.address : editingShippingAddress?.address || ""}
-                                        onChange={handleInputChange}
-                                        autoComplete="street-address"
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3" required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="sm:col-span-3">
-                                <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
-                                    Name
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        type="text"
-                                        name="name"
-                                        id="name"
-                                        value={isAddingShippingAddress ? newShippingAddress.name : editingShippingAddress?.name || ""}
-                                        onChange={handleInputChange}
-                                        autoComplete="name"
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="sm:col-span-3">
-                                <label htmlFor="mobileNumber" className="block text-sm font-medium leading-6 text-gray-900">
-                                    Mobile Number
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        type="text"
-                                        name="mobileNumber"
-                                        id="mobileNumber"
-                                        value={isAddingShippingAddress ? newShippingAddress.mobileNumber : editingShippingAddress?.mobileNumber || ""}
-                                        onChange={handleInputChange}
-                                        autoComplete="tel"
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="sm:col-span-3 sm:col-start-1">
-                                <label htmlFor="province" className="block text-sm font-medium leading-6 text-gray-900">
-                                    Province
-                                </label>
-                                <div className="mt-2 relative">
-                                    <input
-                                        type="text"
-                                        name="province"
-                                        id="province"
-                                        value={isAddingShippingAddress ? newShippingAddress.province : editingShippingAddress?.province || ""}
-                                        onChange={handleInputChange}
-                                        onFocus={() => setShowProvinceDropdown(true)}
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"required
-                                        autoComplete="address-level1"
-                                    />
-                                    {showProvinceDropdown && filteredProvinces.length > 0 && (
-                                        <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                                            {filteredProvinces.map((province) => (
-                                                <li
-                                                    key={province}
-                                                    className="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-indigo-600 hover:text-white"
-                                                    onClick={() => handleProvinceSelect(province)}
-                                                >
-                                                    {province}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="sm:col-span-3">
-                                <label htmlFor="district" className="block text-sm font-medium leading-6 text-gray-900">
-                                    District
-                                </label>
-                                <div className="mt-2 relative">
-                                    <input
-                                        type="text"
-                                        name="district"
-                                        id="district"
-                                        value={isAddingShippingAddress ? newShippingAddress.district : editingShippingAddress?.district || ""}
-                                        onChange={handleInputChange}
-                                        onFocus={() => setShowDistrictDropdown(true)}
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"required
-                                        autoComplete="address-level2"
-                                    />
-                                    {showDistrictDropdown && filteredDistricts.length > 0 && (
-                                        <ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                                            {filteredDistricts.map((district) => (
-                                                <li
-                                                    key={district}
-                                                    className="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900 hover:bg-indigo-600 hover:text-white"
-                                                    onClick={() => handleDistrictSelect(district)}
-                                                >
-                                                    {district}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="sm:col-span-2 sm:col-start-1">
-                                <label htmlFor="postal-code" className="block text-sm font-medium leading-6 text-gray-900">
-                                    ZIP / Postal code
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        type="text"
-                                        name="postalCode"
-                                        id="postal-code"
-                                        value={isAddingShippingAddress ? newShippingAddress.postalCode : editingShippingAddress?.postalCode || ""}
-                                        onChange={handleInputChange}
-                                        autoComplete="postal-code"
-                                        className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 pl-3"required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="sm:col-span-6">
-                                <div className="relative flex items-start">
-                                    <div className="flex h-6 items-center">
-                                        <input
-                                            id="isPrimary"
-                                            name="isPrimary"
-                                            type="checkbox"
-                                            checked={isAddingShippingAddress ? newShippingAddress.isPrimary : editingShippingAddress?.isPrimary || false}
-                                            onChange={handleCheckboxChange}
-                                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                        />
-                                    </div>
-                                    <div className="ml-3 text-sm leading-6">
-                                        <label htmlFor="isPrimary" className="font-medium text-gray-900">
-                                            Set as Primary Address
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="sm:col-span-6 mt-4">
-                                {isAddingShippingAddress ? (
-                                    <button
-                                        type="button"
-                                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2"
-                                        onClick={handleSaveNewShippingAddress}
-                                    >
-                                        Save Shipping Address
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2"
-                                        onClick={handleUpdateShippingAddress}
-                                    >
-                                        Update Shipping Address
-                                    </button>
-                                )}
-                                <button
-                                    type="button"
-                                    className="rounded-md bg-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-400"
-                                    onClick={isAddingShippingAddress ? handleCancelAddShippingAddress : handleCancelEditShippingAddress}
-                                >
-                                    Cancel
-                                </button>
-                            </div>
-                        </div>
-                    ) : ( // Display list of addresses
-                        <div className="mt-4">
-                            {shippingAddresses.map((address) => (
-                                <div key={address.id} className="border rounded-md p-3 mb-4">
-                                    <p className="text-base font-semibold text-gray-900">{address.name}</p>
-                                    <div className="flex justify-between items-center">
-                                        <div className="flex items-center gap-4 flex-wrap">
-                                            <div>
-                                                <p className="text-sm text-gray-700">{address.address}</p>
-                                                <p className="text-sm text-gray-600">{address.district}, {address.province}, {address.postalCode}</p>
-                                            </div>
-                                            {address.isPrimary && (
-                                                <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                                                    Primary
-                                                 </span>
-                                             )}
-                                        </div>
-                                        <button
-                                            type="button"
-                                            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ml-4 flex-shrink-0"
-                                            onClick={() => handleEditShippingAddressClick(address)}
-                                        >
-                                            Edit
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                             {!isAddingShippingAddress && !editingAddressId && (
-                                <button
-                                    type="button"
-                                    className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mt-2"
-                                    onClick={handleAddShippingAddressClick}
-                                >
-                                    Add New Shipping Address
-                                </button>
-                             )}
-                        </div>
-                    )}
-                </div>
+                  </div>
+                )}
+              </div>
             )}
             {activeTab === "privacy" && (
               <div>
-                <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-900">Privacy settings</h3>
+                <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-900">
+                  Privacy settings
+                </h3>
                 <div className="bg-white/80 backdrop-blur rounded-xl shadow p-2 md:p-4 flex flex-col gap-3 md:gap-4">
                   <style>{`
                     .toggle-switch {
@@ -1844,8 +2434,15 @@ export const ProfileEdit = () => {
                   `}</style>
                   <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-gradient-to-r from-[#f3f6fd] to-[#eaf1fb] shadow-sm">
                     <div>
-                      <span className="block font-semibold text-gray-900">Feature my items in marketing campaigns for a chance to sell faster</span>
-                      <span className="block text-gray-500 text-sm">This allows to showcase my items on social media and other websites. The increased visibility could lead to quicker sales.</span>
+                      <span className="block font-semibold text-gray-900">
+                        Feature my items in marketing campaigns for a chance to
+                        sell faster
+                      </span>
+                      <span className="block text-gray-500 text-sm">
+                        This allows to showcase my items on social media and
+                        other websites. The increased visibility could lead to
+                        quicker sales.
+                      </span>
                     </div>
                     <label className="toggle-switch">
                       <input type="checkbox" defaultChecked />
@@ -1853,54 +2450,86 @@ export const ProfileEdit = () => {
                     </label>
                   </div>
                   <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-gradient-to-r from-[#f3f6fd] to-[#eaf1fb] shadow-sm">
-                    <span className="font-semibold text-gray-900">Notify owners when I favourite their items</span>
+                    <span className="font-semibold text-gray-900">
+                      Notify owners when I favourite their items
+                    </span>
                     <label className="toggle-switch">
                       <input type="checkbox" defaultChecked />
                       <span className="slider"></span>
                     </label>
                   </div>
                   <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-gradient-to-r from-[#f3f6fd] to-[#eaf1fb] shadow-sm">
-                    <span className="font-semibold text-gray-900">Allow third-party tracking</span>
+                    <span className="font-semibold text-gray-900">
+                      Allow third-party tracking
+                    </span>
                     <label className="toggle-switch">
                       <input type="checkbox" defaultChecked />
                       <span className="slider"></span>
                     </label>
                   </div>
                   <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-gradient-to-r from-[#f3f6fd] to-[#eaf1fb] shadow-sm min-h-[64px]">
-                    <span className="font-semibold text-gray-900 flex-1">Allow E-Com to personalise my feed and search results by evaluating my preferences, settings, previous purchases and usage of E-Com website and app</span>
+                    <span className="font-semibold text-gray-900 flex-1">
+                      Allow E-Com to personalise my feed and search results by
+                      evaluating my preferences, settings, previous purchases
+                      and usage of E-Com website and app
+                    </span>
                     <label className="toggle-switch self-center">
                       <input type="checkbox" defaultChecked />
                       <span className="slider"></span>
                     </label>
                   </div>
                   <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-gradient-to-r from-[#f3f6fd] to-[#eaf1fb] shadow-sm">
-                    <span className="font-semibold text-gray-900">Allow E-Com to display my recently viewed items on my Homepage.</span>
+                    <span className="font-semibold text-gray-900">
+                      Allow E-Com to display my recently viewed items on my
+                      Homepage.
+                    </span>
                     <label className="toggle-switch">
                       <input type="checkbox" defaultChecked />
                       <span className="slider"></span>
                     </label>
                   </div>
                   <div className="flex flex-col gap-1 p-3 rounded-lg bg-gradient-to-r from-[#f3f6fd] to-[#eaf1fb] shadow-sm">
-                    <span className="block font-semibold text-gray-900">Download account data</span>
-                    <span className="block text-gray-500 text-sm">Request a copy of your E-Com account data.</span>
+                    <span className="block font-semibold text-gray-900">
+                      Download account data
+                    </span>
+                    <span className="block text-gray-500 text-sm">
+                      Request a copy of your E-Com account data.
+                    </span>
                   </div>
                 </div>
               </div>
             )}
             {activeTab === "security" && !securityPage && (
               <div>
-                <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-900">Keep your account secure</h3>
+                <h3 className="text-xl md:text-2xl font-bold mb-4 text-gray-900">
+                  Keep your account secure
+                </h3>
                 <div className="bg-white/80 backdrop-blur rounded-xl shadow p-2 md:p-4 flex flex-col gap-3 md:gap-4">
                   <button
                     onClick={() => setSecurityPage("confirm")}
                     className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-[#f3f6fd] to-[#eaf1fb] shadow-sm hover:shadow-md border border-transparent hover:border-[#1E90FF] transition group focus:outline-none focus:ring-2 focus:ring-[#1E90FF]"
                   >
                     <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#1E90FF]/10 text-[#1E90FF] text-lg">
-                      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M16 12v1a4 4 0 0 1-8 0v-1"/><path d="M12 16v2"/><circle cx="12" cy="8" r="4"/></svg>
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M16 12v1a4 4 0 0 1-8 0v-1" />
+                        <path d="M12 16v2" />
+                        <circle cx="12" cy="8" r="4" />
+                      </svg>
                     </span>
                     <span className="flex-1 text-left">
-                      <span className="block text-base font-semibold text-[#1E90FF] group-hover:underline">Confirm change</span>
-                      <span className="block text-gray-500 text-sm">Keep your email up to date.</span>
+                      <span className="block text-base font-semibold text-[#1E90FF] group-hover:underline">
+                        Confirm change
+                      </span>
+                      <span className="block text-gray-500 text-sm">
+                        Keep your email up to date.
+                      </span>
                     </span>
                   </button>
                   <button
@@ -1908,20 +2537,49 @@ export const ProfileEdit = () => {
                     className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-[#f3f6fd] to-[#eaf1fb] shadow-sm hover:shadow-md border border-transparent hover:border-[#1E90FF] transition group focus:outline-none focus:ring-2 focus:ring-[#1E90FF]"
                   >
                     <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#1E90FF]/10 text-[#1E90FF] text-lg">
-                      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <rect x="3" y="11" width="18" height="11" rx="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
                     </span>
                     <span className="flex-1 text-left">
-                      <span className="block text-base font-semibold text-[#1E90FF] group-hover:underline">Password</span>
-                      <span className="block text-gray-500 text-sm">Protect your account with a stronger password.</span>
+                      <span className="block text-base font-semibold text-[#1E90FF] group-hover:underline">
+                        Password
+                      </span>
+                      <span className="block text-gray-500 text-sm">
+                        Protect your account with a stronger password.
+                      </span>
                     </span>
                   </button>
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-[#f3f6fd] to-[#eaf1fb] shadow-sm border border-transparent">
                     <span className="flex items-center justify-center w-8 h-8 rounded-full bg-[#1E90FF]/10 text-[#1E90FF] text-lg">
-                      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 19v-6"/><circle cx="12" cy="7" r="4"/><path d="M5 21h14"/></svg>
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 19v-6" />
+                        <circle cx="12" cy="7" r="4" />
+                        <path d="M5 21h14" />
+                      </svg>
                     </span>
                     <span className="flex-1 text-left">
-                      <span className="block text-base font-semibold text-[#1E90FF] group-hover:underline">2-step verification</span>
-                      <span className="block text-gray-500 text-sm">Confirm new logins with a 6-digit code.</span>
+                      <span className="block text-base font-semibold text-[#1E90FF] group-hover:underline">
+                        2-step verification
+                      </span>
+                      <span className="block text-gray-500 text-sm">
+                        Confirm new logins with a 6-digit code.
+                      </span>
                     </span>
                     {user?.twoStepVerification === true ? (
                       <button
@@ -1932,7 +2590,7 @@ export const ProfileEdit = () => {
                       </button>
                     ) : (
                       <button
-                        onClick={() => setSecurityPage('verify')}
+                        onClick={() => setSecurityPage("verify")}
                         className="ml-4 px-4 py-2 rounded bg-[#1E90FF] text-white font-semibold transition"
                       >
                         Enable
@@ -1943,37 +2601,44 @@ export const ProfileEdit = () => {
               </div>
             )}
             {activeTab === "security" && securityPage === "confirm" && (
-              <ConfirmChange onBack={() => setSecurityPage(null)} userEmail={email} />
+              <ConfirmChange
+                onBack={() => setSecurityPage(null)}
+                userEmail={email}
+              />
             )}
             {activeTab === "security" && securityPage === "password" && (
               <ChangePassword onBack={() => setSecurityPage(null)} />
             )}
-            {activeTab === "security" && securityPage === "verify" && !securitySubPage && (
-              <VerifyPhone
-                onBack={() => setSecurityPage(null)}
-                onSwitchToEmail={() => setSecuritySubPage("email")}
-                userEmail={email}
-                onEnableTwoStep={() => {
-                  setUser(prev => ({ ...prev, twoStepVerification: true }));
-                  setShippingAddressStatus("Two-step verification enabled.");
-                  setTimeout(() => setShippingAddressStatus(""), 3000);
-                  setSecurityPage(null);
-                }}
-              />
-            )}
-            {activeTab === "security" && securityPage === "verify" && securitySubPage === "email" && (
-              <VerifyEmail
-                onBack={() => setSecuritySubPage(null)}
-                onSwitchToPhone={() => setSecuritySubPage(null)}
-                userEmail={email}
-                onEnableTwoStep={() => {
-                  setUser(prev => ({ ...prev, twoStepVerification: true }));
-                  setShippingAddressStatus("Two-step verification enabled.");
-                  setTimeout(() => setShippingAddressStatus(""), 3000);
-                  setSecurityPage(null);
-                }}
-              />
-            )}
+            {activeTab === "security" &&
+              securityPage === "verify" &&
+              !securitySubPage && (
+                <VerifyPhone
+                  onBack={() => setSecurityPage(null)}
+                  onSwitchToEmail={() => setSecuritySubPage("email")}
+                  userEmail={email}
+                  onEnableTwoStep={() => {
+                    setUser((prev) => ({ ...prev, twoStepVerification: true }));
+                    setShippingAddressStatus("Two-step verification enabled.");
+                    setTimeout(() => setShippingAddressStatus(""), 3000);
+                    setSecurityPage(null);
+                  }}
+                />
+              )}
+            {activeTab === "security" &&
+              securityPage === "verify" &&
+              securitySubPage === "email" && (
+                <VerifyEmail
+                  onBack={() => setSecuritySubPage(null)}
+                  onSwitchToPhone={() => setSecuritySubPage(null)}
+                  userEmail={email}
+                  onEnableTwoStep={() => {
+                    setUser((prev) => ({ ...prev, twoStepVerification: true }));
+                    setShippingAddressStatus("Two-step verification enabled.");
+                    setTimeout(() => setShippingAddressStatus(""), 3000);
+                    setSecurityPage(null);
+                  }}
+                />
+              )}
           </section>
         </div>
       </main>
@@ -1982,4 +2647,4 @@ export const ProfileEdit = () => {
   );
 };
 
-export default ProfileEdit; 
+export default ProfileEdit;

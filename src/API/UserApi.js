@@ -237,6 +237,32 @@ export const registerUser = async (userData) => {
     }
 };
 
+export const changePassword = async (changePasswordDto) => {
+    try {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+            return { errorDescription: "Authentication required. Please login again." };
+        }
+        const response = await axios.put(
+            `${BASE_BACKEND_URL}/user/changePassword`,
+            changePasswordDto,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        return {
+            errorDescription: error.response?.data?.message ||
+                error.response?.data?.errorDescription ||
+                "An error occurred while changing the password. Please try again."
+        };
+    }
+};
+
 export function decodeJwt(token) {
     try {
         return JSON.parse(atob(token.split('.')[1]));

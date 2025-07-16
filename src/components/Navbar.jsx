@@ -9,6 +9,7 @@ import { searchProducts } from "../API/productApi";
 import { debounce } from "lodash";
 import "../styles/Navbar.css";
 import CategoryDropdownRecursive from "./CategoryDropdownRecursive";
+import { useMessageContext } from '../utils/MessageContext.jsx';
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -30,6 +31,8 @@ export const Navbar = () => {
   const location = useLocation();
   const isDashboardPage = location.pathname === '/admin/dashboard';
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
+  const { getMessages } = useMessageContext();
+  const [showMessages, setShowMessages] = useState(false);
 
   // Debounced search function
   const debouncedSearch = useRef(
@@ -502,6 +505,43 @@ export const Navbar = () => {
             Sell now
           </button>
         </div>
+
+        {/* Message Icon */}
+        {user && (
+          <div className="relative">
+            <button
+              className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 focus:outline-none"
+              onClick={() => setShowMessages((v) => !v)}
+              aria-label="Messages"
+              style={{ marginRight: 8 }}
+            >
+              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+              {getMessages(user.id).length > 0 && (
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                  {getMessages(user.id).length}
+                </span>
+              )}
+            </button>
+            {showMessages && (
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
+                <div className="p-4">
+                  <h4 className="font-semibold mb-2">Messages</h4>
+                  {getMessages(user.id).length === 0 ? (
+                    <div className="text-gray-500 text-sm">No messages</div>
+                  ) : (
+                    <ul className="space-y-2 max-h-48 overflow-y-auto">
+                      {getMessages(user.id).map((msg, idx) => (
+                        <li key={idx} className="text-gray-800 text-sm bg-gray-100 rounded px-2 py-1">{msg}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Mobile Menu Button */}
         <button

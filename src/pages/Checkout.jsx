@@ -10,6 +10,104 @@ import { decodeJwt } from "../API/UserApi";
 import { getUserByEmail } from "../API/config";
 import provinceDistrictData from "../utils/provinceDistrictData";
 import { extractArray } from "../utils/extractArray";
+import { useMessageContext } from '../utils/MessageContext.jsx';
+import Modal from '../components/Modal';
+import { FaRegCreditCard, FaRegUser, FaCheckCircle, FaExclamationCircle, FaRegQuestionCircle } from 'react-icons/fa';
+
+const PaymentDetails = ({ userId, onSuccess, onError, onClose }) => {
+  const { addMessage } = useMessageContext();
+  const navigate = useNavigate();
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [cvc, setCvc] = useState('');
+  const [cardholder, setCardholder] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  // Get product info for message
+  const product = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('checkoutProduct'));
+    } catch {
+      return null;
+    }
+  })[0];
+  const orderTotal = product ? (product.price * (product.quantity || 1)).toFixed(2) : '';
+  const productTitle = product ? (product.title.length > 20 ? product.title.slice(0, 20) + '…' : product.title) : '';
+
+  const allFilled = cardNumber && expiry && cvc && cardholder;
+
+  const handleTrue = () => {
+    if (allFilled) {
+      const msg = `Your order placed successfully`;
+      setSuccessMsg(msg);
+      setErrorMsg('');
+      addMessage(userId, msg);
+      if (onSuccess) onSuccess();
+      setTimeout(() => {
+        navigate('#');
+      }, 1500);
+    }
+  };
+
+  const handleFalse = () => {
+    setErrorMsg('Payment failed. Please check your details.');
+    setSuccessMsg('');
+    if (onError) onError();
+  };
+
+  return (
+    <div style={{ minWidth: 340, maxWidth: 400, margin: '0 auto', background: '#fff', borderRadius: 16, boxShadow: '0 2px 16px rgba(30,144,255,0.08)', padding: 32, position: 'relative' }}>
+      <h2 style={{ fontWeight: 700, fontSize: 24, marginBottom: 20, color: '#1E90FF', textAlign: 'center', letterSpacing: 0.5 }}>Payment Details</h2>
+      <form autoComplete="off" onSubmit={e => e.preventDefault()}>
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontWeight: 600, color: '#333', display: 'block', marginBottom: 6 }}>Card Number</label>
+          <div style={{ position: 'relative' }}>
+            <input type="text" value={cardNumber} onChange={e => setCardNumber(e.target.value)} placeholder="Card Number" maxLength={19} style={{ width: '100%', padding: '10px 36px 10px 12px', border: '1.5px solid #d1e6fa', borderRadius: 8, fontSize: 16, outline: 'none', transition: 'border 0.2s' }} />
+            <FaRegCreditCard style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#1E90FF', fontSize: 20 }} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ fontWeight: 600, color: '#333', display: 'block', marginBottom: 6 }}>Expiry</label>
+            <input type="text" value={expiry} onChange={e => setExpiry(e.target.value)} placeholder="MM / YY" maxLength={7} style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #d1e6fa', borderRadius: 8, fontSize: 16, outline: 'none', transition: 'border 0.2s' }} />
+          </div>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <label style={{ fontWeight: 600, color: '#333', display: 'block', marginBottom: 6 }}>CVC</label>
+            <input type="text" value={cvc} onChange={e => setCvc(e.target.value)} placeholder="CVC" maxLength={4} style={{ width: '100%', padding: '10px 36px 10px 12px', border: '1.5px solid #d1e6fa', borderRadius: 8, fontSize: 16, outline: 'none', transition: 'border 0.2s' }} />
+            <FaRegQuestionCircle style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#1E90FF', fontSize: 18 }} />
+          </div>
+        </div>
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontWeight: 600, color: '#333', display: 'block', marginBottom: 6 }}>Cardholder Name</label>
+          <div style={{ position: 'relative' }}>
+            <input type="text" value={cardholder} onChange={e => setCardholder(e.target.value)} placeholder="Cardholder Name" style={{ width: '100%', padding: '10px 36px 10px 12px', border: '1.5px solid #d1e6fa', borderRadius: 8, fontSize: 16, outline: 'none', transition: 'border 0.2s' }} />
+            <FaRegUser style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', color: '#1E90FF', fontSize: 20 }} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
+          <button type="button" onClick={handleTrue} disabled={!allFilled} style={{ flex: 1, background: allFilled ? '#1E90FF' : '#b3d8fd', color: '#fff', padding: '12px 0', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 16, boxShadow: allFilled ? '0 2px 8px rgba(30,144,255,0.08)' : 'none', transition: 'background 0.2s' }}>
+            
+            Pay Now</button>
+          <button type="button" onClick={handleFalse} className="px-4 py-2 border border-[#1E90FF] text-[#1E90FF] rounded hover:bg-[#e6f2ff] transition-colors"
+          >Cancel</button>
+        </div>
+      </form>
+      {successMsg && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#1E90FF', background: '#e6f7ff', borderRadius: 8, padding: '12px 16px', fontWeight: 600, marginBottom: 8, marginTop: 8, fontSize: 16 }}>
+          <FaCheckCircle style={{ color: '#43a047', fontSize: 22 }} />
+          {successMsg}
+        </div>
+      )}
+      {errorMsg && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f44336', background: '#ffebee', borderRadius: 8, padding: '12px 16px', fontWeight: 600, marginBottom: 8, marginTop: 8, fontSize: 16 }}>
+          <FaExclamationCircle style={{ color: '#f44336', fontSize: 22 }} />
+          {errorMsg}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Checkout = () => {
   const { id } = useParams();
@@ -36,6 +134,8 @@ const Checkout = () => {
   const [phoneError, setPhoneError] = useState("");
   const [brands, setBrands] = useState([]);
   const [conditions, setConditions] = useState([]);
+  const [showPayment, setShowPayment] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   // Fetch product if not in state
   useEffect(() => {
@@ -142,6 +242,19 @@ const Checkout = () => {
 
   useEffect(() => {
     fetchAndSetPrimaryAddress();
+    // Get userId for payment context
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      try {
+        const decoded = decodeJwt(token);
+        const email = decoded?.sub;
+        if (email) {
+          getUserByEmail(email).then(userObj => {
+            if (userObj && userObj.id) setUserId(userObj.id);
+          });
+        }
+      } catch (e) { setUserId(null); }
+    }
   }, []);
 
   // When addressForm or its province changes, update districts
@@ -553,7 +666,7 @@ const Checkout = () => {
             </div>
 
             {orderError && <div className="text-red-500 text-sm mt-2">{orderError}</div>}
-            {orderSuccess && <div className="text-green-600 text-sm mt-2">Order placed successfully! Redirecting...</div>}
+            {orderSuccess && <div className="text-green-600 text-sm mt-2">Your order placed successfully! Redirecting...</div>}
           </div>
 
           {/* Order Summary */}
@@ -574,7 +687,7 @@ const Checkout = () => {
               </div>
               <button
                 className="w-full bg-[#1E90FF] text-white py-3 rounded-lg font-bold hover:bg-[#1876cc] transition-colors mt-4 disabled:opacity-50"
-                onClick={handleOrder}
+                onClick={() => setShowPayment(true)}
                 disabled={orderLoading || !address?.id}
               >
                 {orderLoading ? 'Placing Order...' : 'Confirm and Pay'}
@@ -588,7 +701,7 @@ const Checkout = () => {
       {showAddressModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-transparent"
-          onClick={() => setShowAddressModal(false)}
+          onClick={() => setShowAddressModal(false)}L
         >
           <div
             className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 relative border border-gray-200"
@@ -619,6 +732,16 @@ const Checkout = () => {
           </div>
         </div>
       )}
+      <Modal open={showPayment} onClose={() => setShowPayment(false)}>
+        {userId && (
+          <PaymentDetails
+            userId={userId}
+            onSuccess={() => {}}
+            onError={() => {}}
+            onClose={() => { setShowPayment(false); }}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

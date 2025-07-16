@@ -22,10 +22,11 @@ import { DashboardAdmin } from "./pages/DashboardAdmin";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import CategoryProducts from "./pages/CategoryProducts";
 import Checkout from "./pages/Checkout";
+import { MessageProvider } from "./utils/MessageContext.jsx";
 
 function App() {
   return (
-    <>
+    <MessageProvider>
       <BrowserRouter>
         <Routes>
           <Route index element={<Home />} />
@@ -59,7 +60,7 @@ function App() {
         <Route path="/category/:categoryId" element={<CategoryProducts />} />
         </Routes>
       </BrowserRouter>
-    </>
+    </MessageProvider>
   );
 }
 

@@ -956,30 +956,22 @@ export const ProfileEdit = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (isAddingShippingAddress) {
-      setNewShippingAddress({
-        ...newShippingAddress,
-        [name]: value,
-      });
-    } else if (editingAddressId) {
-      setEditingShippingAddress({
-        ...editingShippingAddress,
-        [name]: value,
-      });
-    }
-
-    if (name === "district") {
-      const filtered = districts.filter((d) =>
-        d.toLowerCase().includes(value.toLowerCase())
-      );
-      setFilteredDistricts(filtered);
-      setShowDistrictDropdown(true);
-    } else if (name === "province") {
-      const filtered = provinces.filter((p) =>
-        p.toLowerCase().includes(value.toLowerCase())
-      );
-      setFilteredProvinces(filtered);
-      setShowProvinceDropdown(true);
+    if (name === "province") {
+      handleProvinceSelect(value);
+    } else if (name === "district") {
+      handleDistrictSelect(value);
+    } else {
+      if (isAddingShippingAddress) {
+        setNewShippingAddress({
+          ...newShippingAddress,
+          [name]: value,
+        });
+      } else if (editingAddressId) {
+        setEditingShippingAddress({
+          ...editingShippingAddress,
+          [name]: value,
+        });
+      }
     }
   };
 
@@ -1053,7 +1045,7 @@ export const ProfileEdit = () => {
       postalCode: "",
       district: "",
       province: "",
-      isPrimary: shippingAddresses.length === 0 ? true : false, // Set as primary by default if it's the first address
+      isPrimary: false,
       name: "", // Add name field
       mobileNumber: "", // Add mobileNumber field
     });
@@ -1091,6 +1083,51 @@ export const ProfileEdit = () => {
       return;
     }
     setSavingShippingAddress(true);
+
+    // Check for a previously deleted (inactive) address with the same details (case-insensitive, trimmed)
+    const normalize = str => (str || "").trim().toLowerCase();
+    const match = shippingAddresses.find(addr =>
+      !addr.isActive &&
+      normalize(addr.address) === normalize(newShippingAddress.address) &&
+      normalize(addr.district) === normalize(newShippingAddress.district) &&
+      normalize(addr.province) === normalize(newShippingAddress.province) &&
+      normalize(addr.postalCode) === normalize(newShippingAddress.postalCode) &&
+      normalize(addr.name) === normalize(newShippingAddress.name) &&
+      normalize(addr.mobileNumber) === normalize(newShippingAddress.mobileNumber)
+    );
+
+    if (match) {
+      // Reactivate the address instead of creating a new one
+      const payload = {
+        ...match,
+        ...newShippingAddress,
+        isActive: true,
+        userDto: { id: user.id },
+        country: undefined,
+      };
+      const response = await updateShippingAddress(payload);
+      if (response && response.status) {
+        setIsAddingShippingAddress(false);
+        setNewShippingAddress({
+          address: "",
+          city: "",
+          postalCode: "",
+          district: "",
+          province: "",
+          isPrimary: shippingAddresses.length === 0 ? true : false,
+          name: "",
+          mobileNumber: "",
+          isActive: 1,
+        });
+        if (user && user.id) {
+          await fetchShippingAddresses(user.id);
+        }
+        setSavingShippingAddress(false);
+        return;
+      }
+      // handle error if needed
+    }
+
     // First, unset any other primary addresses if the new one is primary
     if (newShippingAddress.isPrimary) {
       const currentlyPrimary = shippingAddresses.find(
@@ -1360,6 +1397,23 @@ export const ProfileEdit = () => {
       setTimeout(() => setShippingAddressStatus(""), 3000);
     }
   };
+
+  useEffect(() => {
+    if (activeTab === "shipping-address" && user?.id) {
+      fetchShippingAddresses(user.id);
+    }
+  }, [activeTab, user]);
+
+  // Add this useEffect to listen for a custom event to refresh shipping addresses
+  useEffect(() => {
+    const handler = () => {
+      if (activeTab === "shipping-address" && user?.id) {
+        fetchShippingAddresses(user.id);
+      }
+    };
+    window.addEventListener("refresh-shipping-addresses", handler);
+    return () => window.removeEventListener("refresh-shipping-addresses", handler);
+  }, [activeTab, user]);
 
   if (loading) {
     return <div>Loading settings...</div>;
@@ -1824,14 +1878,14 @@ export const ProfileEdit = () => {
                       )}
                       <div className="flex justify-end gap-4 mt-4">
                         <button
-                          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition"
+                          className="rounded-lg px-6 py-2 border border-[#1E90FF] text-[#1E90FF] font-medium hover:bg-[#e6f3ff] transition"
                           onClick={handleCancelEdit}
                           disabled={savingBankDetails}
                         >
                           Cancel
                         </button>
                         <button
-                          className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition"
+                          className="rounded-lg px-6 py-2 bg-[#1E90FF] text-white font-medium hover:bg-[#1876cc] transition"
                           onClick={handleUpdateBankDetails}
                           disabled={savingBankDetails}
                         >
@@ -1893,8 +1947,16 @@ export const ProfileEdit = () => {
                       </div>
                       <div className="flex justify-end">
                         <button
-                          className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition"
-                          onClick={() => setIsEditingBankDetails(true)}
+                          className="rounded-lg px-6 py-2 bg-[#1E90FF] text-white font-medium hover:bg-[#1876cc] transition"
+                          onClick={() => {
+                            setIsEditingBankDetails(true);
+                            if (bankDetails) {
+                              setSelectedBankId(bankDetails.bankDto?.id || "");
+                              setBankSearch(bankDetails.bankDto?.name || "");
+                              setSelectedBranchId(bankDetails.branchDto?.id || "");
+                              setBranchSearch(bankDetails.branchDto?.branchName || "");
+                            }
+                          }}
                         >
                           Edit
                         </button>
@@ -2074,7 +2136,7 @@ export const ProfileEdit = () => {
                       </span>
                     )}
                     <button
-                      className="px-6 py-2 bg-[#1E90FF] text-white rounded-lg font-medium hover:bg-[#1876cc] transition"
+                      className="rounded-lg px-6 py-2 bg-[#1E90FF] text-white font-medium hover:bg-[#1876cc] transition"
                       onClick={handleSaveBankDetails}
                       disabled={savingBankDetails}
                     >
@@ -2094,17 +2156,18 @@ export const ProfileEdit = () => {
                 )}
                 {shippingAddresses.length === 0 &&
                 !isAddingShippingAddress &&
-                !editingAddressId ? (
+                !editingAddressId &&
+                shippingAddresses.filter(addr => addr.isActive).length <= 5 ? (
                   <div className="mt-4">
                     <p className="text-sm text-gray-600">
                       No shipping addresses found.
                     </p>
                     <button
                       type="button"
-                      className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mt-2"
+                      className="mt-4 px-4 py-2 bg-[#1E90FF] text-white rounded hover:bg-[#1876cc] transition-colors"
                       onClick={handleAddShippingAddressClick}
                     >
-                      Add Shipping Address
+                      Add New Shipping Address
                     </button>
                   </div>
                 ) : isAddingShippingAddress || editingAddressId ? (
@@ -2311,7 +2374,7 @@ export const ProfileEdit = () => {
                       {isAddingShippingAddress ? (
                         <button
                           type="button"
-                          className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2"
+                          className="bg-[#1E90FF] text-white px-6 py-2 rounded hover:bg-[#1876cc] transition-colors mr-2"
                           onClick={handleSaveNewShippingAddress}
                         >
                           Save Shipping Address
@@ -2319,7 +2382,7 @@ export const ProfileEdit = () => {
                       ) : (
                         <button
                           type="button"
-                          className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mr-2"
+                          className="bg-[#1E90FF] text-white px-6 py-2 rounded hover:bg-[#1876cc] transition-colors mr-2"
                           onClick={handleUpdateShippingAddress}
                         >
                           Update Shipping Address
@@ -2327,7 +2390,7 @@ export const ProfileEdit = () => {
                       )}
                       <button
                         type="button"
-                        className="rounded-md bg-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-400"
+                        className="px-4 py-2 border border-[#1E90FF] text-[#1E90FF] rounded hover:bg-[#e6f2ff] transition-colors"
                         onClick={
                           isAddingShippingAddress
                             ? handleCancelAddShippingAddress
@@ -2341,13 +2404,16 @@ export const ProfileEdit = () => {
                 ) : (
                   // Display list of addresses
                   <div className="mt-4">
-                    {shippingAddresses.map((address) => (
+                    {shippingAddresses.filter(address => address.isActive).map((address) => (
                       <div
                         key={address.id}
                         className="border rounded-md p-3 mb-4"
                       >
                         <p className="text-base font-semibold text-gray-900">
                           {address.name}
+                          {address.mobileNumber && (
+                            <span className="text-gray-500 font-normal ml-2">| {address.mobileNumber}</span>
+                          )}
                         </p>
                         <div className="flex justify-between items-center">
                           <div className="flex items-center gap-4 flex-wrap">
@@ -2356,8 +2422,7 @@ export const ProfileEdit = () => {
                                 {address.address}
                               </p>
                               <p className="text-sm text-gray-600">
-                                {address.district}, {address.province},{" "}
-                                {address.postalCode}
+                                {address.district}, {address.province}, {address.postalCode}
                               </p>
                             </div>
                             {address.isPrimary && (
@@ -2366,22 +2431,37 @@ export const ProfileEdit = () => {
                               </span>
                             )}
                           </div>
-                          <button
-                            type="button"
-                            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ml-4 flex-shrink-0"
-                            onClick={() =>
-                              handleEditShippingAddressClick(address)
-                            }
-                          >
-                            Edit
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              className="p-2 rounded hover:bg-red-100"
+                              title="Delete Address"
+                              onClick={async () => {
+                                const payload = { ...address, isActive: false };
+                                await updateShippingAddress(payload);
+                                if (user && user.id) await fetchShippingAddresses(user.id);
+                              }}
+                            >
+                              {/* Simple bucket SVG icon */}
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-red-600">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 7.5V19a2 2 0 002 2h8a2 2 0 002-2V7.5M9.75 11.25v4.5m4.5-4.5v4.5M4.5 7.5h15m-10.125 0V5.25A1.5 1.5 0 0110.875 3.75h2.25a1.5 1.5 0 011.5 1.5V7.5" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              className="px-3 py-1 bg-[#1E90FF] text-white rounded hover:bg-[#1876cc] text-xs ml-4 transition-colors"
+                              onClick={() => handleEditShippingAddressClick(address)}
+                            >
+                              Edit
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
-                    {!isAddingShippingAddress && !editingAddressId && (
+                    {!isAddingShippingAddress && !editingAddressId && shippingAddresses.filter(addr => addr.isActive).length < 5 && (
                       <button
                         type="button"
-                        className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mt-2"
+                        className="mt-4 px-4 py-2 bg-[#1E90FF] text-white rounded hover:bg-[#1876cc] transition-colors"
                         onClick={handleAddShippingAddressClick}
                       >
                         Add New Shipping Address

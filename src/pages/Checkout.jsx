@@ -104,7 +104,7 @@ const Checkout = () => {
       } catch (e) { currentUserId = null; }
     }
     // Filter addresses for current user
-    const userAddresses = addrs.filter(address => address.userDto?.id === currentUserId);
+    const userAddresses = addrs.filter(address => address.userDto?.id === currentUserId && address.isActive);
     setAddresses(userAddresses);
     let selected = null;
     // Use saved address from localStorage if available
@@ -175,6 +175,8 @@ const Checkout = () => {
     setQuantity(Number(e.target.value));
   };
 
+  const normalize = str => (str || "").trim().toLowerCase();
+
   const handleAddressSave = async (e) => {
     e.preventDefault();
     // Phone validation before submit
@@ -203,10 +205,44 @@ const Checkout = () => {
         }
       } catch (e) { currentUserId = null; }
     }
+    // Reactivate deleted address if match (case-insensitive, trimmed)
+    const match = addresses.find(addr =>
+      !addr.isActive &&
+      normalize(addr.address) === normalize(addressForm.address) &&
+      normalize(addr.district) === normalize(addressForm.district) &&
+      normalize(addr.province) === normalize(addressForm.province) &&
+      normalize(addr.postalCode) === normalize(addressForm.postalCode) &&
+      normalize(addr.name) === normalize(addressForm.name) &&
+      normalize(addr.mobileNumber) === normalize(addressForm.mobileNumber)
+    );
+    if (match) {
+      const payload = {
+        ...match,
+        ...addressForm,
+        isActive: true, // Ensure active
+        userDto: { id: currentUserId },
+      };
+      let res = await updateShippingAddress(payload);
+      if (!res.errorDescription) {
+        setOrderError(null);
+        setShowEditAddress(false);
+        setAddressLimitError("");
+        setShowAddressModal(false);
+        const savedId = res.id || res.addressId || addressForm.id;
+        await fetchAndSetPrimaryAddress(savedId);
+        await fetchAndSetPrimaryAddress(); // Always refresh the list
+        window.dispatchEvent(new Event("refresh-shipping-addresses"));
+        return;
+      }
+      setOrderError(res.errorDescription);
+      setAddressLoading(false);
+      return;
+    }
     // Build payload with userDto
     const payload = {
       ...addressForm,
       userDto: { id: currentUserId },
+      isActive: true, // Ensure active
     };
     let res;
     if (addressForm.id) {
@@ -218,12 +254,14 @@ const Checkout = () => {
     }
     if (!res.errorDescription) {
       setOrderError(null);
-      setShowEditAddress(false);
       setAddressLimitError("");
-      setShowAddressModal(false); // Close modal if open
-      // After saving, re-fetch addresses and update to the saved one
-      const savedId = res.id || res.addressId || addressForm.id; // fallback to form id if needed
-      await fetchAndSetPrimaryAddress(savedId);
+      setShowAddressModal(false);
+      const savedId = res.id || res.addressId || addressForm.id;
+      await fetchAndSetPrimaryAddress(savedId); // Always fetch and select the new address
+      setShowEditAddress(false); // Close the form AFTER the fetch
+      window.dispatchEvent(new Event("refresh-shipping-addresses"));
+      setAddressLoading(false);
+      return;
     } else {
       setOrderError(res.errorDescription);
       setAddressLoading(false);
@@ -509,7 +547,7 @@ const Checkout = () => {
                   className="mt-4 px-4 py-2 bg-[#1E90FF] text-white rounded hover:bg-[#1876cc] transition-colors"
                   onClick={() => { setShowEditAddress('new'); setAddressForm({ country: 'United Kingdom' }); }}
                 >
-                  Add New Address
+                  Add New Shipping Address
                 </button>
               )}
             </div>

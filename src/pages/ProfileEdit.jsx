@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { getUserByEmail } from "../API/config";
-import { decodeJwt, updateUser } from "../API/UserApi";
+import { decodeJwt, updateUser, changePassword } from "../API/UserApi";
 import {
   searchUserBankDetails,
   saveUserBankDetails,
@@ -79,15 +79,20 @@ function ChangePassword({ onBack }) {
       setTimeout(() => setError(""), 3000);
       return;
     }
-    // TODO: Call your API to change password, passing currentPassword and newPassword
-    // Example:
-    // const result = await changePasswordApi({ currentPassword, newPassword });
-    // if (result.success) { setStatus("Password updated!"); ... }
-    setStatus("Password updated successfully!"); // Placeholder
+    // Call backend API
+    const result = await changePassword({ currentPassword, newPassword });
+    if (result && result.status) {
+      setStatus("Password updated successfully!");
+      setError("");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } else {
+      setError(result?.errorDescription || "Failed to update password.");
+      setStatus("");
+    }
     setTimeout(() => setStatus(""), 3000);
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
+    setTimeout(() => setError(""), 3000);
   };
 
   return (

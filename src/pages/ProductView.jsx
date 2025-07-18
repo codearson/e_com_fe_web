@@ -3,6 +3,7 @@ import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { getProductById } from '../API/productApi';
+import { getAllProductCategoriesBySearch } from '../API/ProductCategoryApi';
 
 const ProductView = () => {
   const { id } = useParams();
@@ -12,6 +13,8 @@ const ProductView = () => {
   const [loading, setLoading] = useState(!location.state?.product);
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [categories, setCategories] = useState([]);
+  const [categoryMap, setCategoryMap] = useState({});
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -44,6 +47,29 @@ const ProductView = () => {
 
     fetchProduct();
   }, [id, location.state, product]);
+
+  useEffect(() => {
+    // Fetch all categories for breadcrumb
+    const fetchCategories = async () => {
+      const result = await getAllProductCategoriesBySearch();
+      let cats = [];
+      if (result && !result.errorDescription) {
+        if (Array.isArray(result)) {
+          cats = result;
+        } else if (Array.isArray(result.responseDto)) {
+          cats = result.responseDto;
+        } else if (result.responseDto && Array.isArray(result.responseDto.payload)) {
+          cats = result.responseDto.payload;
+        }
+      }
+      setCategories(cats);
+      // Build id -> category map
+      const map = {};
+      cats.forEach(cat => { map[cat.id] = cat; });
+      setCategoryMap(map);
+    };
+    fetchCategories();
+  }, []);
   
   if (loading) {
     return (
@@ -77,6 +103,39 @@ const ProductView = () => {
     );
   }
 
+  // Helper to build category path for breadcrumb
+  const getCategoryPath = () => {
+    const catObj = product.productCategoryDto;
+    if (!catObj || !categoryMap || Object.keys(categoryMap).length === 0) return [];
+    let path = [];
+    let current = null;
+    // Always resolve by id if possible
+    if (catObj.id && categoryMap[catObj.id]) {
+      current = categoryMap[catObj.id];
+    } else if (catObj.name) {
+      // fallback: try to find by name
+      current = Object.values(categoryMap).find(cat => cat.name === catObj.name);
+    }
+    if (!current) {
+      return [catObj.name || catObj];
+    }
+    // Walk up the parentId chain to the root (level 1)
+    while (current) {
+      path.unshift(current.name);
+      if (!current.parentId || !categoryMap[current.parentId]) break;
+      current = categoryMap[current.parentId];
+    }
+    return path;
+  };
+
+  if (product) {
+    // Debug: log product and productCategory
+    console.log('DEBUG Product:', product);
+    console.log('DEBUG ProductCategoryDto:', product.productCategoryDto);
+    console.log('DEBUG categoryMap:', JSON.stringify(categoryMap, null, 2));
+    console.log('DEBUG Breadcrumb Path:', getCategoryPath());
+  }
+ 
   // Create an array of images (use actual image or fallback)
   const productImages = product.responseDto?.imageUrl 
     ? [product.responseDto.imageUrl] 
@@ -89,7 +148,13 @@ const ProductView = () => {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
           {/* Breadcrumb */}
           <div className="text-sm text-gray-500 mb-4">
-            Home / {product.productCategory?.name || 'Products'} / {product.title}
+            Home
+            {getCategoryPath().map((cat, idx) => (
+              <span key={cat}>
+                {' / '}{cat}
+              </span>
+            ))}
+            {' / '}{product.title}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -137,7 +202,7 @@ const ProductView = () => {
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">{product.title}</h1>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center">
-                    <span className="text-gray-600">Brand: {product.brand?.brand || 'Unbranded'}</span>
+                    <span className="text-gray-600">Brand: {product.brandDto?.brandName || product.brandDto?.brand || 'Unbranded'}</span>
                   </div>
                   <span className="text-gray-500">|</span>
                   <div className="flex items-center">
@@ -196,7 +261,7 @@ const ProductView = () => {
                   <div>
                     <h3 className="text-sm font-medium text-gray-900 mb-1">Condition</h3>
                     <div className="bg-gray-100 p-2 rounded-md">
-                      <p className="text-gray-700">{product.conditions.name}</p>
+                      <p className="text-gray-700">{product.conditions?.conditionType || product.conditions?.name || 'Used'}</p>
                     </div>
                   </div>
                 )}
@@ -226,18 +291,6 @@ const ProductView = () => {
                   Buy Now
                 </button>
               </div>
-
-              {/* Category Info */}
-              {product.productCategory && (
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-900">Category</h3>
-                      <p className="text-gray-500">{product.productCategory.name}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>

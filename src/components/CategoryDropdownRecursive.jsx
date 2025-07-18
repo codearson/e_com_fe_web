@@ -306,4 +306,4 @@ export default function CategoryDropdownRecursive({ mobileMenuOpen: controlledMo
       )}
     </nav>
   );
-} 
+}

@@ -677,6 +677,6 @@ export const Navbar = () => {
         open={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
       />
-    </nav>
-  );
+    </nav>
+  );
 };

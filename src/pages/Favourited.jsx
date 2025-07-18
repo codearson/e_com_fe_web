@@ -86,7 +86,7 @@ export const Favourited = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#e0e7ff] via-[#f8fafc] to-[#c7d2fe] flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] to-[#f8fafc] flex flex-col">
       <Navbar />
       <main className="flex-1 flex flex-col items-center justify-center py-12">
         {products.length === 0 ? (
@@ -94,8 +94,7 @@ export const Favourited = () => {
             <span className="beating-heart mb-6 drop-shadow-xl" style={{filter: 'drop-shadow(0 0 12px #e573a6aa)'}}>
               <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                  <linearGradient id="heartGradient" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#ffb6d5" />
+                  <linearGradient id="heartGradient" x1="0" y1="0" x2="2" y2="2" gradientUnits="userSpaceOnUse">
                     <stop offset="1" stopColor="#e573a6" />
                   </linearGradient>
                 </defs>
@@ -109,7 +108,7 @@ export const Favourited = () => {
           </div>
         ) : (
           <div className="mt-12 w-full max-w-7xl px-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map(product => (
                 <div
                   key={product.id}
@@ -140,16 +139,13 @@ export const Favourited = () => {
                         {product.title}
                       </h3>
                       <h4 className="text-sm text-gray-600 mt-1">
-                        {product.brand?.brand}
+                        {product.brandDto?.brandName || 'Unbranded'}
                       </h4>
                       {product.size && (
                         <p className="text-sm text-gray-600 mt-1">
                           {product.size}
                         </p>
                       )}
-                      <p className="text-sm text-gray-500 mt-1">
-                        {product.conditions?.name || 'Condition not specified'}
-                      </p>
                     </div>
                     <div className="mt-4">
                       <div className="flex items-baseline">
@@ -164,15 +160,19 @@ export const Favourited = () => {
                     </div>
                   </div>
                     <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-                      <span className="text-xs text-gray-500">
-                        {product.quantity > 0 ? 'In stock' : 'Out of stock'}
+                      <span className={`text-xs font-medium ${
+                        product.statusDto?.type === 'Available' ? 'text-green-600' :
+                        product.statusDto?.type === 'Out of Stock' ? 'text-red-600' :
+                        'text-gray-500'
+                      }`}>
+                        {product.statusDto?.type || (product.quantity > 0 ? 'In stock' : 'Out of stock')}
                       </span>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        product.conditions?.name === 'New with tags' ? 'bg-green-100 text-green-800' :
-                        product.conditions?.name === 'New without tags' ? 'bg-blue-100 text-blue-800' :
+                        product.conditionsDto?.conditionType === 'New' ? 'bg-green-100 text-green-800' :
+                        product.conditionsDto?.conditionType === 'New without tags' ? 'bg-blue-100 text-blue-800' :
                         'bg-gray-100 text-gray-800'
                       }`}>
-                        {product.conditions?.name || 'Used'}
+                        {product.conditionsDto?.conditionType || 'Used'}
                       </span>
                     </div>
                   </div>

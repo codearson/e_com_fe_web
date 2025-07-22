@@ -23,6 +23,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import CategoryProducts from "./pages/CategoryProducts";
 import Checkout from "./pages/Checkout";
 import { MessageProvider } from "./utils/MessageContext.jsx";
+import MyOrders from "./pages/MyOrders";
 
 function App() {
   return (
@@ -47,6 +48,11 @@ function App() {
           <Route path="/buying" element={<Buying />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/checkout/:id" element={<Checkout />} />
+          <Route path="/my-orders" element={
+            <ProtectedRoute>
+              <MyOrders />
+            </ProtectedRoute>
+          } />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/users" element={<Users />} />
           <Route

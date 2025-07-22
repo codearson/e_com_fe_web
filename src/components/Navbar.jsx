@@ -432,6 +432,15 @@ export const Navbar = () => {
                     >
                       Profile
                     </button>
+                    <button
+                      className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer w-full"
+                      onClick={() => {
+                        navigate("/my-orders");
+                        setUserDropdownOpen(false);
+                      }}
+                    >
+                      My Orders
+                    </button>
                     {/* Favourites link */}
                     <button
                       className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer w-full"

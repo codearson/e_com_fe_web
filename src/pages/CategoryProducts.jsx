@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getProductsByCategory } from "../API/productApi";
+import { saveFavourite, getAllFavourites, updateFavourite } from "../API/favouriteApi";
+import { getUserByEmail } from "../API/config";
+import { decodeJwt } from "../API/UserApi";
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { HeartIcon } from '@heroicons/react/24/outline';
 
 // ProductCard component for displaying individual product information.
-const ProductCard = ({ product, onProductClick }) => (
+const ProductCard = ({ product, onProductClick, isFavourite, onFavouriteClick }) => (
   <div
     className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100"
   >
@@ -21,8 +24,19 @@ const ProductCard = ({ product, onProductClick }) => (
           e.target.src = 'https://placehold.co/400x400/png';
         }}
       />
-      <button className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors shadow-sm">
-        <HeartIcon className="h-5 w-5 text-gray-600 hover:text-red-500" />
+      <button
+        className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors shadow-sm"
+        onClick={e => {
+          e.stopPropagation();
+          onFavouriteClick(product);
+        }}
+        aria-label={isFavourite ? "Remove from favourites" : "Add to favourites"}
+      >
+        {isFavourite ? (
+          <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" /></svg>
+        ) : (
+          <svg className="h-5 w-5 text-gray-600 hover:text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.364l-7.682-7.682a4.5 4.5 0 010-6.364z" /></svg>
+        )}
       </button>
     </div>
     <div className="p-4">
@@ -75,6 +89,8 @@ const CategoryProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [favourites, setFavourites] = useState([]);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -97,8 +113,57 @@ const CategoryProducts = () => {
     fetchData();
   }, [categoryId]);
 
+  useEffect(() => {
+    const fetchUserAndFavourites = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        const decoded = decodeJwt(token);
+        const email = decoded?.sub;
+        if (email) {
+          const userData = await getUserByEmail(email);
+          setUser(userData);
+          const favRes = await getAllFavourites();
+          if (favRes.success && favRes.data.responseDto) {
+            setFavourites(favRes.data.responseDto.filter(fav => fav.userDto?.id === userData.id && fav.isActive));
+          }
+        }
+      }
+    };
+    fetchUserAndFavourites();
+    // Listen for favouritesUpdated event
+    const handleFavouritesUpdated = () => {
+      fetchUserAndFavourites();
+    };
+    window.addEventListener('favouritesUpdated', handleFavouritesUpdated);
+    return () => {
+      window.removeEventListener('favouritesUpdated', handleFavouritesUpdated);
+    };
+  }, []);
+
   const handleProductClick = (product) => {
     navigate(`/productView/${product.id}`, { state: { product } });
+  };
+
+  const handleFavouriteClick = async (product) => {
+    if (!user) return;
+    const alreadyFav = favourites.find(fav => fav.productDto?.id === product.id && fav.isActive);
+    if (!alreadyFav) {
+      await saveFavourite({ id: product.id }, { id: user.id }, true);
+      const favRes = await getAllFavourites();
+      if (favRes.success && favRes.data.responseDto) {
+        setFavourites(favRes.data.responseDto.filter(fav => fav.userDto?.id === user.id && fav.isActive));
+      }
+      window.dispatchEvent(new Event('favouritesUpdated'));
+    } else {
+      // Unfavourite logic
+      await updateFavourite({
+        id: alreadyFav.id,
+        productDto: { id: product.id },
+        userDto: { id: user.id },
+        isActive: false
+      });
+      window.dispatchEvent(new Event('favouritesUpdated'));
+    }
   };
 
   return (
@@ -124,7 +189,13 @@ const CategoryProducts = () => {
           {!loading && products.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map(product => (
-                <ProductCard key={product.id} product={product} onProductClick={handleProductClick} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onProductClick={handleProductClick}
+                  isFavourite={!!favourites.find(fav => fav.productDto?.id === product.id && fav.isActive)}
+                  onFavouriteClick={handleFavouriteClick}
+                />
               ))}
             </div>
           )}

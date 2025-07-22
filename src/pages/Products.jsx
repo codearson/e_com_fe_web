@@ -30,9 +30,18 @@ const Products = () => {
             setFavourites(favRes.data.responseDto.filter(fav => fav.userDto?.id === userData.id && fav.isActive));
           }
         }
-      }
+      };
     };
     fetchUserAndFavourites();
+
+    // Listen for favouritesUpdated event
+    const handleFavouritesUpdated = () => {
+      fetchUserAndFavourites();
+    };
+    window.addEventListener('favouritesUpdated', handleFavouritesUpdated);
+    return () => {
+      window.removeEventListener('favouritesUpdated', handleFavouritesUpdated);
+    };
   }, []);
 
   useEffect(() => {
@@ -54,37 +63,19 @@ const Products = () => {
     navigate(`/productView/${product.id}`, { state: { product } });
   };
 
-  const handleFavouriteClick = async (product) => {
+  const handleFavouriteToggle = async (product) => {
     if (!user) return;
-    // Check if already favourited
     const alreadyFav = favourites.find(fav => fav.productDto?.id === product.id && fav.isActive);
     if (!alreadyFav) {
       await saveFavourite({ id: product.id }, { id: user.id }, true);
-      // Refresh favourites
-      const favRes = await getAllFavourites();
-      if (favRes.success && favRes.data.responseDto) {
-        setFavourites(favRes.data.responseDto.filter(fav => fav.userDto?.id === user.id && fav.isActive));
-      }
-      // Notify other tabs/pages
-      window.dispatchEvent(new Event('favouritesUpdated'));
+    } else {
+      await updateFavourite({
+        id: alreadyFav.id,
+        productDto: { id: product.id },
+        userDto: { id: user.id },
+        isActive: false
+      });
     }
-    // Optionally, handle unfavourite logic here
-  };
-
-  const handleUnfavouriteClick = async (product) => {
-    // Find the favourite record for this product and user
-    const fav = favourites.find(fav => fav.productDto?.id === product.id && fav.userDto?.id === user.id && fav.isActive);
-    if (!fav) return;
-
-    // Call the update API to set isActive to false
-    await updateFavourite({
-      id: fav.id,
-      productDto: { id: product.id },
-      userDto: { id: user.id },
-      isActive: false
-    });
-
-    // Optionally, update the UI immediately
     window.dispatchEvent(new Event('favouritesUpdated'));
   };
 
@@ -140,7 +131,7 @@ const Products = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map(product => {
-                console.log('PRODUCT CARD DEBUG:', product);
+                const isFav = !!favourites.find(fav => fav.productDto?.id === product.id && fav.isActive);
                 return (
                   <div
                     key={product.id}
@@ -161,16 +152,11 @@ const Products = () => {
                         className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors shadow-sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          const isFav = !!favourites.find(fav => fav.productDto?.id === product.id && fav.isActive);
-                          if (isFav) {
-                            handleUnfavouriteClick(product);
-                          } else {
-                            handleFavouriteClick(product);
-                          }
+                          handleFavouriteToggle(product);
                         }}
-                        aria-label={!!favourites.find(fav => fav.productDto?.id === product.id && fav.isActive) ? "Remove from favourites" : "Add to favourites"}
+                        aria-label={isFav ? "Remove from favourites" : "Add to favourites"}
                       >
-                        {!!favourites.find(fav => fav.productDto?.id === product.id && fav.isActive) ? (
+                        {isFav ? (
                           <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" /></svg>
                         ) : (
                           <svg className="h-5 w-5 text-gray-600 hover:text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.364l-7.682-7.682a4.5 4.5 0 010-6.364z" /></svg>

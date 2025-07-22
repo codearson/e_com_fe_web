@@ -45,7 +45,7 @@ const PaymentDetails = ({ userId, onSuccess, onError, onClose }) => {
       addMessage(userId, msg);
       if (onSuccess) onSuccess();
       setTimeout(() => {
-        navigate('#');
+        navigate(`/orderconfirmation/${orderId}`);
       }, 1500);
     }
   };
@@ -136,6 +136,7 @@ const Checkout = () => {
   const [conditions, setConditions] = useState([]);
   const [showPayment, setShowPayment] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [orderId, setOrderId] = useState(null);
 
   // Fetch product if not in state
   useEffect(() => {
@@ -381,28 +382,10 @@ const Checkout = () => {
     }
   };
 
-  const handleOrder = async (e) => {
+  const handleOrder = (e) => {
     e.preventDefault();
-    setOrderLoading(true);
-    setOrderError(null);
-    // Compose order payload
-    const orderPayload = {
-      productId: product.id || product.productId,
-      quantity,
-      shippingAddressId: address?.id,
-      // Add more fields as needed
-    };
-    const res = await saveOrder(orderPayload);
-    if (!res.errorDescription) {
-      setOrderSuccess(true);
-      setOrderError(null);
-      localStorage.removeItem('checkoutSelectedAddressId');
-      // Optionally redirect or show success
-      setTimeout(() => navigate("/"), 2000);
-    } else {
-      setOrderError(res.errorDescription);
-    }
-    setOrderLoading(false);
+    if (!address) return alert("Please select a shipping address.");
+    setShowPayment(true); // Just show payment modal
   };
 
   // Example usage: Save or update brand/condition (call these as needed)
@@ -687,7 +670,7 @@ const Checkout = () => {
               </div>
               <button
                 className="w-full bg-[#1E90FF] text-white py-3 rounded-lg font-bold hover:bg-[#1876cc] transition-colors mt-4 disabled:opacity-50"
-                onClick={() => setShowPayment(true)}
+                onClick={handleOrder}
                 disabled={orderLoading || !address?.id}
               >
                 {orderLoading ? 'Placing Order...' : 'Confirm and Pay'}
@@ -732,16 +715,45 @@ const Checkout = () => {
           </div>
         </div>
       )}
-      <Modal open={showPayment} onClose={() => setShowPayment(false)}>
-        {userId && (
+      {/* Remove PaymentDetails modal and show order confirmation after placing order */}
+      {showPayment && (
+        <Modal open={showPayment} onClose={() => setShowPayment(false)}>
           <PaymentDetails
             userId={userId}
-            onSuccess={() => {}}
-            onError={() => {}}
-            onClose={() => { setShowPayment(false); }}
+            product={product}
+            address={address}
+            quantity={quantity}
+            onSuccess={async () => {
+              // Save order after payment is successful
+              const estimateDeliveryDate = new Date();
+              estimateDeliveryDate.setDate(estimateDeliveryDate.getDate() + 2);
+              const order = {
+                productDto: { id: product.id || product.productId },
+                userDto: { id: userId },
+                postagePartnerDto: { id: address.postagePartnerDto?.id || 2 },
+                shippingAddressDto: { id: address.id },
+                statusDto: { id: 2 },
+                quantity,
+                estimateDeliveryDate: estimateDeliveryDate.toISOString(),
+                isActive: 1
+              };
+              try {
+                const res = await saveOrder(order);
+                if (res && res.responseDto && res.responseDto.id) {
+                  setShowPayment(false);
+                  navigate(`/orderconfirmation/${res.responseDto.id}`);
+                } else {
+                  alert("Order could not be placed. Please try again.");
+                }
+              } catch (error) {
+                alert("Order could not be placed. Please try again.");
+              }
+            }}
+            onError={() => setShowPayment(false)}
+            onClose={() => setShowPayment(false)}
           />
-        )}
-      </Modal>
+        </Modal>
+      )}
     </div>
   );
 };

@@ -46,3 +46,20 @@ export const updateOrder = async (orderData) => {
         return { errorDescription: error.response?.data?.errorDescription || "Failed to update order." };
     }
 }; 
+
+export async function getOrderById(id) {
+  const accessToken = localStorage.getItem("accessToken");
+  if (!accessToken) {
+    return { errorDescription: "Authentication required." };
+  }
+  const res = await fetch(
+    `${BASE_BACKEND_URL}/orders/getById?ordersId=${id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  return res.json();
+} 

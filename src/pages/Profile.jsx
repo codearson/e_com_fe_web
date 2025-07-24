@@ -4,10 +4,13 @@ import { Footer } from "../components/Footer";
 import { useNavigate } from "react-router-dom";
 import { getUserByEmail } from "../API/config";
 import { decodeJwt } from "../API/UserApi";
+import { getProductsByUserId } from "../API/productApi";
 
 export const Profile = () => {
   const [tab, setTab] = useState("listings");
   const [user, setUser] = useState(null);
+  const [userProducts, setUserProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,6 +22,12 @@ export const Profile = () => {
         if (email) {
           const userData = await getUserByEmail(email);
           setUser(userData);
+          if (userData?.id) {
+            setLoadingProducts(true);
+            const products = await getProductsByUserId(userData.id);
+            setUserProducts(products);
+            setLoadingProducts(false);
+          }
         }
       }
     };
@@ -49,6 +58,10 @@ export const Profile = () => {
                 </span>
                 <span className="text-gray-500 text-base">No reviews yet</span>
               </div>
+              {/* Product count section */}
+              <div className="flex items-center text-lg font-semibold text-[#1E90FF] mb-2">
+                Selling {userProducts.length} product{userProducts.length !== 1 ? 's' : ''} 
+              </div>
               <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6 text-gray-600 text-base mb-2 gap-1 sm:gap-0">
                 <div className="flex items-center justify-center mb-1 sm:mb-0">
                   <svg
@@ -63,52 +76,6 @@ export const Profile = () => {
                   </svg>
                   {user.address || "Address not available"}
                 </div>
-                <div className="flex items-center justify-center mb-1 sm:mb-0">
-                  <svg
-                    className="w-5 h-5 mr-1 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M8 17v1a3 3 0 0 0 3 3h2a3 3 0 0 0 3-3v-1" />
-                    <path d="M12 12v4" />
-                    <path d="M12 4v4" />
-                  </svg>
-                  Last seen 12 seconds ago
-                </div>
-                <div className="flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 mr-1 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M17 20h5v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M9 20H4v-2a4 4 0 0 1 3-3.87" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  <span>0 followers, </span>
-                  <span className="ml-1">0 following</span>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center justify-center md:justify-start text-gray-600 text-base mb-2 gap-x-3 gap-y-1">
-                <span className="mr-2">Verified info:</span>
-                {["Google", "Email"].map((v) => (
-                  <span key={v} className="flex items-center mr-2">
-                    <svg
-                      className="w-5 h-5 mr-1 text-green-500"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M5 13l4 4L19 7" />
-                    </svg>
-                    {v}
-                  </span>
-                ))}
               </div>
             </div>
             <div className="flex md:justify-end w-full md:w-auto mt-4 md:mt-0">
@@ -157,49 +124,92 @@ export const Profile = () => {
           </div>
           {/* Listings Tab */}
           {tab === "listings" && (
-            <div className="flex flex-col items-center justify-center py-16">
-              <svg
-                width="80"
-                height="80"
-                fill="none"
-                stroke="#6C63FF"
-                strokeWidth="2"
-                viewBox="0 0 64 64"
-                className="mb-6"
-              >
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="30"
-                  stroke="#6C63FF"
-                  strokeWidth="2"
-                  fill="#f3f4f6"
-                />
-                <path
-                  d="M24 44V28l8-8 8 8v16"
-                  stroke="#6C63FF"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                />
-                <circle cx="32" cy="36" r="2" fill="#6C63FF" />
-                <rect
-                  x="28"
-                  y="44"
-                  width="8"
-                  height="4"
-                  rx="2"
-                  fill="#6C63FF"
-                />
-              </svg>
-              <h2 className="text-2xl font-bold mb-2 text-center">
-                Upload items to start selling
-              </h2>
-              <p className="text-lg text-gray-500 mb-6 text-center">
-                Declutter your life. Sell what you don't wear anymore!
-              </p>
-              <button className="px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors">
-                List now
-              </button>
+            <div className="w-full flex flex-col items-center justify-center py-8">
+              {loadingProducts ? (
+                <div>Loading your items...</div>
+              ) : userProducts.length === 0 ? (
+                <>
+                  <svg
+                    width="80"
+                    height="80"
+                    fill="none"
+                    stroke="#6C63FF"
+                    strokeWidth="2"
+                    viewBox="0 0 64 64"
+                    className="mb-6"
+                  >
+                    <circle
+                      cx="32"
+                      cy="32"
+                      r="30"
+                      stroke="#6C63FF"
+                      strokeWidth="2"
+                      fill="#f3f4f6"
+                    />
+                    <path
+                      d="M24 44V28l8-8 8 8v16"
+                      stroke="#6C63FF"
+                      strokeWidth="2"
+                      strokeLinejoin="round"
+                    />
+                    <circle cx="32" cy="36" r="2" fill="#6C63FF" />
+                    <rect
+                      x="28"
+                      y="44"
+                      width="8"
+                      height="4"
+                      rx="2"
+                      fill="#6C63FF"
+                    />
+                  </svg>
+                  <h2 className="text-2xl font-bold mb-2 text-center">
+                    Upload items to start selling
+                  </h2>
+                  <p className="text-lg text-gray-500 mb-6 text-center">
+                    Declutter your life. Sell what you don't wear anymore!
+                  </p>
+                  <button
+                    className="px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors"
+                    onClick={() => navigate("/sell")}
+                  >
+                    List now
+                  </button>
+                </>
+              ) : (
+                <div className="w-full">
+                  <h2 className="text-2xl font-bold mb-6 text-center">Your Listed Items</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {userProducts.map((product) => (
+                      <div
+                        key={product.id}
+                        className="bg-white rounded-xl shadow p-4 flex flex-col items-center cursor-pointer hover:shadow-lg transition"
+                        onClick={() => navigate(`/productView/${product.id}`, { state: { product } })}
+                      >
+                        <img
+                          src={
+                            product.imageUrl && product.imageUrl.startsWith('http')
+                              ? product.imageUrl
+                              : "https://via.placeholder.com/150"
+                          }
+                          alt={product.title}
+                          className="w-32 h-32 object-cover rounded mb-3"
+                        />
+                        <div className="font-semibold text-lg mb-1">{product.title}</div>
+                        <div className="text-gray-600 mb-1">{product.brandDto?.brandName}</div>
+                        <div className="text-gray-800 font-bold">{product.price ? `Rs. ${product.price}` : "Price not set"}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-center mt-8">
+                    <button
+                      className="px-8 py-3 bg-[#1E90FF] text-white rounded-lg text-lg font-semibold hover:bg-[#1876cc] transition-colors"
+                      onClick={() => navigate("/sell")}
+                    >
+                      List another item
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {/* Reviews Tab */}

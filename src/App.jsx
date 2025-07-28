@@ -23,6 +23,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import CategoryProducts from "./pages/CategoryProducts";
 import Checkout from "./pages/Checkout";
 import { MessageProvider } from "./utils/MessageContext.jsx";
+import OrderConfirmation from "./pages/orderconfirmation.jsx";
 import MyOrders from "./pages/MyOrders";
 
 function App() {
@@ -64,6 +65,7 @@ function App() {
             }
           />
         <Route path="/category/:categoryId" element={<CategoryProducts />} />
+        <Route path="/orderconfirmation/:orderId" element={<OrderConfirmation />} />
         </Routes>
       </BrowserRouter>
     </MessageProvider>

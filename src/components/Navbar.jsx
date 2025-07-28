@@ -9,7 +9,7 @@ import { searchProducts } from "../API/productApi";
 import { debounce } from "lodash";
 import "../styles/Navbar.css";
 import CategoryDropdownRecursive from "./CategoryDropdownRecursive";
-import { useMessageContext } from '../utils/MessageContext.jsx';
+import { useMessageContext } from "../utils/MessageContext.jsx";
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -29,7 +29,7 @@ export const Navbar = () => {
   const searchRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const isDashboardPage = location.pathname === '/admin/dashboard';
+  const isDashboardPage = location.pathname === "/admin/dashboard";
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const { getMessages } = useMessageContext();
   const [showMessages, setShowMessages] = useState(false);
@@ -99,11 +99,14 @@ export const Navbar = () => {
 
   // Track category state changes
   useEffect(() => {
-    console.log('Categories state updated:', categories);
-    console.log('Number of categories:', categories.length);
+    console.log("Categories state updated:", categories);
+    console.log("Number of categories:", categories.length);
     if (categories.length > 0) {
-      console.log('First category:', categories[0]);
-      console.log('Level 1 categories count:', categories.filter(cat => cat.level === 1).length);
+      console.log("First category:", categories[0]);
+      console.log(
+        "Level 1 categories count:",
+        categories.filter((cat) => cat.level === 1).length
+      );
     }
   }, [categories]);
 
@@ -129,47 +132,91 @@ export const Navbar = () => {
     const fetchCategories = async () => {
       try {
         const result = await getAllProductCategoriesBySearch();
-        console.log('Fetched categories (raw):', result);
+        console.log("Fetched categories (raw):", result);
         if (result && !result.errorDescription) {
-          const flatCategories = Array.isArray(result) ? result : result.responseDto;
+          const flatCategories = Array.isArray(result)
+            ? result
+            : result.responseDto;
           if (flatCategories && Array.isArray(flatCategories)) {
-            console.log('Fetched categories (flat array):', flatCategories);
+            console.log("Fetched categories (flat array):", flatCategories);
             setCategories(flatCategories);
 
             // Build nested structure
             const categoryMap = {};
-            flatCategories.forEach(category => {
+            flatCategories.forEach((category) => {
               categoryMap[category.id] = { ...category, children: [] };
-              console.log('Added to categoryMap:', category.id, category.name);
+              console.log("Added to categoryMap:", category.id, category.name);
             });
 
             const rootCategories = [];
-            flatCategories.forEach(category => {
-              const isActive = category.isActive === true || category.isActive === 1;
-              if (category.parentId === null && category.level === 1 && isActive) {
+            flatCategories.forEach((category) => {
+              const isActive =
+                category.isActive === true || category.isActive === 1;
+              if (
+                category.parentId === null &&
+                category.level === 1 &&
+                isActive
+              ) {
                 rootCategories.push(categoryMap[category.id]);
-                console.log('Added as root category:', category.name);
-              } else if (category.parentId !== null && categoryMap[category.parentId] && isActive) {
-                 const parent = categoryMap[category.parentId];
-                 const isParentActive = parent.isActive === true || parent.isActive === 1;
-                 if(isParentActive) {
-                   categoryMap[category.parentId].children.push(categoryMap[category.id]);
-                   console.log('Added as child:', category.name, 'level:', category.level, 'under parent:', parent.name, 'level:', parent.level);
-                 } else {
-                   console.log('Skipped child (parent inactive):', category.name, 'under parent:', parent.name);
-                 }
+                console.log("Added as root category:", category.name);
+              } else if (
+                category.parentId !== null &&
+                categoryMap[category.parentId] &&
+                isActive
+              ) {
+                const parent = categoryMap[category.parentId];
+                const isParentActive =
+                  parent.isActive === true || parent.isActive === 1;
+                if (isParentActive) {
+                  categoryMap[category.parentId].children.push(
+                    categoryMap[category.id]
+                  );
+                  console.log(
+                    "Added as child:",
+                    category.name,
+                    "level:",
+                    category.level,
+                    "under parent:",
+                    parent.name,
+                    "level:",
+                    parent.level
+                  );
+                } else {
+                  console.log(
+                    "Skipped child (parent inactive):",
+                    category.name,
+                    "under parent:",
+                    parent.name
+                  );
+                }
               } else {
-                if (!isActive) console.log('Skipped category (inactive):', category.name);
-                if (category.parentId !== null && !categoryMap[category.parentId]) console.log('Skipped child (parent not found):', category.name, 'parent ID:', category.parentId);
-                if (category.parentId === null && category.level !== 1) console.log('Skipped category (incorrect level for root):', category.name, 'level:', category.level);
+                if (!isActive)
+                  console.log("Skipped category (inactive):", category.name);
+                if (
+                  category.parentId !== null &&
+                  !categoryMap[category.parentId]
+                )
+                  console.log(
+                    "Skipped child (parent not found):",
+                    category.name,
+                    "parent ID:",
+                    category.parentId
+                  );
+                if (category.parentId === null && category.level !== 1)
+                  console.log(
+                    "Skipped category (incorrect level for root):",
+                    category.name,
+                    "level:",
+                    category.level
+                  );
               }
             });
             setNestedCategories(rootCategories);
-            console.log('Nested categories (built tree):', rootCategories);
+            console.log("Nested categories (built tree):", rootCategories);
           }
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error("Error fetching categories:", error);
       }
     };
     fetchCategories();
@@ -193,12 +240,15 @@ export const Navbar = () => {
   }, [userDropdownOpen, hoveredCategoryId]);
 
   const getLevel1Categories = () => {
-    console.log('Getting Level 1 categories from nested structure:', nestedCategories);
-    const level1Cats = nestedCategories.filter(cat => {
-        const isActive = cat.isActive === true || cat.isActive === 1;
-        return cat.level === 1 && isActive;
+    console.log(
+      "Getting Level 1 categories from nested structure:",
+      nestedCategories
+    );
+    const level1Cats = nestedCategories.filter((cat) => {
+      const isActive = cat.isActive === true || cat.isActive === 1;
+      return cat.level === 1 && isActive;
     });
-    console.log('Filtered Level 1 categories for display:', level1Cats);
+    console.log("Filtered Level 1 categories for display:", level1Cats);
     return level1Cats;
   };
 
@@ -217,13 +267,33 @@ export const Navbar = () => {
     return null;
   };
 
-  const hoveredLevel1Category = findCategoryById(hoveredCategoryId, nestedCategories);
-  const level2Categories = hoveredLevel1Category ? hoveredLevel1Category.children : [];
-  console.log('Level 2 categories for hovered Level 1 (' + hoveredLevel1Category?.name + '):', level2Categories);
+  const hoveredLevel1Category = findCategoryById(
+    hoveredCategoryId,
+    nestedCategories
+  );
+  const level2Categories = hoveredLevel1Category
+    ? hoveredLevel1Category.children
+    : [];
+  console.log(
+    "Level 2 categories for hovered Level 1 (" +
+      hoveredLevel1Category?.name +
+      "):",
+    level2Categories
+  );
 
-  const hoveredLevel2Category = findCategoryById(hoveredLevel2CategoryId, level2Categories);
-  const level3Categories = hoveredLevel2Category ? hoveredLevel2Category.children : [];
-  console.log('Level 3 categories for hovered Level 2 (' + hoveredLevel2Category?.name + '):', level3Categories);
+  const hoveredLevel2Category = findCategoryById(
+    hoveredLevel2CategoryId,
+    level2Categories
+  );
+  const level3Categories = hoveredLevel2Category
+    ? hoveredLevel2Category.children
+    : [];
+  console.log(
+    "Level 3 categories for hovered Level 2 (" +
+      hoveredLevel2Category?.name +
+      "):",
+    level3Categories
+  );
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -236,24 +306,24 @@ export const Navbar = () => {
   const mobileSearchInput = (
     <div className="lg:hidden flex-1 mx-4" ref={searchRef}>
       <form onSubmit={handleSearchSubmit} className="relative">
-          <div className="flex items-center bg-gray-100 rounded-full px-3 py-1.5 border border-gray-200">
-            <svg
-              className="w-5 h-5 text-gray-500 mr-2"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search"
-              className="flex-1 bg-transparent text-sm focus:outline-none text-gray-800 placeholder-gray-500"
+        <div className="flex items-center bg-gray-100 rounded-full px-3 py-1.5 border border-gray-200">
+          <svg
+            className="w-5 h-5 text-gray-500 mr-2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search"
+            className="flex-1 bg-transparent text-sm focus:outline-none text-gray-800 placeholder-gray-500"
             value={searchQuery}
             onChange={handleSearchChange}
             disabled={isDashboardPage}
@@ -263,60 +333,62 @@ export const Navbar = () => {
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
           )}
         </div>
-        {showSuggestions && searchSuggestions.length > 0 && !isDashboardPage && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-            {searchSuggestions.map((product) => (
-              <div
-                key={product.id}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                onClick={() => handleSuggestionClick(product)}
-              >
-                <img
-                  src={product.imageUrl || "/placeholder-product.jpg"}
-                  alt={product.name}
-                  className="w-8 h-8 object-cover rounded mr-3"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">
-                    {product.name}
+        {showSuggestions &&
+          searchSuggestions.length > 0 &&
+          !isDashboardPage && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+              {searchSuggestions.map((product) => (
+                <div
+                  key={product.id}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                  onClick={() => handleSuggestionClick(product)}
+                >
+                  <img
+                    src={product.imageUrl || "/placeholder-product.jpg"}
+                    alt={product.name}
+                    className="w-8 h-8 object-cover rounded mr-3"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {product.name}
+                    </div>
+                    <div className="text-sm text-gray-500 truncate">
+                      {product.brand}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500 truncate">
-                    {product.brand}
+                  <div className="ml-3 text-sm font-semibold text-[#1E90FF]">
+                    ${product.price}
                   </div>
                 </div>
-                <div className="ml-3 text-sm font-semibold text-[#1E90FF]">
-                  ${product.price}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
       </form>
-        </div>
+    </div>
   );
 
   // Update the desktop search input
   const desktopSearchInput = (
     <div className="hidden lg:flex flex-1 max-w-2xl mx-8" ref={searchRef}>
       <form onSubmit={handleSearchSubmit} className="relative flex-1">
-          <div className="flex items-center flex-1 bg-gray-100 rounded-full px-4 py-2 border border-gray-200">
-            <svg
-              className="w-5 h-5 text-gray-500 mr-3"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search for items..."
-              className="flex-1 bg-transparent text-sm focus:outline-none text-gray-800 placeholder-gray-500"
+        <div className="flex items-center flex-1 bg-gray-100 rounded-full px-4 py-2 border border-gray-200">
+          <svg
+            className="w-5 h-5 text-gray-500 mr-3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search for items..."
+            className="flex-1 bg-transparent text-sm focus:outline-none text-gray-800 placeholder-gray-500"
             value={searchQuery}
             onChange={handleSearchChange}
             disabled={isDashboardPage}
@@ -326,34 +398,36 @@ export const Navbar = () => {
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
           )}
         </div>
-        {showSuggestions && searchSuggestions.length > 0 && !isDashboardPage && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-            {searchSuggestions.map((product) => (
-              <div
-                key={product.id}
-                className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
-                onClick={() => handleSuggestionClick(product)}
-              >
-                <img
-                  src={product.imageUrl || "/placeholder-product.jpg"}
-                  alt={product.name}
-                  className="w-8 h-8 object-cover rounded mr-3"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-gray-900 truncate">
-                    {product.name}
+        {showSuggestions &&
+          searchSuggestions.length > 0 &&
+          !isDashboardPage && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+              {searchSuggestions.map((product) => (
+                <div
+                  key={product.id}
+                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                  onClick={() => handleSuggestionClick(product)}
+                >
+                  <img
+                    src={product.imageUrl || "/placeholder-product.jpg"}
+                    alt={product.name}
+                    className="w-8 h-8 object-cover rounded mr-3"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {product.name}
+                    </div>
+                    <div className="text-sm text-gray-500 truncate">
+                      {product.brand}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500 truncate">
-                    {product.brand}
+                  <div className="ml-3 text-sm font-semibold text-[#1E90FF]">
+                    ${product.price}
                   </div>
                 </div>
-                <div className="ml-3 text-sm font-semibold text-[#1E90FF]">
-                  ${product.price}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
       </form>
     </div>
   );
@@ -482,9 +556,7 @@ export const Navbar = () => {
                             navigate("/admin/users");
                             setUserDropdownOpen(false);
                           }}
-                        >
-                    
-                        </button>
+                        ></button>
                       </>
                     )}
                     <button
@@ -524,7 +596,14 @@ export const Navbar = () => {
               aria-label="Messages"
               style={{ marginRight: 8 }}
             >
-              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <svg
+                width="24"
+                height="24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
               {getMessages(user.id).length > 0 && (
@@ -542,7 +621,12 @@ export const Navbar = () => {
                   ) : (
                     <ul className="space-y-2 max-h-48 overflow-y-auto">
                       {getMessages(user.id).map((msg, idx) => (
-                        <li key={idx} className="text-gray-800 text-sm bg-gray-100 rounded px-2 py-1">{msg}</li>
+                        <li
+                          key={idx}
+                          className="text-gray-800 text-sm bg-gray-100 rounded px-2 py-1"
+                        >
+                          {msg}
+                        </li>
                       ))}
                     </ul>
                   )}
@@ -573,14 +657,10 @@ export const Navbar = () => {
           </svg>
         </button>
       </div>
-
       {/* Secondary Menu (hidden on mobile) */}
-      <div
-        className="border-t border-gray-200 hidden lg:flex flex-col px-12 text-black text-base font-normal bg-white z-40 relative"
-      >
+      <div className="border-t border-gray-200 hidden lg:flex flex-col px-12 text-black text-base font-normal bg-white z-40 relative">
         <CategoryDropdownRecursive />
       </div>
-
       {/* Mobile Sidebar */}
       {menuOpen && (
         <>
@@ -611,7 +691,11 @@ export const Navbar = () => {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+                    d={
+                      menuOpen
+                        ? "M6 18L18 6M6 6l12 12"
+                        : "M4 6h16M4 12h16M4 18h16"
+                    }
                   />
                 </svg>
               </button>
@@ -680,12 +764,9 @@ export const Navbar = () => {
           </aside>
         </>
       )}
-
       {/* Render AuthModal */}
-      <AuthModal
-        open={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-      />
-    </nav>
-  );
+      <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+        
+    </nav>
+  );
 };

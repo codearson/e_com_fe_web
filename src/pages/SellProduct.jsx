@@ -8,6 +8,8 @@ import { getAllConditions } from '../API/conditionApi';
 import { getAllStatuses } from '../API/statusApi';
 import { extractArray } from '../utils/extractArray';
 import { uploadProductImages } from '../API/ProductImageApi';
+import { decodeJwt } from '../API/UserApi';
+import { getUserByEmail } from '../API/config';
 
 const SellProduct = () => {
   // Dropdown data
@@ -89,6 +91,20 @@ const SellProduct = () => {
     const brand = brands.find(b => b.id === Number(brandId));
     const condition = conditions.find(c => c.id === Number(conditionId));
 
+    // Get logged-in user id
+    let userId = null;
+    try {
+      const token = localStorage.getItem('accessToken');
+      const decoded = decodeJwt(token);
+      const email = decoded?.sub;
+      if (email) {
+        const userData = await getUserByEmail(email);
+        userId = userData?.id;
+      }
+    } catch (err) {
+      console.error('Failed to get logged-in user id:', err);
+    }
+
     const productData = {
       title,
       description,
@@ -100,7 +116,8 @@ const SellProduct = () => {
       brandDto: brand ? { id: brand.id } : null,
       conditionsDto: condition ? { id: condition.id } : null,
       statusDto: statusId ? { id: Number(statusId) } : null,
-      isActive: true
+      isActive: true,
+      userDto: userId ? { id: userId } : undefined
     };
     console.log("Submitting productData:", productData);
 

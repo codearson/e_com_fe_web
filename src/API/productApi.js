@@ -276,3 +276,24 @@ export const getProductsByCategory = async (categoryId) => {
     }
 };
 
+export const getProductsByUserId = async (userId) => {
+    try {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+            return [];
+        }
+        const response = await axios.get(
+            `${BASE_BACKEND_URL}/product/byUser/${userId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }
+        );
+        return response.data.responseDto || [];
+    } catch (error) {
+        console.error('Error fetching products by userId:', error);
+        return [];
+    }
+};
+

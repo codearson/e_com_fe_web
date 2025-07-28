@@ -3,8 +3,7 @@ import { Footer } from "../components/Footer";
 import { useEffect, useState } from "react";
 import { getAllproductPage } from "../API/productApi";
 import { useNavigate } from "react-router-dom";
-
-
+import { BASE_BACKEND_URL } from '../API/config'; 
 
 export const Home = () => {
     const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -18,7 +17,7 @@ export const Home = () => {
                 setLoading(true);
                 setError(null);
                 const response = await getAllproductPage();
-                
+
                 if (response?.payload && Array.isArray(response.payload)) {
                     const latestProducts = [...response.payload]
                         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -69,7 +68,7 @@ export const Home = () => {
                     <div className="max-w-2xl">
                         <h1 className="text-5xl font-bold text-gray-900 mb-4">Welcome to Our Store</h1>
                         <p className="text-xl text-gray-600 mb-8">Discover amazing products at great prices</p>
-                        <button 
+                        <button
                             onClick={() => navigate('/products')}
                             className="bg-[#1E90FF] text-white px-8 py-3 rounded-lg hover:bg-[#1876cc] transition-colors"
                         >
@@ -85,8 +84,8 @@ export const Home = () => {
                     <h2 className="text-3xl font-semibold text-gray-900 mb-8">Featured Categories</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {['Electronics', 'Fashion', 'Home & Living'].map((category) => (
-                            <div 
-                                key={category} 
+                            <div
+                                key={category}
                                 className="bg-gray-50 p-6 rounded-lg hover:shadow-lg transition-shadow cursor-pointer"
                                 onClick={() => navigate('/products')}
                             >
@@ -103,7 +102,7 @@ export const Home = () => {
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl font-semibold text-gray-900 mb-2">Featured Products</h2>
                     <p className="text-gray-600 mb-8">Check out our featured collection</p>
-                    
+
                     {loading ? (
                         <div className="flex justify-center items-center h-64">
                             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -115,16 +114,17 @@ export const Home = () => {
                     ) : featuredProducts.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             {featuredProducts.map((product) => (
-                                <div 
-                                    key={product.id} 
+                                <div
+                                    key={product.id}
                                     className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer"
                                     onClick={() => handleProductClick(product)}
                                 >
-                                    <div className="aspect-square bg-gray-200 rounded-lg mb-4 overflow-hidden">
-                                        <img 
-                                            src={product.responseDto?.imageUrl || 'https://placehold.co/400x400/png'} 
-                                            alt={product.title || product.name}
-                                            className="w-full h-full object-cover"
+                                    <div className="relative group">
+                                        <img
+                                            src={`${BASE_BACKEND_URL}${product.imageUrl || '/default-image.jpg'}`}
+                                            alt={product.title}
+                                            className="w-full h-64 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                                            onClick={() => handleProductClick(product)}
                                             onError={(e) => {
                                                 e.target.onerror = null;
                                                 e.target.src = 'https://placehold.co/400x400/png';
@@ -134,11 +134,10 @@ export const Home = () => {
                                     <h3 className="font-medium text-gray-900 mb-2">{product.title || product.name}</h3>
                                     <p className="text-gray-600 mb-2">LKR {product.price?.toFixed(2)}</p>
                                     <div className="flex justify-between items-center">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                            product.conditions?.name === 'New with tags' ? 'bg-green-100 text-green-800' :
-                                            product.conditions?.name === 'New without tags' ? 'bg-blue-100 text-blue-800' :
-                                            'bg-gray-100 text-gray-800'
-                                        }`}>
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.conditions?.name === 'New with tags' ? 'bg-green-100 text-green-800' :
+                                                product.conditions?.name === 'New without tags' ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-gray-100 text-gray-800'
+                                            }`}>
                                             {product.conditions?.name || product.condition || 'Used'}
                                         </span>
                                         {product.brand?.brand && (
@@ -155,7 +154,7 @@ export const Home = () => {
                     )}
                 </div>
             </section>
-            <Footer />  
+            <Footer />
         </div>
     );
 };

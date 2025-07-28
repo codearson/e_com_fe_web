@@ -7,6 +7,7 @@ import { decodeJwt } from "../API/UserApi";
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { HeartIcon } from '@heroicons/react/24/outline';
+import { BASE_BACKEND_URL } from '../API/config';
 
 // ProductCard component for displaying individual product information.
 const ProductCard = ({ product, onProductClick, isFavourite, onFavouriteClick }) => (
@@ -15,7 +16,7 @@ const ProductCard = ({ product, onProductClick, isFavourite, onFavouriteClick })
   >
     <div className="relative group">
       <img
-        src={product.responseDto?.imageUrl || 'https://placehold.co/400x400/png'}
+        src={`${BASE_BACKEND_URL}${product.imageUrl || '/default-image.jpg'}`}
         alt={product.title}
         className="w-full h-64 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-105"
         onClick={() => onProductClick(product)}
@@ -72,11 +73,10 @@ const ProductCard = ({ product, onProductClick, isFavourite, onFavouriteClick })
         <span className="text-xs text-gray-500">
           {product.quantity > 0 ? 'In stock' : 'Out of stock'}
         </span>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          product.conditions?.name === 'New with tags' ? 'bg-green-100 text-green-800' :
-          product.conditions?.name === 'New without tags' ? 'bg-blue-100 text-blue-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.conditions?.name === 'New with tags' ? 'bg-green-100 text-green-800' :
+            product.conditions?.name === 'New without tags' ? 'bg-blue-100 text-blue-800' :
+              'bg-gray-100 text-gray-800'
+          }`}>
           {product.conditions?.name || 'Used'}
         </span>
       </div>

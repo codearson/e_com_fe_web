@@ -4,6 +4,7 @@ import { Footer } from '../components/Footer';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { getProductById } from '../API/productApi';
 import { getAllProductCategoriesBySearch } from '../API/ProductCategoryApi';
+import { BASE_BACKEND_URL } from '../API/config'; 
 
 const ProductView = () => {
   const { id } = useParams();
@@ -137,9 +138,10 @@ const ProductView = () => {
   }
  
   // Create an array of images (use actual image or fallback)
-  const productImages = product.responseDto?.imageUrl 
-    ? [product.responseDto.imageUrl] 
-    : ["https://placehold.co/400x400/png"];
+ const productImages = product.imageUrl
+  ? [`${BASE_BACKEND_URL}${product.imageUrl}`]
+  : ["https://placehold.co/400x400/png"];
+
  
   return (
     <div className="min-h-screen bg-gray-50">

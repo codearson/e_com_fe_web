@@ -6,6 +6,8 @@ import { getAllProducts } from '../API/productApi';
 import { saveFavourite, getAllFavourites, updateFavourite } from '../API/favouriteApi';
 import { getUserByEmail } from '../API/config';
 import { decodeJwt } from '../API/UserApi';
+import { BASE_BACKEND_URL } from '../API/config'; 
+
 
 const Products = () => {
   const [products, setProducts] = useState([]); 
@@ -139,7 +141,7 @@ const Products = () => {
                   >
                     <div className="relative group">
                       <img
-                        src={product.imageUrl || product.imageUrl || 'https://placehold.co/400x400/png'}
+                        src={`${BASE_BACKEND_URL}${product.imageUrl || '/default-image.jpg'}`}
                         alt={product.title}
                         className="w-full h-64 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-105"
                         onClick={() => handleProductClick(product)}

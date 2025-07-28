@@ -6,6 +6,8 @@ import { getUserByEmail } from "../API/config";
 import { decodeJwt } from "../API/UserApi";
 import { useNavigate } from "react-router-dom";
 import { getProductById } from "../API/productApi";
+import { BASE_BACKEND_URL } from '../API/config'; 
+
 
 export const Favourited = () => {
   const [favourites, setFavourites] = useState([]);
@@ -114,17 +116,17 @@ export const Favourited = () => {
                   key={product.id}
                   className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden border border-gray-100"
                 >
-                  <div className="relative group">
-                    <img
-                      src={product.responseDto?.imageUrl || 'https://placehold.co/400x400/png'}
-                      alt={product.title}
-                      className="w-full h-64 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-105"
-                      onClick={() => handleProductClick(product)}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = 'https://placehold.co/400x400/png';
-                      }}
-                    />
+                   <div className="relative group">
+                      <img
+                        src={`${BASE_BACKEND_URL}${product.imageUrl || '/default-image.jpg'}`}
+                        alt={product.title}
+                        className="w-full h-64 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-105"
+                        onClick={() => handleProductClick(product)}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://placehold.co/400x400/png';
+                        }}
+                      />
                     <button
                       className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors shadow-sm"
                       aria-label="Unfavourite"

@@ -5,6 +5,7 @@ import { saveFavourite, getAllFavourites, updateFavourite } from '../API/favouri
 import { getUserByEmail } from '../API/config';
 import { decodeJwt } from '../API/UserApi';
 import { Navbar } from '../components/Navbar';
+import { BASE_BACKEND_URL } from '../API/config'; 
 
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
@@ -52,7 +53,7 @@ const SearchResults = () => {
           console.log('Unexpected results format:', typeof results);
           setProducts([]);
         }
-        
+
         setError(null);
       } catch (err) {
         console.error('Error in search:', err);
@@ -200,7 +201,7 @@ const SearchResults = () => {
                     >
                       <div className="relative group">
                         <img
-                          src={product.imageUrl || 'https://placehold.co/400x400/png'}
+                          src={`${BASE_BACKEND_URL}${product.imageUrl || '/default-image.jpg'}`}
                           alt={product.title}
                           className="w-full h-64 object-cover cursor-pointer transition-transform duration-300 group-hover:scale-105"
                           onClick={() => handleProductClick(product)}
@@ -256,18 +257,16 @@ const SearchResults = () => {
                           </div>
                         </div>
                         <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-                          <span className={`text-xs font-medium ${
-                            product.statusDto?.type === 'Available' ? 'text-green-600' :
-                            product.statusDto?.type === 'Out of Stock' ? 'text-red-600' :
-                            'text-gray-500'
-                          }`}>
+                          <span className={`text-xs font-medium ${product.statusDto?.type === 'Available' ? 'text-green-600' :
+                              product.statusDto?.type === 'Out of Stock' ? 'text-red-600' :
+                                'text-gray-500'
+                            }`}>
                             {product.statusDto?.type || (product.quantity > 0 ? 'In stock' : 'Out of stock')}
                           </span>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            product.conditionsDto?.conditionType === 'New' ? 'bg-green-100 text-green-800' :
-                            product.conditionsDto?.conditionType === 'New without tags' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.conditionsDto?.conditionType === 'New' ? 'bg-green-100 text-green-800' :
+                              product.conditionsDto?.conditionType === 'New without tags' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                            }`}>
                             {product.conditionsDto?.conditionType || 'Used'}
                           </span>
                         </div>

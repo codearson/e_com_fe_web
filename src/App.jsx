@@ -49,7 +49,7 @@ function App() {
           <Route path="/buying" element={<Buying />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/checkout/:id" element={<Checkout />} />
-          <Route path="/my-orders" element={
+          <Route path="/myorders" element={
             <ProtectedRoute>
               <MyOrders />
             </ProtectedRoute>

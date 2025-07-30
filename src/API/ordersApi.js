@@ -62,4 +62,21 @@ export async function getOrderById(id) {
     }
   );
   return res.json();
+}
+
+export async function getOrdersByUserId(userId) {
+  const accessToken = localStorage.getItem("accessToken");
+  if (!accessToken) {
+    return { errorDescription: "Authentication required." };
+  }
+  const res = await fetch(
+    `${BASE_BACKEND_URL}/orders/getByUserId?userId=${userId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  return res.json();
 } 

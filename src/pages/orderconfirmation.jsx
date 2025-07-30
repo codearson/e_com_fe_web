@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getOrderById } from '../API/ordersApi';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
+import { BASE_BACKEND_URL } from '../API/config';
 
 const primaryColor = '#1976d2'; // blue
 const accentColor = '#ff9800';  // orange
@@ -88,7 +89,6 @@ const OrderConfirmation = () => {
   const product = o.productDto || {};
   const user = o.userDto || {};
   const shipping = o.shippingAddressDto || {};
-  const status = o.statusDto || {};
   const postage = o.postagePartnerDto || {};
 
   return (
@@ -102,10 +102,6 @@ const OrderConfirmation = () => {
             <div style={valueStyle}>{o.id}</div>
           </div>
           <div style={{ marginBottom: 18 }}>
-            <div style={labelStyle}>Status</div>
-            <div style={valueStyle}>{status.type}</div>
-          </div>
-          <div style={{ marginBottom: 18 }}>
             <div style={labelStyle}>Created At</div>
             <div style={valueStyle}>{new Date(o.createdAt).toLocaleString()}</div>
           </div>
@@ -116,7 +112,7 @@ const OrderConfirmation = () => {
           <div style={sectionTitleStyle}>Product</div>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: 18 }}>
             <img
-              src={product.imageUrl || 'https://placehold.co/60x60/png'}
+              src={`${BASE_BACKEND_URL}${product.imageUrl || '/default-image.jpg'}`}
               alt={product.title}
               style={{
                 width: 70,
@@ -127,13 +123,17 @@ const OrderConfirmation = () => {
                 border: `1.5px solid ${bgColor}`,
                 background: bgColor,
               }}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://placehold.co/400x400/png';
+              }}
             />
             <div>
               <div style={{ ...valueStyle, fontSize: 18 }}>{product.title}</div>
               <div style={{ color: secondaryText, fontSize: 14 }}>{product.brandDto?.brandName}</div>
               <div style={{ color: secondaryText, fontSize: 14 }}>Condition: {product.conditionsDto?.conditionType}</div>
               <div style={{ color: secondaryText, fontSize: 14 }}>
-                Price: <span style={{ color: accentColor, fontWeight: 700 }}>₹{product.price}</span>
+                Price: <span style={{ color: accentColor, fontWeight: 700 }}>LKR{product.price}</span>
               </div>
               <div style={{ color: secondaryText, fontSize: 14 }}>Quantity: {o.quantity}</div>
             </div>
@@ -145,12 +145,7 @@ const OrderConfirmation = () => {
             <div style={{ color: secondaryText, fontSize: 15 }}>{shipping.district} {shipping.province} {shipping.postalCode}</div>
             <div style={{ color: secondaryText, fontSize: 15 }}>Mobile: {shipping.mobileNumber}</div>
           </div>
-          <div style={sectionTitleStyle}>Customer</div>
-          <div style={{ marginBottom: 18 }}>
-            <div style={valueStyle}>{user.firstName} {user.lastName}</div>
-            <div style={{ color: secondaryText, fontSize: 15 }}>Email: {user.emailAddress}</div>
-            <div style={{ color: secondaryText, fontSize: 15 }}>Mobile: {user.mobileNumber}</div>
-          </div>
+
           <div style={sectionTitleStyle}>Postage Partner</div>
           <div style={{ marginBottom: 8 }}>
             <div style={valueStyle}>{postage.partnerName}</div>

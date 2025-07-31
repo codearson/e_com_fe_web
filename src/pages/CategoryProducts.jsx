@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { getProductsByCategory } from "../API/productApi";
-import { saveFavourite, getAllFavourites, updateFavourite } from "../API/favouriteApi";
-import { getUserByEmail } from "../API/config";
-import { decodeJwt } from "../API/UserApi";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
-import { HeartIcon } from '@heroicons/react/24/outline';
+import { getProductsByCategory } from '../API/productApi';
+import { getAllFavourites, saveFavourite, updateFavourite } from '../API/favouriteApi';
+import { filterProductsWithActiveImages } from '../API/ProductImageApi';
 import { BASE_BACKEND_URL } from '../API/config';
+import { getUserByEmail } from "../API/config";
+import { decodeJwt } from "../API/UserApi";
+import { HeartIcon } from '@heroicons/react/24/outline';
 
 // ProductCard component for displaying individual product information.
 const ProductCard = ({ product, onProductClick, isFavourite, onFavouriteClick }) => (
@@ -101,7 +102,9 @@ const CategoryProducts = () => {
       try {
         const result = await getProductsByCategory(categoryId);
         if (Array.isArray(result)) {
-          setProducts(result);
+          // Filter products to only show those with active images
+          const productsWithActiveImages = await filterProductsWithActiveImages(result);
+          setProducts(productsWithActiveImages);
         } else {
           setError(result.error || "No products found.");
         }

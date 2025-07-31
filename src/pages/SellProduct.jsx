@@ -1,6 +1,7 @@
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { saveProduct } from '../API/productApi';
 import { getAllBrands } from '../API/brandApi';
 import { getCategoriesByParentAndLevel } from '../API/ProductCategoryApi';
@@ -12,6 +13,7 @@ import { decodeJwt } from '../API/UserApi';
 import { getUserByEmail } from '../API/config';
 
 const SellProduct = () => {
+  const navigate = useNavigate();
   // Dropdown data
   const [brands, setBrands] = useState([]);
   const [categoryLevels, setCategoryLevels] = useState([{ options: [], selected: "", level: 1, parentId: null }]);
@@ -124,28 +126,51 @@ const SellProduct = () => {
     try {
       // 1. Save product first
       const response = await saveProduct(productData);
+      console.log('Save product response:', response);
       if (response && !response.errorDescription && response.responseDto && response.responseDto.id) {
         const productId = response.responseDto.id;
         let imageUrl = null;
         // 2. If image files selected, upload them
         if (imageFiles.length > 0) {
-          const uploadRes = await uploadProductImages(imageFiles, productId);
-          const uploadedImages = uploadRes.data.responseDto || [];
-          if (uploadedImages.length > 0) {
-            imageUrl = uploadedImages[0].url;
+          try {
+            const uploadRes = await uploadProductImages(imageFiles, productId);
+            console.log('Upload response:', uploadRes);
+            
+            // Handle different response structures
+            let uploadedImages = [];
+            if (uploadRes?.data?.responseDto) {
+              uploadedImages = uploadRes.data.responseDto;
+            } else if (uploadRes?.responseDto) {
+              uploadedImages = uploadRes.responseDto;
+            } else if (Array.isArray(uploadRes)) {
+              uploadedImages = uploadRes;
+            }
+            
+            if (uploadedImages.length > 0) {
+              imageUrl = uploadedImages[0].url;
+              console.log('Image URL set:', imageUrl);
+            }
+          } catch (uploadError) {
+            console.error('Error uploading images:', uploadError);
+            // Don't fail the entire product creation if image upload fails
           }
         }
         // 3. If imageUrl is set, update product with image_url
         if (imageUrl) {
           await saveProduct({ ...productData, id: productId, imageUrl });
         }
-        setMessage({ type: 'success', text: 'Product saved successfully!' });
+        setMessage({ type: 'success', text: 'Product saved successfully! Redirecting to products page...' });
         // Reset form
         setTitle(""); setBrandId(""); setPrice(""); setSize(""); setQuantity(""); setDescription(""); setColor("");
         setCategoryLevels([{ options: [], selected: "", level: 1, parentId: null }]);
         setImageFiles([]);
+        
+        // Redirect to products page after successful creation
+        setTimeout(() => {
+          navigate('/products');
+        }, 2000);
       } else {
-        setMessage({ type: 'error', text: response.errorDescription || 'Failed to save product.' });
+        setMessage({ type: 'error', text: response?.errorDescription || 'Failed to save product.' });
       }
     } catch (err) {
       let errorText = 'An error occurred while saving the product.';

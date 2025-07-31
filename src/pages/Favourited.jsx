@@ -1,12 +1,13 @@
-import { Navbar } from "../components/Navbar";
-import { Footer } from "../components/Footer";
-import React, { useEffect, useState } from "react";
-import { getAllFavourites, updateFavourite } from "../API/favouriteApi";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Navbar } from '../components/Navbar';
+import { Footer } from '../components/Footer';
+import { getAllFavourites, updateFavourite } from '../API/favouriteApi';
+import { filterProductsWithActiveImages } from '../API/ProductImageApi';
+import { BASE_BACKEND_URL } from '../API/config';
 import { getUserByEmail } from "../API/config";
 import { decodeJwt } from "../API/UserApi";
-import { useNavigate } from "react-router-dom";
 import { getProductById } from "../API/productApi";
-import { BASE_BACKEND_URL } from '../API/config'; 
 
 
 export const Favourited = () => {
@@ -38,7 +39,10 @@ export const Favourited = () => {
             const productPromises = userFavourites.map(fav => getProductById(fav.productDto?.id));
             const productResults = await Promise.all(productPromises);
             console.log('Fetched product details:', productResults);
-            setProducts(productResults.filter(Boolean));
+            
+            // Filter products to only show those with active images
+            const productsWithActiveImages = await filterProductsWithActiveImages(productResults.filter(Boolean));
+            setProducts(productsWithActiveImages);
           }
         }
       }

@@ -27,13 +27,16 @@ export const updateProduct = async (productData) => {
         if (!accessToken) {
             return { errorDescription: "Authentication required." };
         }
-
-        const response = await axios.put(`${BASE_BACKEND_URL}/product/update`, productData, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                "Content-Type": "application/json",
-            },
-        });
+        const response = await axios.post(
+            `${BASE_BACKEND_URL}/product/update`,
+            productData,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
         return response.data;
     } catch (error) {
         console.error('Error updating product:', error);
@@ -45,10 +48,11 @@ export const getAllProducts = async () => {
     try {
         const accessToken = localStorage.getItem("accessToken");
         if (!accessToken) {
+            console.warn('No access token found, returning empty array');
             return [];
         }
 
-        console.log(accessToken);
+        console.log('Fetching all products...');
 
         const response = await axios.get(
             `${BASE_BACKEND_URL}/product/getAll`,
@@ -58,10 +62,31 @@ export const getAllProducts = async () => {
                 },
             }
         );
-        // Expected response format matching your Products page data structure
-        return response.data.responseDto || [];
+        
+        console.log('getAllProducts response:', response.data);
+        
+        // Handle different response structures
+        let products = [];
+        if (response.data?.responseDto) {
+            products = response.data.responseDto;
+        } else if (response.data?.payload) {
+            products = response.data.payload;
+        } else if (Array.isArray(response.data)) {
+            products = response.data;
+        } else if (response.data?.data) {
+            products = response.data.data;
+        }
+        
+        console.log('Extracted products:', products);
+        console.log('Number of products found:', products.length);
+        
+        return products;
     } catch (error) {
         console.error('Error fetching products:', error);
+        if (error.response) {
+            console.error('Error response data:', error.response.data);
+            console.error('Error response status:', error.response.status);
+        }
         return [];
     }
 };

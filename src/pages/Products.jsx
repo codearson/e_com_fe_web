@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { getAllProducts } from '../API/productApi';
-import { saveFavourite, getAllFavourites, updateFavourite } from '../API/favouriteApi';
+import { getAllFavourites, saveFavourite, updateFavourite } from '../API/favouriteApi';
+import { filterProductsWithActiveImages } from '../API/ProductImageApi';
+import { BASE_BACKEND_URL } from '../API/config';
 import { getUserByEmail } from '../API/config';
 import { decodeJwt } from '../API/UserApi';
-import { BASE_BACKEND_URL } from '../API/config'; 
 
 
 const Products = () => {
@@ -51,9 +52,17 @@ const Products = () => {
       setLoading(true);
       try {
         const allProducts = await getAllProducts();
-        setProducts(allProducts);
+        console.log('All products from API:', allProducts);
+        
+        // Filter products to only show those with active images
+        const productsWithActiveImages = await filterProductsWithActiveImages(allProducts);
+        console.log('Products with active images:', productsWithActiveImages);
+        
+        setProducts(productsWithActiveImages);
       } catch (err) {
+        console.error('Error fetching products:', err);
         setError(err.message || 'Failed to fetch products');
+        setProducts([]);
       } finally {
         setLoading(false);
       }

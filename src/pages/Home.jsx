@@ -1,9 +1,10 @@
-import { Navbar } from "../components/Navbar";
-import { Footer } from "../components/Footer";
-import { useEffect, useState } from "react";
-import { getAllproductPage } from "../API/productApi";
-import { useNavigate } from "react-router-dom";
-import { BASE_BACKEND_URL } from '../API/config'; 
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Navbar } from '../components/Navbar';
+import { Footer } from '../components/Footer';
+import { getAllProducts } from '../API/productApi';
+import { filterProductsWithActiveImages } from '../API/ProductImageApi';
+import { BASE_BACKEND_URL } from '../API/config';
 
 export const Home = () => {
     const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -16,17 +17,22 @@ export const Home = () => {
             try {
                 setLoading(true);
                 setError(null);
-                const response = await getAllproductPage();
+                const allProducts = await getAllProducts();
 
-                if (response?.payload && Array.isArray(response.payload)) {
-                    const latestProducts = [...response.payload]
-                        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                        .slice(0, 4);
-                    setFeaturedProducts(latestProducts);
-                } else {
-                    setError("No products available");
-                    setFeaturedProducts([]);
+                let productsArray = [];
+                if (allProducts?.payload && Array.isArray(allProducts.payload)) {
+                    productsArray = allProducts.payload;
+                } else if (Array.isArray(allProducts)) {
+                    productsArray = allProducts;
                 }
+
+                // Filter products to only show those with active images
+                const productsWithActiveImages = await filterProductsWithActiveImages(productsArray);
+                
+                const latestProducts = [...productsWithActiveImages]
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                    .slice(0, 4);
+                setFeaturedProducts(latestProducts);
             } catch (error) {
                 console.error("Error fetching products:", error);
                 setError("Failed to load products. Please try again later.");

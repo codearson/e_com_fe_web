@@ -5,7 +5,8 @@ import { saveFavourite, getAllFavourites, updateFavourite } from '../API/favouri
 import { getUserByEmail } from '../API/config';
 import { decodeJwt } from '../API/UserApi';
 import { Navbar } from '../components/Navbar';
-import { BASE_BACKEND_URL } from '../API/config'; 
+import { BASE_BACKEND_URL } from '../API/config';
+import { filterProductsWithActiveImages } from '../API/ProductImageApi';
 
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
@@ -37,14 +38,18 @@ const SearchResults = () => {
           setProducts([]);
         } else if (Array.isArray(results)) {
           console.log('Results is an array with length:', results.length);
-          setProducts(results);
+          // Filter products to only show those with active images
+          const productsWithActiveImages = await filterProductsWithActiveImages(results);
+          setProducts(productsWithActiveImages);
         } else if (typeof results === 'object') {
           console.log('Results is an object:', results);
           // If results is an object, try to find an array property
           const arrayData = Object.values(results).find(val => Array.isArray(val));
           if (arrayData) {
             console.log('Found array data in results:', arrayData);
-            setProducts(arrayData);
+            // Filter products to only show those with active images
+            const productsWithActiveImages = await filterProductsWithActiveImages(arrayData);
+            setProducts(productsWithActiveImages);
           } else {
             console.log('No array data found in results');
             setProducts([]);

@@ -25,6 +25,7 @@ import Checkout from "./pages/Checkout";
 import { MessageProvider } from "./utils/MessageContext.jsx";
 import OrderConfirmation from "./pages/orderconfirmation.jsx";
 import MyOrders from "./pages/MyOrders";
+import EditProduct from './pages/EditProduct';
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
           <Route path="/buying" element={<Buying />} />
           <Route path="/search" element={<SearchResults />} />
           <Route path="/checkout/:id" element={<Checkout />} />
+          <Route path="/edit-product/:id" element={<EditProduct />} />
           <Route path="/my-orders" element={
             <ProtectedRoute>
               <MyOrders />

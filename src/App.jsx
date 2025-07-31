@@ -51,7 +51,8 @@ function App() {
           <Route path="/search" element={<SearchResults />} />
           <Route path="/checkout/:id" element={<Checkout />} />
           <Route path="/edit-product/:id" element={<EditProduct />} />
-          <Route path="/my-orders" element={
+          
+          <Route path="/myorders" element={
             <ProtectedRoute>
               <MyOrders />
             </ProtectedRoute>

@@ -39,14 +39,11 @@ const PaymentDetails = ({ userId, onSuccess, onError, onClose }) => {
 
   const handleTrue = () => {
     if (allFilled) {
-      const msg = `Your order placed successfully`;
+      const msg = `Payment successful! Your order has been placed. Redirecting to order confirmation...`;
       setSuccessMsg(msg);
       setErrorMsg('');
       addMessage(userId, msg);
       if (onSuccess) onSuccess();
-      setTimeout(() => {
-        navigate(`/orderconfirmation/${orderId}`);
-      }, 1500);
     }
   };
 
@@ -741,7 +738,10 @@ const Checkout = () => {
                 const res = await saveOrder(order);
                 if (res && res.responseDto && res.responseDto.id) {
                   setShowPayment(false);
-                  navigate(`/orderconfirmation/${res.responseDto.id}`);
+                  // Add a delay to show the success message before navigating
+                  setTimeout(() => {
+                    navigate(`/orderconfirmation/${res.responseDto.id}`);
+                  }, 1500);
                 } else {
                   alert("Order could not be placed. Please try again.");
                 }

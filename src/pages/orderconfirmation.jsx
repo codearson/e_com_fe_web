@@ -4,6 +4,8 @@ import { getOrderById } from '../API/ordersApi';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { BASE_BACKEND_URL } from '../API/config';
+import { useMessageContext } from '../utils/MessageContext.jsx';
+import { decodeJwt } from '../API/UserApi';
 
 const primaryColor = '#1976d2'; // blue
 const accentColor = '#ff9800';  // orange
@@ -63,6 +65,7 @@ const OrderConfirmation = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { addMessage } = useMessageContext();
 
   useEffect(() => {
     if (orderId) {
@@ -70,6 +73,22 @@ const OrderConfirmation = () => {
         .then(data => {
           setOrder(data);
           setLoading(false);
+          
+          // Add permanent order confirmation message
+          const token = localStorage.getItem("accessToken");
+          if (token) {
+            const decoded = decodeJwt(token);
+            const email = decoded?.sub;
+            if (email) {
+              const o = data.responseDto;
+              const product = o.productDto || {};
+              const orderTotal = (product.price * o.quantity).toFixed(2);
+              const deliveryDate = o.estimateDeliveryDate ? new Date(o.estimateDeliveryDate).toLocaleDateString() : 'TBD';
+              
+              const confirmationMessage = `Order #${o.id} confirmed! You ordered ${o.quantity}x ${product.title} for LKR ${orderTotal}. Estimated delivery: ${deliveryDate}. Track your order in My Orders.`;
+              addMessage(decoded.userId || email, confirmationMessage);
+            }
+          }
         })
         .catch(() => {
           setError('Failed to fetch order');
@@ -79,7 +98,7 @@ const OrderConfirmation = () => {
       setError('No order ID provided');
       setLoading(false);
     }
-  }, [orderId]);
+  }, [orderId, addMessage]);
 
   if (loading) return <div style={{ background: bgColor, minHeight: '100vh', paddingTop: 80, textAlign: 'center' }}><Navbar /><div>Loading...</div><Footer /></div>;
   if (error) return <div style={{ background: bgColor, minHeight: '100vh', paddingTop: 80, textAlign: 'center' }}><Navbar /><div>{error}</div><Footer /></div>;

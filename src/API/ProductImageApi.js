@@ -384,56 +384,30 @@ export async function getActiveProductImages(productId) {
     console.log('getActiveProductImages response status:', response.status);
     console.log('getActiveProductImages API response:', response.data);
     
-    // Filter only active images (is_active = 1)
-    let activeImages = response.data?.responseDto || response.data?.payload || response.data;
-    if (Array.isArray(activeImages)) {
-      activeImages = activeImages.filter(img => {
-        return img.is_active === 1 || img.isActive === true || img.isActive === 1;
-      });
-    } else {
-      activeImages = [];
-    }
+         // Filter only active images (is_active = 1)
+     let activeImages = response.data?.responseDto || response.data?.payload || response.data;
+     console.log('Raw response data:', response.data);
+     console.log('Extracted activeImages:', activeImages);
+     
+           if (Array.isArray(activeImages)) {
+        activeImages = activeImages.filter(img => {
+          // Check for different possible active status fields
+          const isActive = img.is_active === 1 || img.isActive === true || img.isActive === 1 || img.isActive === "true";
+          console.log('Image:', img.id, 'isActive:', isActive, 'img.isActive:', img.isActive, 'img.is_active:', img.is_active);
+          return isActive;
+        });
+      } else {
+        activeImages = [];
+      }
     
-    // Get removed images from localStorage as additional filter (for immediate UI feedback)
-    const removedImages = getRemovedImagesFromStorage(productId);
-    const availableImages = activeImages.filter(img => !removedImages.includes(img.id));
-    
-    // Get primary image and order from localStorage
-    const primaryImageId = getPrimaryImageFromStorage(productId);
-    const imageOrder = getImageOrderFromStorage(productId);
-    
-    console.log('Primary image from storage:', primaryImageId);
-    console.log('Image order from storage:', imageOrder);
-    console.log('Removed images from storage:', removedImages);
-    console.log('Database active images:', activeImages.length);
-    console.log('Available images after localStorage filter:', availableImages.length);
-    
-    // Sort images based on localStorage data
-    let sortedImages = [...availableImages];
-    
-    if (imageOrder && imageOrder.length > 0) {
-      // Sort by the stored order
-      const orderMap = {};
-      imageOrder.forEach((id, index) => {
-        orderMap[id] = index;
-      });
-      
-      sortedImages.sort((a, b) => {
-        const orderA = orderMap[a.id] !== undefined ? orderMap[a.id] : 999;
-        const orderB = orderMap[b.id] !== undefined ? orderMap[b.id] : 999;
-        return orderA - orderB;
-      });
-    } else if (primaryImageId) {
-      // If no order but primary image is set, put primary first
-      sortedImages.sort((a, b) => {
-        if (a.id === primaryImageId) return -1;
-        if (b.id === primaryImageId) return 1;
-        return a.id - b.id; // Sort by ID for remaining images
-      });
-    } else {
-      // Default sort by ID (lower ID first)
-      sortedImages.sort((a, b) => a.id - b.id);
-    }
+         // For now, let's skip localStorage filtering to see all images
+     const availableImages = activeImages;
+     
+     console.log('Database active images:', activeImages.length);
+     console.log('Available images:', availableImages.length);
+     
+          // Sort images by ID for now
+     let sortedImages = [...availableImages].sort((a, b) => a.id - b.id);
     
     console.log('All images:', response.data);
     console.log('Active images:', activeImages);

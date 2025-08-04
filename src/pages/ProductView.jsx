@@ -4,6 +4,7 @@ import { Footer } from '../components/Footer';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { getProductById } from '../API/productApi';
 import { getAllProductCategoriesBySearch } from '../API/ProductCategoryApi';
+import { getActiveProductImages } from '../API/ProductImageApi';
 import { BASE_BACKEND_URL } from '../API/config'; 
 
 const ProductView = () => {
@@ -14,6 +15,8 @@ const ProductView = () => {
   const [loading, setLoading] = useState(!location.state?.product);
   const [error, setError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [productImages, setProductImages] = useState([]);
+  const [loadingImages, setLoadingImages] = useState(true);
   const [categories, setCategories] = useState([]);
   const [categoryMap, setCategoryMap] = useState({});
 
@@ -48,6 +51,55 @@ const ProductView = () => {
 
     fetchProduct();
   }, [id, location.state, product]);
+
+  // Fetch product images when product is loaded
+  useEffect(() => {
+    const fetchProductImages = async () => {
+      if (product?.id) {
+        try {
+                     setLoadingImages(true);
+            const images = await getActiveProductImages(product.id);
+           
+                                    // Convert image objects to URLs
+             const imageUrls = images.map(img => {
+               const imageUrl = img.url || img.imageUrl;
+               
+               // Handle different URL formats
+               let fullUrl;
+               if (imageUrl.startsWith('http')) {
+                 fullUrl = imageUrl;
+               } else if (imageUrl.startsWith('/')) {
+                 fullUrl = `${BASE_BACKEND_URL}${imageUrl}`;
+               } else {
+                 fullUrl = `${BASE_BACKEND_URL}/${imageUrl}`;
+               }
+               
+               // Properly encode the URL for special characters
+               const urlParts = fullUrl.split('/');
+               const filename = urlParts[urlParts.length - 1];
+               const path = urlParts.slice(0, -1).join('/');
+               const encodedFilename = encodeURIComponent(filename);
+               fullUrl = `${path}/${encodedFilename}`;
+              
+              return {
+                id: img.id,
+                url: fullUrl,
+                alt: `${product.title} ${img.id}`
+              };
+            });
+           
+                       setProductImages(imageUrls);
+        } catch (error) {
+          console.error('Error fetching product images:', error);
+          setProductImages([]);
+        } finally {
+          setLoadingImages(false);
+        }
+      }
+    };
+
+    fetchProductImages();
+  }, [product?.id]);
 
   useEffect(() => {
     // Fetch all categories for breadcrumb
@@ -129,18 +181,21 @@ const ProductView = () => {
     return path;
   };
 
-  if (product) {
-    // Debug: log product and productCategory
-    console.log('DEBUG Product:', product);
-    console.log('DEBUG ProductCategoryDto:', product.productCategoryDto);
-    console.log('DEBUG categoryMap:', JSON.stringify(categoryMap, null, 2));
-    console.log('DEBUG Breadcrumb Path:', getCategoryPath());
-  }
+  
  
-  // Create an array of images (use actual image or fallback)
- const productImages = product.imageUrl
-  ? [`${BASE_BACKEND_URL}${product.imageUrl}`]
-  : ["https://placehold.co/400x400/png"];
+  // Create fallback image array if no product images are loaded
+  const fallbackImages = product.imageUrl
+    ? [`${BASE_BACKEND_URL}${product.imageUrl}`]
+    : ["https://placehold.co/400x400/png"];
+
+  // Use product images if available, otherwise use fallback
+  const displayImages = productImages.length > 0 ? productImages : fallbackImages.map((url, index) => ({
+    id: `fallback-${index}`,
+    url: url,
+    alt: `${product.title} ${index + 1}`
+  }));
+  
+  
 
  
   return (
@@ -161,39 +216,97 @@ const ProductView = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Product Images */}
-            <div className="space-y-3">
-              <div className="aspect-w-1 aspect-h-1 w-full">
-                <img 
-                  src={productImages[selectedImage]} 
-                  alt={product.title} 
-                  className="w-full h-[400px] object-cover rounded-lg"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = 'https://placehold.co/400x400/png';
-                  }}
-                />
-              </div>
-              {productImages.length > 1 && (
-                <div className="grid grid-cols-4 gap-2">
-                  {productImages.map((image, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImage(index)}
-                      className={`border-2 rounded-md overflow-hidden ${
-                        selectedImage === index ? 'border-blue-500' : 'border-gray-200'
-                      }`}
-                    >
-                      <img 
-                        src={image} 
-                        alt={`${product.title} ${index + 1}`} 
-                        className="w-full h-20 object-cover"
-                        onError={(e) => {
+            <div className="space-y-4">
+              <div className="aspect-w-1 aspect-h-1 w-full relative group">
+                {loadingImages ? (
+                  <div className="w-full h-[400px] bg-gray-200 rounded-xl flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : (
+                  <>
+                                         <img 
+                       src={displayImages[selectedImage]?.url || 'https://placehold.co/400x400/png'} 
+                       alt={displayImages[selectedImage]?.alt || product.title} 
+                       className="w-full h-[400px] object-cover rounded-xl shadow-lg transition-all duration-500 ease-in-out"
+                                                                       onError={(e) => {
                           e.target.onerror = null;
                           e.target.src = 'https://placehold.co/400x400/png';
                         }}
-                      />
-                    </button>
-                  ))}
+                     />
+                    
+                    {/* Enhanced Navigation arrows for multiple images */}
+                    {displayImages.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => setSelectedImage(prev => prev === 0 ? displayImages.length - 1 : prev - 1)}
+                          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-3 shadow-xl transition-all duration-300 hover:scale-110 opacity-0 group-hover:opacity-100"
+                          aria-label="Previous image"
+                        >
+                          <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setSelectedImage(prev => prev === displayImages.length - 1 ? 0 : prev + 1)}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-3 shadow-xl transition-all duration-300 hover:scale-110 opacity-0 group-hover:opacity-100"
+                          aria-label="Next image"
+                        >
+                          <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </>
+                    )}
+                    
+                    {/* Image counter overlay */}
+                    {displayImages.length > 1 && (
+                      <div className="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm font-medium">
+                        {selectedImage + 1} / {displayImages.length}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              
+              {/* Enhanced Thumbnail navigation */}
+              {displayImages.length > 1 && !loadingImages && (
+                <div className="space-y-3">
+                  <div className="flex justify-center space-x-2">
+                    {displayImages.map((image, index) => (
+                      <button
+                        key={image.id || index}
+                        onClick={() => setSelectedImage(index)}
+                        className={`relative overflow-hidden rounded-lg transition-all duration-300 transform hover:scale-105 ${
+                          selectedImage === index 
+                            ? 'ring-2 ring-blue-500 ring-offset-2 scale-105' 
+                            : 'ring-1 ring-gray-200 hover:ring-gray-300'
+                        }`}
+                      >
+                                                 <img 
+                           src={image.url} 
+                           alt={image.alt} 
+                           className="w-16 h-16 object-cover"
+                                                       onError={(e) => {
+                              console.error('Thumbnail failed to load:', e.target.src);
+                              // Stop the infinite loop and use placeholder
+                              e.target.onerror = null;
+                              e.target.src = 'https://placehold.co/400x400/png';
+                            }}
+                           onLoad={(e) => {
+                             console.log('Thumbnail loaded successfully:', e.target.src);
+                           }}
+                         />
+                        {/* Active indicator */}
+                        {selectedImage === index && (
+                          <div className="absolute inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  
                 </div>
               )}
             </div>    

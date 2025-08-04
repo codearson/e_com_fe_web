@@ -31,7 +31,7 @@ export const Navbar = () => {
   const location = useLocation();
   const isDashboardPage = location.pathname === "/admin/dashboard";
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
-  const { getMessages } = useMessageContext();
+  const { getMessages, clearMessages } = useMessageContext();
   const [showMessages, setShowMessages] = useState(false);
 
   // Debounced search function
@@ -615,7 +615,20 @@ export const Navbar = () => {
             {showMessages && (
               <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
                 <div className="p-4">
-                  <h4 className="font-semibold mb-2">Messages</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold">Messages</h4>
+                    {getMessages(user.id).length > 0 && (
+                      <button
+                        onClick={() => {
+                          clearMessages(user.id);
+                          setShowMessages(false);
+                        }}
+                        className="text-xs text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                  </div>
                   {getMessages(user.id).length === 0 ? (
                     <div className="text-gray-500 text-sm">No messages</div>
                   ) : (
@@ -710,13 +723,102 @@ export const Navbar = () => {
               >
                 Sell now
               </button>
-              <button
-                className="w-full py-2.5 border border-[#1E90FF] text-[#1E90FF] rounded-md font-medium hover:bg-[#e6f3ff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:ring-opacity-50"
-                onClick={() => setAuthModalOpen(true)}
-              >
-                Sign up | Log in
-              </button>
+              {user ? (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#1E90FF] to-[#6dd5ed] text-white font-semibold text-lg">
+                    {user.firstName?.[0]}
+                    {user.lastName?.[0]}
+                  </span>
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-900 text-sm">
+                      {user.firstName} {user.lastName}
+                    </div>
+                    <div className="text-gray-500 text-xs">{user.email}</div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  className="w-full py-2.5 border border-[#1E90FF] text-[#1E90FF] rounded-md font-medium hover:bg-[#e6f3ff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:ring-opacity-50"
+                  onClick={() => setAuthModalOpen(true)}
+                >
+                  Sign up | Log in
+                </button>
+              )}
             </div>
+            {user && (
+              <div className="border-b border-gray-200">
+                <button
+                  className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none"
+                  onClick={() => {
+                    navigate("/profile");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Profile
+                </button>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none"
+                  onClick={() => {
+                    navigate("/myorders");
+                    setMenuOpen(false);
+                  }}
+                >
+                  My Orders
+                </button>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none"
+                  onClick={() => {
+                    navigate("/favourites");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Favourites
+                </button>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none"
+                  onClick={() => {
+                    navigate("/profile/edit");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Settings
+                </button>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none flex items-center justify-between"
+                  onClick={() => {
+                    setShowMessages(true);
+                    setMenuOpen(false);
+                  }}
+                >
+                  <span>Messages</span>
+                  {getMessages(user.id).length > 0 && (
+                    <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                      {getMessages(user.id).length}
+                    </span>
+                  )}
+                </button>
+                {user?.userRoleDto?.userRole === "ADMIN" && (
+                  <button
+                    className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none"
+                    onClick={() => {
+                      navigate("/admin/dashboard");
+                      setMenuOpen(false);
+                    }}
+                  >
+                    Dashboard
+                  </button>
+                )}
+                <button
+                  className="w-full text-left px-4 py-3 text-sm font-semibold text-[#1E90FF] hover:bg-gray-100 focus:outline-none"
+                  onClick={() => {
+                    handleLogout();
+                    setMenuOpen(false);
+                  }}
+                >
+                  Log out
+                </button>
+              </div>
+            )}
             <button
               className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 border-b border-gray-200 hover:bg-gray-100 focus:outline-none"
               onClick={() => setMobileCategoriesOpen(true)}

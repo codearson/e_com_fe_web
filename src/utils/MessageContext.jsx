@@ -1,10 +1,27 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const MessageContext = createContext();
 
 export const MessageProvider = ({ children }) => {
-  // messages: { [userId]: [array of messages] }
-  const [messages, setMessages] = useState({});
+  // Initialize messages from localStorage or empty object
+  const [messages, setMessages] = useState(() => {
+    try {
+      const savedMessages = localStorage.getItem('userMessages');
+      return savedMessages ? JSON.parse(savedMessages) : {};
+    } catch (error) {
+      console.error('Error loading messages from localStorage:', error);
+      return {};
+    }
+  });
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('userMessages', JSON.stringify(messages));
+    } catch (error) {
+      console.error('Error saving messages to localStorage:', error);
+    }
+  }, [messages]);
 
   const addMessage = (userId, message) => {
     setMessages(prev => ({
@@ -15,8 +32,26 @@ export const MessageProvider = ({ children }) => {
 
   const getMessages = (userId) => messages[userId] || [];
 
+  const clearMessages = (userId) => {
+    setMessages(prev => {
+      const newMessages = { ...prev };
+      delete newMessages[userId];
+      return newMessages;
+    });
+  };
+
+  const clearAllMessages = () => {
+    setMessages({});
+  };
+
   return (
-    <MessageContext.Provider value={{ messages, addMessage, getMessages }}>
+    <MessageContext.Provider value={{ 
+      messages, 
+      addMessage, 
+      getMessages, 
+      clearMessages, 
+      clearAllMessages 
+    }}>
       {children}
     </MessageContext.Provider>
   );

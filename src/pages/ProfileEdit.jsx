@@ -22,6 +22,7 @@ import {
 } from "../API/UserApi";
 import provinceDistrictData from "../utils/provinceDistrictData";
 import { getProductsByUserId } from "../API/productApi";
+import { uploadProfileImage, findByUserId } from "../API/UserProfileImageApi";
 window.__BACKEND_URL__ = "http://localhost:8080";
 
 const tabs = [
@@ -412,6 +413,7 @@ export const ProfileEdit = () => {
   const [savingShippingAddress, setSavingShippingAddress] = useState(false);
 
   const [districts, setDistricts] = useState([]);
+  const [filteredDistricts, setFilteredDistricts] = useState([]);
   const [provinces, setProvinces] = useState([]);
   const [filteredProvinces, setFilteredProvinces] = useState([]);
   const [showDistrictDropdown, setShowDistrictDropdown] = useState(false);
@@ -426,6 +428,12 @@ export const ProfileEdit = () => {
 
   const [userProducts, setUserProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  
+  // Profile image state variables
+  const [profileImage, setProfileImage] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const [imageSuccess, setImageSuccess] = useState("");
 
   const navigate = useNavigate();
 
@@ -440,20 +448,14 @@ export const ProfileEdit = () => {
   }, []);
 
   const fetchShippingAddresses = async (userId) => {
-    console.log("Fetching shipping addresses for user ID:", userId);
     const addresses = await getAllShippingAddressesBySearch();
-    console.log("All shipping addresses fetched:", addresses);
     // Filter addresses by logged-in user's ID
     if (userId && addresses) {
       const userAddresses = addresses.filter(
         (address) => address.userDto?.id === userId
       );
-      console.log("Filtered shipping addresses for user:", userAddresses);
       setShippingAddresses(userAddresses);
     } else {
-      console.log(
-        "User ID not available or no addresses fetched, setting empty array."
-      );
       setShippingAddresses([]);
     }
   };
@@ -551,10 +553,51 @@ export const ProfileEdit = () => {
             setGender(userData.gender || "");
 
             // Fetch user products
+            console.log("=== STARTING USER PRODUCTS FETCH ===");
             setLoadingProducts(true);
-            const products = await getProductsByUserId(userData.id);
-            setUserProducts(products);
-            setLoadingProducts(false);
+            try {
+              console.log("About to fetch products for user ID:", userData.id);
+              const products = await getProductsByUserId(userData.id);
+              console.log("User products fetched successfully:", products);
+              setUserProducts(products);
+              setLoadingProducts(false);
+              console.log("User products fetched, now fetching profile image...");
+            } catch (error) {
+              console.error("Error fetching user products:", error);
+              setLoadingProducts(false);
+              console.log("User products fetch failed, but continuing with profile image...");
+            }
+
+            // Fetch profile image
+            console.log("=== STARTING PROFILE IMAGE FETCH ===");
+            console.log("About to call findByUserId with userData.id:", userData.id);
+            console.log("User data object:", userData);
+            try {
+              console.log("Fetching profile image for user ID:", userData.id);
+              const profileResponse = await findByUserId(userData.id);
+              console.log("Profile response:", profileResponse);
+              console.log("Profile response status:", profileResponse?.status);
+              console.log("Profile response DTO:", profileResponse?.responseDto);
+              if (profileResponse && profileResponse.status && profileResponse.responseDto) {
+                console.log("Setting profile image:", profileResponse.responseDto.profileImage);
+                setProfileImage(profileResponse.responseDto.profileImage);
+              } else {
+                console.log("No profile image found or invalid response structure");
+                console.log("Response structure:", {
+                  hasResponse: !!profileResponse,
+                  hasStatus: !!profileResponse?.status,
+                  hasResponseDto: !!profileResponse?.responseDto,
+                  responseDto: profileResponse?.responseDto
+                });
+                // Set profile image to null to show fallback
+                setProfileImage(null);
+              }
+            } catch (error) {
+              console.error("Error fetching profile image:", error);
+              console.error("Error details:", error.response?.data);
+              // Set profile image to null to show fallback
+              setProfileImage(null);
+            }
           }
         } else {
           console.log("No userEmail from decoded token.");
@@ -625,6 +668,11 @@ export const ProfileEdit = () => {
     }
   }, [branchSearch, branches, bankDetails]);
 
+  // Debug profile image state changes
+  useEffect(() => {
+    console.log("Profile image state changed:", profileImage);
+  }, [profileImage]);
+
   const handleProfileUpdate = async () => {
     setUpdateStatus("Updating...");
     // Compose dateOfBirth string if all fields are present
@@ -654,6 +702,60 @@ export const ProfileEdit = () => {
     }
     setTimeout(() => setUpdateStatus(""), 3000);
     setTimeout(() => setError(null), 3000);
+  };
+
+  // Handle profile image upload
+  const handleImageUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    if (files.length === 0) return;
+
+    const file = files[0]; // Take the first file
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setImageError("Please select a valid image file.");
+      setTimeout(() => setImageError(""), 3000);
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError("Image size should be less than 5MB.");
+      setTimeout(() => setImageError(""), 3000);
+      return;
+    }
+
+    setUploadingImage(true);
+    setImageError("");
+    setImageSuccess("");
+
+    try {
+      const userId = user?.id;
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
+
+      const result = await uploadProfileImage(file, userId);
+      
+      if (result && result.status) {
+        setImageSuccess("Profile image uploaded successfully!");
+        // Update the profile image with the new image
+        if (result.responseDto && result.responseDto.profileImage) {
+          setProfileImage(result.responseDto.profileImage);
+        }
+        // Clear the file input
+        event.target.value = "";
+      } else {
+        setImageError(result?.errorDescription || "Failed to upload image.");
+      }
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      setImageError("An error occurred while uploading the image.");
+    } finally {
+      setUploadingImage(false);
+      setTimeout(() => setImageSuccess(""), 3000);
+      setTimeout(() => setImageError(""), 3000);
+    }
   };
 
   const handleBankSelect = (bank) => {
@@ -1368,8 +1470,7 @@ export const ProfileEdit = () => {
     setFilteredProvinces(provinces);
   };
 
-  // Add state for filteredDistricts in the component
-  const [filteredDistricts, setFilteredDistricts] = useState([]);
+
 
   // When province changes in add/edit form, update filteredDistricts
   useEffect(() => {
@@ -1488,13 +1589,37 @@ export const ProfileEdit = () => {
                       Your photo
                     </span>
                     <img
-                      src={`https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random&color=fff&size=160`}
+                      src={profileImage ? `${window.__BACKEND_URL__}/uploads/profiles/${profileImage}` : `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random&color=fff&size=160`}
                       alt="Profile"
                       className="w-20 h-20 rounded-full object-cover border-2 border-gray-200 mb-2"
+                      onError={(e) => {
+                        console.error("Image failed to load:", e.target.src);
+                        console.error("Profile image state:", profileImage);
+                        e.target.src = `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=random&color=fff&size=160`;
+                      }}
+                      onLoad={() => {
+                        console.log("Profile image loaded successfully:", profileImage);
+                      }}
                     />
-                    <button className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition">
-                      Choose photo
-                    </button>
+                    <input
+                      type="file"
+                      id="profile-image-input"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="profile-image-input"
+                      className="border border-[#1E90FF] text-[#1E90FF] rounded px-4 py-1 font-medium hover:bg-[#e6f3ff] transition cursor-pointer"
+                    >
+                      {uploadingImage ? "Uploading..." : "Choose photo"}
+                    </label>
+                    {imageError && (
+                      <p className="text-red-500 text-sm mt-1">{imageError}</p>
+                    )}
+                    {imageSuccess && (
+                      <p className="text-green-500 text-sm mt-1">{imageSuccess}</p>
+                    )}
                   </div>
                   <div className="flex-1 flex flex-col gap-4">
                     <div className="flex flex-col md:flex-row gap-4">

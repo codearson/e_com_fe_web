@@ -5,6 +5,8 @@ import { getAllShippingAddressesBySearch, saveShippingAddress, updateShippingAdd
 import { saveOrder } from "../API/ordersApi";
 import { saveBrand, updateBrand, getAllBrands } from "../API/brandApi";
 import { saveCondition, updateCondition, getAllConditions } from "../API/conditionApi";
+import { getActiveProductImages } from "../API/ProductImageApi";
+import { BASE_BACKEND_URL } from "../API/config";
 import { Navbar } from "../components/Navbar";
 import { decodeJwt } from "../API/UserApi";
 import { getUserByEmail } from "../API/config";
@@ -137,6 +139,7 @@ const Checkout = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [userId, setUserId] = useState(null);
   const [orderId, setOrderId] = useState(null);
+  const [productImage, setProductImage] = useState(null);
 
   // Fetch product if not in state
   useEffect(() => {
@@ -184,6 +187,48 @@ const Checkout = () => {
     };
     fetchConditions();
   }, []);
+
+  // Fetch product image when product is loaded
+  useEffect(() => {
+    const fetchProductImage = async () => {
+      if (product?.id) {
+        try {
+          const images = await getActiveProductImages(product.id);
+          if (images && images.length > 0) {
+            // Get the first image and construct the full URL
+            const firstImage = images[0];
+            const imageUrl = firstImage.url || firstImage.imageUrl;
+            
+            // Handle different URL formats
+            let fullUrl;
+            if (imageUrl.startsWith('http')) {
+              fullUrl = imageUrl;
+            } else if (imageUrl.startsWith('/')) {
+              fullUrl = `${BASE_BACKEND_URL}${imageUrl}`;
+            } else {
+              fullUrl = `${BASE_BACKEND_URL}/${imageUrl}`;
+            }
+            
+            // Properly encode the URL for special characters
+            const urlParts = fullUrl.split('/');
+            const filename = urlParts[urlParts.length - 1];
+            const path = urlParts.slice(0, -1).join('/');
+            const encodedFilename = encodeURIComponent(filename);
+            fullUrl = `${path}/${encodedFilename}`;
+            
+            setProductImage(fullUrl);
+          } else {
+            setProductImage(null);
+          }
+        } catch (error) {
+          console.error('Error fetching product image:', error);
+          setProductImage(null);
+        }
+      }
+    };
+
+    fetchProductImage();
+  }, [product?.id]);
 
   // Helper to fetch and set primary address
   const fetchAndSetPrimaryAddress = async (preferredAddressId = null) => {
@@ -482,9 +527,13 @@ const Checkout = () => {
             <div className="bg-white p-4 rounded-lg shadow-sm">
               <div className="flex items-center gap-4">
                 <img
-                  src={product.responseDto?.imageUrl || product.imageUrl || "https://placehold.co/100x100/png"}
+                  src={productImage || "https://placehold.co/100x100/png"}
                   alt={product.title}
                   className="w-24 h-24 object-cover rounded-md"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://placehold.co/100x100/png";
+                  }}
                 />
                 <div>
                   <h2 className="font-semibold text-lg">{product.title}</h2>

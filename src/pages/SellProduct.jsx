@@ -235,7 +235,7 @@ const SellProduct = () => {
               {statuses.length === 0 && !loadingDropdowns && <option disabled>No statuses found</option>}
               {statuses.map(s => <option key={s.id} value={s.id}>{s.type}</option>)}
             </select>
-            <input type="number" placeholder="Price" className="p-3 border border-gray-300 rounded-md" value={price} onChange={e => setPrice(e.target.value)} required min="0" step="0.01" />
+            <input type="number" placeholder="Price" className="p-3 border border-gray-300 rounded-md" value={price} onChange={e => setPrice(e.target.value)} required min="0" step="1" />
             <input type="text" placeholder="Size" className="p-3 border border-gray-300 rounded-md" value={size} onChange={e => setSize(e.target.value)} />
             <input type="number" placeholder="Quantity" className="p-3 border border-gray-300 rounded-md" value={quantity} onChange={e => setQuantity(e.target.value)} required min="1" />
             <input type="text" placeholder="Color" className="p-3 border border-gray-300 rounded-md" value={color} onChange={e => setColor(e.target.value)} />

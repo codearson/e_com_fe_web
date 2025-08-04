@@ -6,6 +6,7 @@ import { getUserByEmail } from "../API/config";
 import { decodeJwt } from "../API/UserApi";
 import { getProductsByUserId } from "../API/productApi";
 import { filterProductsWithActiveImages } from "../API/ProductImageApi";
+import { findByUserId } from "../API/UserProfileImageApi";
 import { BASE_BACKEND_URL } from '../API/config'; 
 
 export const Profile = () => {
@@ -13,6 +14,7 @@ export const Profile = () => {
   const [user, setUser] = useState(null);
   const [userProducts, setUserProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+  const [profileImage, setProfileImage] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,15 +27,25 @@ export const Profile = () => {
           const userData = await getUserByEmail(email);
           setUser(userData);
           if (userData?.id) {
+            // Fetch profile image
+            try {
+              const profileResponse = await findByUserId(userData.id);
+              if (profileResponse && profileResponse.status && profileResponse.responseDto) {
+                setProfileImage(profileResponse.responseDto.profileImage);
+              } else {
+                setProfileImage(null);
+              }
+            } catch (error) {
+              console.error("Error fetching profile image:", error);
+              setProfileImage(null);
+            }
+
             setLoadingProducts(true);
             try {
               const products = await getProductsByUserId(userData.id);
               
               // Filter products to only show those with active images
               const productsWithActiveImages = await filterProductsWithActiveImages(products);
-              
-              console.log('Original products:', products);
-              console.log('Products with active images:', productsWithActiveImages);
               
               setUserProducts(productsWithActiveImages);
             } catch (error) {
@@ -60,9 +72,12 @@ export const Profile = () => {
         <div className="w-full max-w-5xl mx-auto flex flex-col md:flex-row md:items-center md:space-x-8 bg-white rounded-2xl shadow p-4 md:p-10 mb-8">
           <div className="flex-shrink-0 flex justify-center md:block mb-4 md:mb-0">
             <img
-              src={`https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random&color=fff&size=160`}
+              src={profileImage ? `${BASE_BACKEND_URL}/uploads/profiles/${profileImage}` : `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random&color=fff&size=160`}
               alt="Profile"
               className="w-28 h-28 md:w-40 md:h-40 rounded-full object-cover border-4 border-gray-100 shadow"
+              onError={(e) => {
+                e.target.src = `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random&color=fff&size=160`;
+              }}
             />
           </div>
           <div className="flex-1 flex flex-col md:flex-row md:items-center md:justify-between w-full">

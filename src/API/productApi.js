@@ -198,53 +198,47 @@ export const searchProducts = async (searchTerm) => {
             headers.Authorization = `Bearer ${accessToken}`;
         }
 
-        // Build query parameters
+        // Build query parameters - try with minimal parameters first
         const params = new URLSearchParams({
             pageNumber: '1',
-            pageSize: '20',
-            status: '1',
-            name: searchTerm, // Search in product name
-            description: searchTerm, // Search in description
-            brand: searchTerm, // Search in brand
-            category: searchTerm // Search in category
+            pageSize: '50', // Increased page size to get more products
+            status: '1' // Re-enable status filter
+            // Temporarily remove search parameters to see if the issue is with the search params
         });
 
         const response = await axios.get(
-            `${BASE_BACKEND_URL}/product/getAllPage?${params.toString()}`,
+            `${BASE_BACKEND_URL}/product/getAll`,
             { headers }
         );
         
-        console.log('Search API response:', response.data);
-        
-        // Handle the response format from getAllPage endpoint
+        // Handle the response format from getAll endpoint
         let products = [];
-        if (response.data.responseDto?.payload) {
-            products = response.data.responseDto.payload;
-        } else if (response.data.payload) {
-            products = response.data.payload;
+        if (response.data.responseDto) {
+            products = response.data.responseDto;
         } else if (Array.isArray(response.data)) {
             products = response.data;
         }
 
         // Filter products to match search term more closely
         const searchTermLower = searchTerm.toLowerCase();
+        
         const filteredProducts = products.filter(product => {
-            const nameMatch = product.name?.toLowerCase().includes(searchTermLower);
+            const titleMatch = product.title?.toLowerCase().includes(searchTermLower);
             const descMatch = product.description?.toLowerCase().includes(searchTermLower);
-            const brandMatch = product.brand?.toLowerCase().includes(searchTermLower);
-            const categoryMatch = product.category?.toLowerCase().includes(searchTermLower);
+            const brandMatch = product.brandDto?.brandName?.toLowerCase().includes(searchTermLower);
+            const categoryMatch = product.productCategoryDto?.name?.toLowerCase().includes(searchTermLower);
             
-            // Prioritize exact matches in name or close matches
-            return nameMatch || descMatch || brandMatch || categoryMatch;
+            // Prioritize exact matches in title or close matches
+            return titleMatch || descMatch || brandMatch || categoryMatch;
         });
 
         // Sort results by relevance (exact matches first)
         filteredProducts.sort((a, b) => {
-            const aNameMatch = a.name?.toLowerCase().includes(searchTermLower);
-            const bNameMatch = b.name?.toLowerCase().includes(searchTermLower);
+            const aTitleMatch = a.title?.toLowerCase().includes(searchTermLower);
+            const bTitleMatch = b.title?.toLowerCase().includes(searchTermLower);
             
-            if (aNameMatch && !bNameMatch) return -1;
-            if (!aNameMatch && bNameMatch) return 1;
+            if (aTitleMatch && !bTitleMatch) return -1;
+            if (!aTitleMatch && bTitleMatch) return 1;
             return 0;
         });
         

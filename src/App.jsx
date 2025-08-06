@@ -26,10 +26,13 @@ import { MessageProvider } from "./utils/MessageContext.jsx";
 import OrderConfirmation from "./pages/orderconfirmation.jsx";
 import MyOrders from "./pages/MyOrders";
 import EditProduct from './pages/EditProduct';
+import Cart from "./pages/Cart";
+import { CartProvider } from "./utils/CartContext.jsx";
 
 function App() {
   return (
     <MessageProvider>
+      <CartProvider>
       <BrowserRouter>
         <Routes>
           <Route index element={<Home />} />
@@ -51,6 +54,7 @@ function App() {
           <Route path="/search" element={<SearchResults />} />
           <Route path="/checkout/:id" element={<Checkout />} />
           <Route path="/edit-product/:id" element={<EditProduct />} />
+          <Route path="/cart" element={<Cart />} />
           
           <Route path="/myorders" element={
             <ProtectedRoute>
@@ -71,6 +75,7 @@ function App() {
         <Route path="/orderconfirmation/:orderId" element={<OrderConfirmation />} />
         </Routes>
       </BrowserRouter>
+      </CartProvider>
     </MessageProvider>
   );
 }

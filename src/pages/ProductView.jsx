@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { getProductById } from '../API/productApi';
+import { getProductById, getSellerByProductId } from '../API/productApi';
 import { getAllProductCategoriesBySearch } from '../API/ProductCategoryApi';
 import { getActiveProductImages } from '../API/ProductImageApi';
+import { findByUserId } from '../API/UserProfileImageApi';
 import { BASE_BACKEND_URL } from '../API/config'; 
 
 const ProductView = () => {
@@ -19,6 +20,9 @@ const ProductView = () => {
   const [loadingImages, setLoadingImages] = useState(true);
   const [categories, setCategories] = useState([]);
   const [categoryMap, setCategoryMap] = useState({});
+  const [seller, setSeller] = useState(null);
+  const [loadingSeller, setLoadingSeller] = useState(false);
+  const [sellerProfileImage, setSellerProfileImage] = useState(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -123,6 +127,63 @@ const ProductView = () => {
     };
     fetchCategories();
   }, []);
+
+  // Fetch seller information when product is loaded
+  useEffect(() => {
+    const fetchSeller = async () => {
+      if (product?.id) {
+        try {
+          setLoadingSeller(true);
+          
+          // First check if product already has user information
+          if (product.userDto && product.userDto.id) {
+            setSeller(product.userDto);
+            
+            // Fetch seller's profile image
+            try {
+              const profileResponse = await findByUserId(product.userDto.id);
+              if (profileResponse && profileResponse.status && profileResponse.responseDto) {
+                setSellerProfileImage(profileResponse.responseDto.profileImage);
+              } else {
+                setSellerProfileImage(null);
+              }
+            } catch (error) {
+              console.error("Error fetching seller profile image:", error);
+              setSellerProfileImage(null);
+            }
+            
+            setLoadingSeller(false);
+            return;
+          }
+          
+          // If not, fetch seller information
+          const sellerData = await getSellerByProductId(product.id);
+          setSeller(sellerData);
+          
+          // Fetch seller's profile image if we have seller data
+          if (sellerData?.id) {
+            try {
+              const profileResponse = await findByUserId(sellerData.id);
+              if (profileResponse && profileResponse.status && profileResponse.responseDto) {
+                setSellerProfileImage(profileResponse.responseDto.profileImage);
+              } else {
+                setSellerProfileImage(null);
+              }
+            } catch (error) {
+              console.error("Error fetching seller profile image:", error);
+              setSellerProfileImage(null);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching seller information:', error);
+        } finally {
+          setLoadingSeller(false);
+        }
+      }
+    };
+
+    fetchSeller();
+  }, [product?.id]);
   
   if (loading) {
     return (
@@ -405,6 +466,87 @@ const ProductView = () => {
                 >
                   Buy Now
                 </button>
+              </div>
+
+              {/* Seller Information Section */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  Seller Information
+                  <svg className="w-5 h-5 ml-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </h3>
+                {loadingSeller ? (
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded animate-pulse w-32"></div>
+                      <div className="h-3 bg-gray-200 rounded animate-pulse w-24"></div>
+                    </div>
+                  </div>
+                ) : seller ? (
+                    <div 
+                      className="flex items-center space-x-4 cursor-pointer hover:bg-gray-50 p-3 rounded-lg transition-colors"
+                      onClick={() => {
+                        if (seller?.id) {
+                          navigate(`/seller/${seller.id}`, { 
+                            state: { 
+                              seller: seller,
+                              sellerProfileImage: sellerProfileImage 
+                            } 
+                          });
+                        }
+                      }}
+                    >
+                      <div className="relative">
+                        <img 
+                          src={sellerProfileImage ? `${BASE_BACKEND_URL}/uploads/profiles/${sellerProfileImage}` : 
+                               seller.profileImageUrl ? `${BASE_BACKEND_URL}${seller.profileImageUrl}` :
+                               seller.profileImage ? `${BASE_BACKEND_URL}/uploads/profiles/${seller.profileImage}` :
+                               'https://placehold.co/100x100/png'} 
+                          alt={`${seller.firstName || seller.first_name || ''} ${seller.lastName || seller.last_name || ''}`}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://placehold.co/100x100/png';
+                          }}
+                        />
+                        {(seller.isActive || seller.status) && (
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">
+                          {seller.firstName || seller.first_name || ''} {seller.lastName || seller.last_name || ''}
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          Member since {seller.createdDate ? new Date(seller.createdDate).getFullYear() :
+                                     'N/A'}
+                        </p>
+                        {(seller.email || seller.username) && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {seller.email || seller.username}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center space-x-1">
+                          <span className="text-yellow-400">★</span>
+                          <span className="text-sm text-gray-600">4.8</span>
+                        </div>
+                        <p className="text-xs text-gray-500">(24 reviews)</p>
+                      </div>
+                      <div className="text-gray-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                ) : (
+                  <div className="text-gray-500 text-sm">
+                    Seller information not available
+                  </div>
+                )}
               </div>
             </div>
           </div>

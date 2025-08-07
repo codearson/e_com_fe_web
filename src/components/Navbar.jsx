@@ -312,7 +312,7 @@ export const Navbar = () => {
 
   // Update the mobile search input
   const mobileSearchInput = (
-    <div className="lg:hidden flex-1 mx-4" ref={searchRef}>
+    <div className="lg:hidden flex-1 mx-2" ref={searchRef}>
       <form onSubmit={handleSearchSubmit} className="relative">
         <div className="flex items-center bg-gray-100 rounded-full px-3 py-1.5 border border-gray-200">
           <svg
@@ -443,11 +443,11 @@ export const Navbar = () => {
   return (
     <nav className="bg-white shadow-lg border-b border-gray-200 font-sans z-50 relative">
       {/* Main Navbar */}
-      <div className="flex items-center justify-between px-4 py-3 lg:px-8 lg:py-4">
+      <div className="flex items-center justify-between px-2 sm:px-4 py-3 lg:px-8 lg:py-4 w-full">
         {/* Logo */}
         <div className="flex items-center flex-shrink-0">
           <span
-            className="text-2xl lg:text-3xl font-bold text-[#1E90FF] mr-6 select-none tracking-tight"
+            className="text-2xl lg:text-3xl font-bold text-[#1E90FF] mr-4 lg:mr-6 select-none tracking-tight"
             style={{ fontFamily: "cursive", cursor: "pointer" }}
             onClick={() => navigate("/")}
           >
@@ -456,7 +456,67 @@ export const Navbar = () => {
         </div>
 
         {/* Mobile Search */}
-        {mobileSearchInput}
+        <div className="lg:hidden flex-1 mx-2" ref={searchRef}>
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <div className="flex items-center bg-gray-100 rounded-full px-3 py-1.5 border border-gray-200">
+              <svg
+                className="w-5 h-5 text-gray-500 mr-2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search"
+                className="flex-1 bg-transparent text-sm focus:outline-none text-gray-800 placeholder-gray-500"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                disabled={isDashboardPage}
+                onFocus={() => searchQuery.trim() && setShowSuggestions(true)}
+              />
+              {isSearching && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+              )}
+            </div>
+            {showSuggestions &&
+              searchSuggestions.length > 0 &&
+              !isDashboardPage && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                  {searchSuggestions.map((product) => (
+                    <div
+                      key={product.id}
+                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center"
+                      onClick={() => handleSuggestionClick(product)}
+                    >
+                      <img
+                        src={product.imageUrl || "/placeholder-product.jpg"}
+                        alt={product.name}
+                        className="w-8 h-8 object-cover rounded mr-3"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {product.name}
+                        </div>
+                        <div className="text-sm text-gray-500 truncate">
+                          {product.brand}
+                        </div>
+                      </div>
+                      <div className="ml-3 text-sm font-semibold text-[#1E90FF]">
+                        ${product.price}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+          </form>
+        </div>
 
         {/* Desktop Search */}
         {desktopSearchInput}
@@ -567,7 +627,7 @@ export const Navbar = () => {
                       </>
                     )}
                     <button
-                      className="text-left px-4 py-2 text-sm text-[#1E90FF] hover:bg-gray-100 font-semibold cursor-pointer w-full transition-colors border-t border-gray-100 mt-1 pt-2"
+                      className="text-left px-4 py-2 text-sm font-semibold text-[#1E90FF] hover:bg-gray-100 font-semibold cursor-pointer w-full transition-colors border-t border-gray-100 mt-1 pt-2"
                       onClick={handleLogout}
                     >
                       Log out
@@ -612,9 +672,95 @@ export const Navbar = () => {
           </button>
         </div>
 
-        {/* Message Icon */}
+        {/* Mobile Right Side Icons */}
+        <div className="lg:hidden flex items-center space-x-2">
+          {/* Message Icon - Mobile */}
+          {user && (
+            <div className="relative">
+              <button
+                className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 focus:outline-none"
+                onClick={() => setShowMessages((v) => !v)}
+                aria-label="Messages"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                {getMessages(user.id).length > 0 && (
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                    {getMessages(user.id).length}
+                  </span>
+                )}
+              </button>
+              {showMessages && (
+                <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold">Messages</h4>
+                      {getMessages(user.id).length > 0 && (
+                        <button
+                          onClick={() => {
+                            clearMessages(user.id);
+                            setShowMessages(false);
+                          }}
+                          className="text-xs text-red-600 hover:text-red-800 font-medium"
+                        >
+                          Clear All
+                        </button>
+                      )}
+                    </div>
+                    {getMessages(user.id).length === 0 ? (
+                      <div className="text-gray-500 text-sm">No messages</div>
+                    ) : (
+                      <ul className="space-y-2 max-h-48 overflow-y-auto">
+                        {getMessages(user.id).map((msg, idx) => (
+                          <li
+                            key={idx}
+                            className="text-gray-800 text-sm bg-gray-100 rounded px-2 py-1"
+                          >
+                            {msg}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Mobile Menu Button */}
+          <button
+            className="p-2 rounded-md hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-gray-200 flex items-center justify-center"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+            style={{ minWidth: '44px', minHeight: '44px' }}
+          >
+            <svg
+              className="w-6 h-6 text-[#1E90FF]"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Message Icon - Desktop */}
         {user && (
-          <div className="relative">
+          <div className="relative hidden lg:block">
             <button
               className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 focus:outline-none"
               onClick={() => setShowMessages((v) => !v)}
@@ -673,27 +819,6 @@ export const Navbar = () => {
             )}
           </div>
         )}
-
-        {/* Mobile Menu Button */}
-        <button
-          className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-gray-200"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
-        >
-          <svg
-            className="w-6 h-6 text-[#1E90FF]"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
-            />
-          </svg>
-        </button>
       </div>
       {/* Secondary Menu (hidden on mobile) */}
       <div className="border-t border-gray-200 hidden lg:flex flex-col px-12 text-black text-base font-normal bg-white z-40 relative">
@@ -706,7 +831,7 @@ export const Navbar = () => {
             className="fixed inset-0 bg-black/40 z-40 transition-opacity duration-300"
             onClick={() => setMenuOpen(false)}
           ></div>
-          <aside className="fixed top-0 left-0 w-64 md:w-80 h-full bg-white z-50 shadow-lg flex flex-col transition-transform duration-300 transform translate-x-0 overflow-y-auto">
+          <aside className="fixed top-0 right-0 w-64 md:w-80 h-full bg-white z-50 shadow-lg flex flex-col transition-transform duration-300 transform translate-x-0 overflow-y-auto">
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
               <span
                 className="text-2xl font-bold text-[#1E90FF] select-none tracking-tight"

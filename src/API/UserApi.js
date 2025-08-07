@@ -263,6 +263,32 @@ export const changePassword = async (changePasswordDto) => {
     }
 };
 
+export const getUserById = async (userId) => {
+    try {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+            return null;
+        }
+
+        const response = await axios.get(
+            `${BASE_BACKEND_URL}/user/getById/${userId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }
+        );
+
+        if (response.data?.responseDto) {
+            return response.data.responseDto;
+        }
+        return null;
+    } catch (error) {
+        console.error('Error fetching user by ID:', error);
+        return null;
+    }
+};
+
 export function decodeJwt(token) {
     try {
         return JSON.parse(atob(token.split('.')[1]));

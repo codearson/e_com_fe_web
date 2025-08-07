@@ -1,4 +1,5 @@
 import { BASE_BACKEND_URL } from "./config";
+import { getUserByEmail } from "./config";
 import axios from "axios";
 
 export const saveProduct = async (productData) => {
@@ -313,6 +314,51 @@ export const getProductsByUserId = async (userId) => {
     } catch (error) {
         console.error('Error fetching products by userId:', error);
         return [];
+    }
+};
+
+export const getSellerByProductId = async (productId) => {
+    try {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+            return null;
+        }
+
+        // Get all products to find the one with matching product ID
+        const response = await axios.get(
+            `${BASE_BACKEND_URL}/product/getAll`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }
+        );
+
+        let products = [];
+        if (response.data?.responseDto) {
+            products = response.data.responseDto;
+        } else if (Array.isArray(response.data)) {
+            products = response.data;
+        }
+
+        // Find the specific product
+        const targetProduct = products.find(p => p.id === parseInt(productId));
+        
+        if (!targetProduct) {
+            return null;
+        }
+        
+        if (!targetProduct.userDto?.id) {
+            return null;
+        }
+
+        // Get user information using getUserByEmail
+        const seller = await getUserByEmail(targetProduct.userDto.email || targetProduct.userDto.username);
+        return seller;
+
+    } catch (error) {
+        console.error('Error fetching seller by product ID:', error);
+        return null;
     }
 };
 

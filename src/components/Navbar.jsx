@@ -10,6 +10,7 @@ import { debounce } from "lodash";
 import "../styles/Navbar.css";
 import CategoryDropdownRecursive from "./CategoryDropdownRecursive";
 import { useMessageContext } from "../utils/MessageContext.jsx";
+import { useCart } from "../utils/CartContext";
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -33,6 +34,13 @@ export const Navbar = () => {
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const { getMessages, clearMessages } = useMessageContext();
   const [showMessages, setShowMessages] = useState(false);
+  const { cartCount } = useCart();
+  const [isCartPage, setIsCartPage] = useState(false);
+
+  // Update cart page status when location changes
+  useEffect(() => {
+    setIsCartPage(location.pathname === "/cart");
+  }, [location.pathname]);
 
   // Debounced search function
   const debouncedSearch = useRef(
@@ -276,8 +284,8 @@ export const Navbar = () => {
     : [];
   console.log(
     "Level 2 categories for hovered Level 1 (" +
-      hoveredLevel1Category?.name +
-      "):",
+    hoveredLevel1Category?.name +
+    "):",
     level2Categories
   );
 
@@ -290,8 +298,8 @@ export const Navbar = () => {
     : [];
   console.log(
     "Level 3 categories for hovered Level 2 (" +
-      hoveredLevel2Category?.name +
-      "):",
+    hoveredLevel2Category?.name +
+    "):",
     level3Categories
   );
 
@@ -529,9 +537,8 @@ export const Navbar = () => {
                 </span>
                 <span className="ml-1 text-gray-800">{user.firstName}</span>
                 <svg
-                  className={`w-4 h-4 ml-2 transition-transform duration-200 ${
-                    userDropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 ml-2 transition-transform duration-200 ${userDropdownOpen ? "rotate-180" : ""
+                    }`}
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
@@ -644,6 +651,24 @@ export const Navbar = () => {
             style={{ fontWeight: 500 }}
           >
             Sell now
+          </button>
+
+          {/* Cart Icon */}
+          <button
+            onClick={() => navigate("/cart")}
+            className="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 focus:outline-none"
+            aria-label="Cart"
+          >
+            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+            </svg>
+            {cartCount > 0 && !isCartPage && (
+              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full min-w-[18px] h-[18px]">
+                {cartCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -838,16 +863,35 @@ export const Navbar = () => {
                 </svg>
               </button>
             </div>
-            <div className="p-4 flex flex-col gap-3 border-b border-gray-200">
+            <div className="p-4 flex items-center gap-3 border-b border-gray-200">
               <button
                 onClick={() => {
                   navigate("/sell");
                   setMenuOpen(false);
                 }}
-                className="w-full py-2.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-colors focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:ring-opacity-50"
+                className="flex-1 py-2.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-colors focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:ring-opacity-50"
               >
                 Sell now
               </button>
+              <button
+                onClick={() => navigate("/cart")}
+                className="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 focus:outline-none"
+               
+                aria-label="Cart"
+              >
+                <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="9" cy="21" r="1" />
+                  <circle cx="20" cy="21" r="1" />
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                </svg>
+                {cartCount > 0 && !isCartPage && (
+                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full min-w-[18px] h-[18px]">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+              </div>
+              <div className="p-4 flex flex-col gap-3 border-b border-gray-200">
               {user ? (
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#1E90FF] to-[#6dd5ed] text-white font-semibold text-lg">
@@ -993,7 +1037,7 @@ export const Navbar = () => {
       )}
       {/* Render AuthModal */}
       <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
-        
+
     </nav>
   );
 };

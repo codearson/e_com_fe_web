@@ -159,7 +159,7 @@ const SellProduct = () => {
         if (imageUrl) {
           await saveProduct({ ...productData, id: productId, imageUrl });
         }
-        setMessage({ type: 'success', text: 'Product saved successfully! Redirecting to products page...' });
+        setMessage({ type: 'success', text: 'Product saved successfully!' });
         // Reset form
         setTitle(""); setBrandId(""); setPrice(""); setSize(""); setQuantity(""); setDescription(""); setColor("");
         setCategoryLevels([{ options: [], selected: "", level: 1, parentId: null }]);

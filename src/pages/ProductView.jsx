@@ -6,6 +6,8 @@ import { getProductById } from '../API/productApi';
 import { getAllProductCategoriesBySearch } from '../API/ProductCategoryApi';
 import { getActiveProductImages } from '../API/ProductImageApi';
 import { BASE_BACKEND_URL } from '../API/config'; 
+import { addToCart } from '../API/cartApi';
+import { useCart } from '../utils/CartContext';
 
 const ProductView = () => {
   const { id } = useParams();
@@ -19,6 +21,21 @@ const ProductView = () => {
   const [loadingImages, setLoadingImages] = useState(true);
   const [categories, setCategories] = useState([]);
   const [categoryMap, setCategoryMap] = useState({});
+  const { refreshCartCount } = useCart();
+
+  const handleAddToCart = async () => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      // Handle case where user is not logged in
+      return;
+    }
+    try {
+      await addToCart(userId, id);
+      refreshCartCount();
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -385,6 +402,7 @@ const ProductView = () => {
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2">
                 <button 
+                  onClick={handleAddToCart}
                   className={`flex-1 px-6 py-2 rounded-lg font-medium transition-colors ${
                     product.quentity > 0 
                       ? 'bg-blue-500 text-white hover:bg-blue-600'
@@ -416,14 +434,3 @@ const ProductView = () => {
 };
 
 export default ProductView;
-
-
-
-
-
-
-
-
-
-
-

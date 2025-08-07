@@ -71,7 +71,12 @@ const Products = () => {
   }, []);
 
   const handleProductClick = (product) => {
-    navigate(`/productView/${product.id}`, { state: { product } });
+    // Pass the full image URL in the navigation state
+    const productForNavigation = {
+      ...product,
+      imageUrl: product.imageUrl ? `${BASE_BACKEND_URL}${product.imageUrl}` : null,
+    };
+    navigate(`/productView/${product.id}`, { state: { product: productForNavigation } });
   };
 
   const handleFavouriteToggle = async (product) => {

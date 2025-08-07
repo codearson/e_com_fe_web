@@ -192,26 +192,17 @@ const Checkout = () => {
         try {
           const images = await getActiveProductImages(product.id);
           if (images && images.length > 0) {
-            // Get the first image and construct the full URL
             const firstImage = images[0];
             const imageUrl = firstImage.url || firstImage.imageUrl;
-            
-            // Handle different URL formats
+
+            // Construct the full URL, ensuring it's absolute
             let fullUrl;
             if (imageUrl.startsWith('http')) {
               fullUrl = imageUrl;
-            } else if (imageUrl.startsWith('/')) {
-              fullUrl = `${BASE_BACKEND_URL}${imageUrl}`;
             } else {
-              fullUrl = `${BASE_BACKEND_URL}/${imageUrl}`;
+              // Use URL constructor for robust joining of base and relative paths
+              fullUrl = new URL(imageUrl, BASE_BACKEND_URL).href;
             }
-            
-            // Properly encode the URL for special characters
-            const urlParts = fullUrl.split('/');
-            const filename = urlParts[urlParts.length - 1];
-            const path = urlParts.slice(0, -1).join('/');
-            const encodedFilename = encodeURIComponent(filename);
-            fullUrl = `${path}/${encodedFilename}`;
             
             setProductImage(fullUrl);
           } else {

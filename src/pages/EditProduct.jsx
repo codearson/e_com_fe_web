@@ -31,6 +31,7 @@ const EditProduct = () => {
   const [maxImages] = useState(5);
   const [draggedImage, setDraggedImage] = useState(null);
   const [primaryImageId, setPrimaryImageId] = useState(null);
+  const [selectedImageIdsToRemove, setSelectedImageIdsToRemove] = useState(new Set());
   // Form state
   const [title, setTitle] = useState("");
   const [brandId, setBrandId] = useState("");
@@ -219,7 +220,8 @@ const EditProduct = () => {
   // Handle image file selection with preview
   const handleImageFileChange = (e) => {
     const files = Array.from(e.target.files);
-    const currentActiveImages = existingImages.length;
+    const selectedCount = selectedImageIdsToRemove.size;
+    const currentActiveImages = existingImages.length - selectedCount;
     const currentPreviewImages = imagePreview.length;
     const totalCurrentImages = currentActiveImages + currentPreviewImages;
     const availableSlots = maxImages - totalCurrentImages;
@@ -268,6 +270,18 @@ const EditProduct = () => {
   };
 
 
+
+  const toggleSelectImageForRemoval = (imageId) => {
+    setSelectedImageIdsToRemove((prev) => {
+      const next = new Set(prev);
+      if (next.has(imageId)) {
+        next.delete(imageId);
+      } else {
+        next.add(imageId);
+      }
+      return next;
+    });
+  };
 
   // Remove existing image and refresh list (sets is_active = 0, keeps in database)
   const handleRemoveImage = async (img) => {
@@ -331,6 +345,17 @@ const EditProduct = () => {
     try {
       await saveImageOrderToDB(id, newImages.map(img => img.id));
       console.log('Image order saved successfully.');
+      // If the dragged image moved to the first position, or generally after reordering,
+      // ensure the first image is treated as primary
+      if (newImages.length > 0) {
+        const newPrimaryId = newImages[0].id;
+        setPrimaryImageId(newPrimaryId);
+        try {
+          await setPrimaryImageStatus(id, newPrimaryId);
+        } catch (err) {
+          console.error('Failed to persist primary image after reorder:', err);
+        }
+      }
     } catch (err) {
       console.error('Failed to save image order:', err);
       setMessage({ type: 'error', text: 'Failed to save image order.' });
@@ -404,6 +429,17 @@ const EditProduct = () => {
     };
 
     try {
+      // 0. Apply pending deletions first
+      let effectiveExistingImages = existingImages;
+      if (selectedImageIdsToRemove.size > 0) {
+        const idsToRemove = Array.from(selectedImageIdsToRemove);
+        await Promise.allSettled(idsToRemove.map((imgId) => updateProductImageStatus(imgId, false)));
+        setSelectedImageIdsToRemove(new Set());
+        // Fetch updated active images for accurate counts and downstream logic
+        effectiveExistingImages = await getActiveProductImages(id);
+        setExistingImages(effectiveExistingImages);
+      }
+
       // 1. Update product details
       const updateRes = await updateProduct(productData);
       if (!updateRes || updateRes.errorDescription) {
@@ -412,7 +448,7 @@ const EditProduct = () => {
 
       // 2. Upload new images if any and manage 5-image limit
       if (imageFiles.length > 0) {
-        const currentActiveImages = existingImages.length;
+        const currentActiveImages = effectiveExistingImages.length;
         const newImagesCount = imageFiles.length;
         const totalAfterUpload = currentActiveImages + newImagesCount;
         
@@ -422,7 +458,7 @@ const EditProduct = () => {
           console.log(`Total images after upload: ${totalAfterUpload}, need to deactivate: ${imagesToDeactivate}`);
           
           // Sort existing images by ID (assuming lower ID = older) and deactivate the oldest ones
-          const sortedImages = [...existingImages].sort((a, b) => a.id - b.id);
+          const sortedImages = [...effectiveExistingImages].sort((a, b) => a.id - b.id);
           const imagesToDeactivateList = sortedImages.slice(0, imagesToDeactivate);
           
           for (const img of imagesToDeactivateList) {
@@ -451,7 +487,8 @@ const EditProduct = () => {
       }
 
       // 3. Always refresh images after update/upload
-      await refreshImages();
+      const refreshed = await getActiveProductImages(id);
+      setExistingImages(refreshed);
       
       // 4. Clean up preview images
       imagePreview.forEach(preview => {
@@ -462,9 +499,11 @@ const EditProduct = () => {
       setImagePreview([]);
       setImageFiles([]);
       
-      // 5. Save the primary image information (first image in the array)
-      if (existingImages.length > 0) {
-        const primaryImage = existingImages[0];
+      // 5. Save the primary image information (first image in the updated array)
+      const latestImages = await getActiveProductImages(id);
+      setExistingImages(latestImages);
+      if (latestImages.length > 0) {
+        const primaryImage = latestImages[0];
         console.log('Setting primary image:', primaryImage);
         
         // Save the primary image to the database
@@ -498,6 +537,9 @@ const EditProduct = () => {
                 <h3 className="text-lg font-semibold text-gray-700">
                   Current Product Images ({existingImages.length}/{maxImages})
                 </h3>
+                {selectedImageIdsToRemove.size > 0 && (
+                  <span className="text-sm text-red-600">{selectedImageIdsToRemove.size} selected to delete (applies on Update)</span>
+                )}
               </div>
               
               <div className="flex flex-wrap gap-4 mb-4">
@@ -515,7 +557,7 @@ const EditProduct = () => {
                         <img
                           src={`${BASE_BACKEND_URL}${img.url}`}
                           alt="Product"
-                          className="w-32 h-32 object-cover rounded-lg border-2 border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                          className={`w-32 h-32 object-cover rounded-lg border-2 shadow-sm hover:shadow-md transition-shadow ${selectedImageIdsToRemove.has(img.id) ? 'border-red-500' : 'border-gray-200'}`}
                           onError={(e) => {
                             console.error('Image failed to load:', `${BASE_BACKEND_URL}${img.url}`);
                             e.target.style.display = 'none';
@@ -523,30 +565,35 @@ const EditProduct = () => {
                         />
                         <button
                           type="button"
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 transition-colors"
-                          onClick={() => handleRemoveImage(img)}
-                          title="Remove image (deactivates in database)"
+                          className={`absolute top-2 right-2 ${selectedImageIdsToRemove.has(img.id) ? 'bg-red-600' : 'bg-red-500'} text-white rounded-full p-1 shadow hover:bg-red-600 transition-colors`}
+                          onClick={() => toggleSelectImageForRemoval(img.id)}
+                          title={selectedImageIdsToRemove.has(img.id) ? 'Unselect for deletion' : 'Select for deletion (applies on Update)'}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                           </svg>
                         </button>
-                        <button
-                          type="button"
-                          className="absolute top-2 left-2 bg-green-500 text-white rounded-full p-1 shadow hover:bg-green-600 transition-colors"
-                          onClick={() => setPrimaryImage(img.id)}
-                          title="Set as primary image (shows in profile)"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        </button>
-                        <div className="absolute bottom-1 left-1 bg-gray-800 text-white text-xs px-1 rounded">
-                          ID: {img.id}
-                        </div>
+                        {img.id !== primaryImageId && (
+                          <button
+                            type="button"
+                            className="absolute top-2 left-2 bg-green-500 text-white rounded-full p-1 shadow hover:bg-green-600 transition-colors"
+                            onClick={() => setPrimaryImage(img.id)}
+                            title="Set as primary image (shows in profile)"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </button>
+                        )}
+                        
                         {img.id === primaryImageId && (
                           <div className="absolute bottom-1 right-1 bg-green-500 text-white text-xs px-1 rounded">
                             Primary
+                          </div>
+                        )}
+                        {selectedImageIdsToRemove.has(img.id) && (
+                          <div className="absolute bottom-1 right-1 bg-red-600 text-white text-xs px-1 rounded">
+                            To delete
                           </div>
                         )}
                         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
@@ -594,7 +641,7 @@ const EditProduct = () => {
             {/* Upload new images */}
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Add New Images ({existingImages.length + imagePreview.length}/{maxImages} used)
+                Add New Images ({(existingImages.length - selectedImageIdsToRemove.size) + imagePreview.length}/{maxImages} used)
               </label>
               <input
                 type="file"
@@ -602,12 +649,12 @@ const EditProduct = () => {
                 multiple
                 accept="image/*"
                 onChange={handleImageFileChange}
-                disabled={existingImages.length + imagePreview.length >= maxImages}
+                disabled={(existingImages.length - selectedImageIdsToRemove.size) + imagePreview.length >= maxImages}
               />
               <p className="text-sm text-gray-500 mt-1">
-                {existingImages.length + imagePreview.length >= maxImages
-                  ? `Maximum ${maxImages} images reached. Remove some images to add new ones.`
-                  : `Select multiple images to add to your product (max ${maxImages} total). When uploading new images that exceed the limit, oldest images will be automatically deactivated.`
+                {(existingImages.length - selectedImageIdsToRemove.size) + imagePreview.length >= maxImages
+                  ? `Maximum ${maxImages} images reached. Mark images for deletion or remove previews to add new ones.`
+                  : `You can mark existing images for deletion. Deletions happen when you click Update Product. Max ${maxImages} images total.`
                 }
               </p>
             </div>

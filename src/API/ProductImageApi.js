@@ -384,36 +384,49 @@ export async function getActiveProductImages(productId) {
     console.log('getActiveProductImages response status:', response.status);
     console.log('getActiveProductImages API response:', response.data);
     
-         // Filter only active images (is_active = 1)
-     let activeImages = response.data?.responseDto || response.data?.payload || response.data;
-     console.log('Raw response data:', response.data);
-     console.log('Extracted activeImages:', activeImages);
-     
-           if (Array.isArray(activeImages)) {
-        activeImages = activeImages.filter(img => {
-          // Check for different possible active status fields
-          const isActive = img.is_active === 1 || img.isActive === true || img.isActive === 1 || img.isActive === "true";
-          console.log('Image:', img.id, 'isActive:', isActive, 'img.isActive:', img.isActive, 'img.is_active:', img.is_active);
-          return isActive;
-        });
-      } else {
-        activeImages = [];
+    // Filter only active images (is_active = 1)
+    let activeImages = response.data?.responseDto || response.data?.payload || response.data;
+    if (Array.isArray(activeImages)) {
+      activeImages = activeImages.filter(img => {
+        const isActive = img.is_active === 1 || img.isActive === true || img.isActive === 1 || img.isActive === "true";
+        return isActive;
+      });
+    } else {
+      activeImages = [];
+    }
+    
+    // Apply saved image order from localStorage if available
+    const savedOrder = getImageOrderFromStorage(productId);
+    if (Array.isArray(savedOrder) && savedOrder.length > 0) {
+      const idToImage = new Map(activeImages.map(img => [img.id, img]));
+      const ordered = [];
+      // Add images present in saved order in that sequence
+      for (const imageId of savedOrder) {
+        if (idToImage.has(imageId)) {
+          ordered.push(idToImage.get(imageId));
+          idToImage.delete(imageId);
+        }
       }
+      // Append any remaining active images not captured in saved order (keep stable by id)
+      const remaining = Array.from(idToImage.values()).sort((a, b) => a.id - b.id);
+      const finalOrdered = [...ordered, ...remaining];
+      return finalOrdered;
+    }
     
-         // For now, let's skip localStorage filtering to see all images
-     const availableImages = activeImages;
-     
-     console.log('Database active images:', activeImages.length);
-     console.log('Available images:', availableImages.length);
-     
-          // Sort images by ID for now
-     let sortedImages = [...availableImages].sort((a, b) => a.id - b.id);
+    // If no saved order, but a primary image is saved, move it to front
+    const primaryId = getPrimaryImageFromStorage(productId);
+    if (primaryId) {
+      const primaryIndex = activeImages.findIndex(img => img.id === primaryId);
+      if (primaryIndex > 0) {
+        const reordered = [...activeImages];
+        const [primary] = reordered.splice(primaryIndex, 1);
+        reordered.unshift(primary);
+        return reordered;
+      }
+    }
     
-    console.log('All images:', response.data);
-    console.log('Active images:', activeImages);
-    console.log('Sorted active images:', sortedImages);
-    
-    return sortedImages;
+    // Default: sort by id (older first)
+    return [...activeImages].sort((a, b) => a.id - b.id);
   } catch (error) {
     console.error('Error in getActiveProductImages:', error);
     if (error.response) {
@@ -463,7 +476,6 @@ export async function getActiveProductImageUrl(productId) {
   try {
     const activeImages = await getActiveProductImages(productId);
     if (activeImages.length > 0) {
-      // The first image in the sorted list is the primary image
       const primaryImage = activeImages[0];
       console.log('Primary image for product', productId, ':', primaryImage.url);
       return primaryImage.url;

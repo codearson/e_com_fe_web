@@ -29,6 +29,7 @@ import EditProduct from "./pages/EditProduct";
 import SellerProfile from "./pages/SellerProfile";
 import Cart from "./pages/Cart";
 import { CartProvider } from "./utils/CartContext.jsx";
+import SellerDashboard from "./pages/sellerDashBoard.jsx";
 
 function App() {
   return (
@@ -60,6 +61,14 @@ function App() {
             <Route path="/edit-product/:id" element={<EditProduct />} />
             <Route path="/seller/:sellerId" element={<SellerProfile />} />
             <Route path="/cart" element={<Cart />} />
+            <Route
+              path="/seller/dashboard"
+              element={
+                <ProtectedRoute>
+                  <SellerDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/myorders"
               element={

@@ -29,7 +29,7 @@ import EditProduct from "./pages/EditProduct";
 import SellerProfile from "./pages/SellerProfile";
 import Cart from "./pages/Cart";
 import { CartProvider } from "./utils/CartContext.jsx";
-import SellerDashboard from "./pages/sellerDashBoard.jsx";
+import SellerDashboard from "./pages/sellerDashboard.jsx";
 
 function App() {
   return (

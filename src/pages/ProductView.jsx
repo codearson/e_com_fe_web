@@ -9,6 +9,8 @@ import { findByUserId } from "../API/UserProfileImageApi";
 import { BASE_BACKEND_URL } from "../API/config";
 import { addToCart } from "../API/cartApi";
 import { useCart } from "../utils/CartContext";
+import { decodeJwt } from "../API/UserApi";
+import { getUserByEmail } from "../API/config";
 
 const ProductView = () => {
   const { id } = useParams();
@@ -25,19 +27,55 @@ const ProductView = () => {
   const [seller, setSeller] = useState(null);
   const [loadingSeller, setLoadingSeller] = useState(false);
   const [sellerProfileImage, setSellerProfileImage] = useState(null);
+  const [cartMessage, setCartMessage] = useState(null);
   const { refreshCartCount } = useCart();
+  const [isQuantityModalOpen, setIsQuantityModalOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
-  const handleAddToCart = async () => {
-    const userId = localStorage.getItem("userId");
+  const handleConfirmAddToCart = async () => {
+    try {
+      // Get user ID from JWT token
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        // Handle case where user is not logged in
+        console.error("User not logged in");
+        return;
+      }
+      
+      const decoded = decodeJwt(token);
+      const email = decoded?.sub;
+      if (!email) {
+        console.error("Could not decode user token");
+        return;
+      }
+      
+      const userData = await getUserByEmail(email);
+      const userId = userData?.id;
     if (!userId) {
-      // Handle case where user is not logged in
+        console.error("Could not get user ID");
       return;
     }
-    try {
-      await addToCart(userId, id);
+      
+      // Add to cart
+      await addToCart(userId, id, quantity);
       refreshCartCount();
+      setCartMessage({
+        type: "success",
+        text: `${quantity} item(s) added to cart successfully!`,
+      });
+      console.log("Successfully added to cart");
+      
+      // Close modal
+      setIsQuantityModalOpen(false);
+
+      // Clear message after 3 seconds
+      setTimeout(() => setCartMessage(null), 3000);
     } catch (error) {
       console.error("Failed to add to cart:", error);
+      setCartMessage({ type: 'error', text: 'Failed to add to cart. Please try again.' });
+      setIsQuantityModalOpen(false);
+      // Clear error message after 3 seconds
+      setTimeout(() => setCartMessage(null), 3000);
     }
   };
 
@@ -290,6 +328,11 @@ const ProductView = () => {
           alt: `${product.title} ${index + 1}`,
         }));
 
+  const openQuantityModal = () => {
+    setQuantity(1); // Reset quantity to 1 each time modal opens
+    setIsQuantityModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -540,10 +583,19 @@ const ProductView = () => {
                 )}
               </div>
 
+              {/* Cart Message */}
+              {cartMessage && (
+                <div className={`text-center p-2 rounded-md mb-3 ${
+                  cartMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                }`}>
+                  {cartMessage.text}
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2">
                 <button
-                  onClick={handleAddToCart}
+                  onClick={openQuantityModal}
                   className={`flex-1 px-6 py-2 rounded-lg font-medium transition-colors ${
                     product.quentity > 0
                       ? "bg-blue-500 text-white hover:bg-blue-600"
@@ -682,6 +734,60 @@ const ProductView = () => {
           </div>
         </div>
       </div>
+      {isQuantityModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Select Quantity</h3>
+              <button onClick={() => setIsQuantityModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-2">Available: {product.quentity} items</p>
+              <div className="flex items-center justify-center space-x-4">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
+                  disabled={quantity <= 1}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                </button>
+                <span className="text-2xl font-semibold min-w-[3rem] text-center">{quantity}</span>
+                <button
+                  onClick={() =>
+                    setQuantity(Math.min(product.quentity, quantity + 1))
+                  }
+                  className="w-10 h-10 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
+                  disabled={quantity >= product.quentity}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsQuantityModalOpen(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmAddToCart}
+                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Add to Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Footer />
     </div>
   );

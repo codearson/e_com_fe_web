@@ -79,4 +79,30 @@ export async function getOrdersByUserId(userId) {
     }
   );
   return res.json();
-} 
+}
+
+export const getAllOrdersPage = async (pageNumber = 1, pageSize = 10, status = true) => {
+    try {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+            return { payload: [], totalRecords: 0 };
+        }
+
+        const response = await axios.get(
+            `${BASE_BACKEND_URL}/orders/getAllPage?pageNumber=${pageNumber}&pageSize=${pageSize}&status=${status}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }
+        );
+        return response.data.responseDto || { payload: [], totalRecords: 0 };
+    } catch (error) {
+        console.error('Error fetching order page:', error);
+        if (error.response) {
+            console.error('Error response status:', error.response.status);
+            console.error('Error response data:', error.response.data);
+        }
+        return { payload: [], totalRecords: 0 };
+    }
+};

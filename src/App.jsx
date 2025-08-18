@@ -29,68 +29,105 @@ import EditProduct from "./pages/EditProduct";
 import SellerProfile from "./pages/SellerProfile";
 import Cart from "./pages/Cart";
 import { CartProvider } from "./utils/CartContext.jsx";
+import ProductManagement from "./pages/ProductManagement.jsx";
+import React, { createContext, useContext } from 'react';
+import { Toaster, toast } from 'sonner';
+
+const ToastContext = createContext(null);
+
+export const useToast = () => {
+  const context = useContext(ToastContext);
+  if (!context) {
+    throw new Error('useToast must be used within a ToastProvider');
+  }
+  return context;
+};
+
+const ToastProviderComponent = ({ children }) => {
+  const showToast = ({ title, description, type = 'foreground' }) => {
+    if (type === 'foreground') {
+      toast.success(title, { description });
+    } else if (type === 'error') {
+      toast.error(title, { description });
+    } else {
+      toast(title, { description });
+    }
+  };
+
+  return (
+    <ToastContext.Provider value={{ showToast }}>
+      {children}
+      <Toaster richColors position="bottom-right" />
+    </ToastContext.Provider>
+  );
+};
 
 function App() {
   return (
     <MessageProvider>
       <CartProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route index element={<Home />} />
-            <Route path="favourites" element={<Favourited />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="profile/edit" element={<ProfileEdit />} />
-            <Route path="*" element={<NotFound />} />
-            <Route path="/sell" element={<SellProduct />} />
-            <Route path="/our-platform" element={<OurPlatform />} />
-            <Route path="/about-us" element={<AboutUs />} />
-            <Route path="/productView/:id" element={<ProductView />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/cookie-policy" element={<CookiePolicy />} />
-            <Route path="/cookie-settings" element={<CookieSettings />} />
-            <Route
-              path="/terms-and-conditions"
-              element={<TermsAndConditions />}
-            />
-            <Route path="/selling" element={<Selling />} />
-            <Route path="/buying" element={<Buying />} />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="/checkout/:id" element={<Checkout />} />
-            <Route path="/edit-product/:id" element={<EditProduct />} />
-            <Route path="/seller/:sellerId" element={<SellerProfile />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route
-              path="/myorders"
-              element={
-                <ProtectedRoute>
-                  <MyOrders />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/users" element={<Users />} />
-            <Route
-              path="/admin/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
-                  <DashboardAdmin />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/category/:categoryId"
-              element={<CategoryProducts />}
-            />
-            <Route
-              path="/orderconfirmation/:orderId"
-              element={<OrderConfirmation />}
-            />
-          </Routes>
-        </BrowserRouter>
+        <ToastProviderComponent>
+          <BrowserRouter>
+            <Routes>
+              <Route index element={<Home />} />
+              <Route path="favourites" element={<Favourited />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="profile/edit" element={<ProfileEdit />} />
+              <Route path="*" element={<NotFound />} />
+              <Route path="/sell" element={<SellProduct />} />
+              <Route path="/our-platform" element={<OurPlatform />} />
+              <Route path="/about-us" element={<AboutUs />} />
+              <Route path="/productView/:id" element={<ProductView />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/cookie-policy" element={<CookiePolicy />} />
+              <Route path="/cookie-settings" element={<CookieSettings />} />
+              <Route path="/product-management" element={<ProductManagement />} />
+              <Route
+                path="/terms-and-conditions"
+                element={<TermsAndConditions />}
+              />
+              <Route path="/selling" element={<Selling />} />
+              <Route path="/buying" element={<Buying />} />
+              <Route path="/search" element={<SearchResults />} />
+              <Route path="/checkout/:id" element={<Checkout />} />
+              <Route path="/edit-product/:id" element={<EditProduct />} />
+              <Route path="/seller/:sellerId" element={<SellerProfile />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route
+                path="/myorders"
+                element={
+                  <ProtectedRoute>
+                    <MyOrders />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/users" element={<Users />} />
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+                    <DashboardAdmin />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/category/:categoryId"
+                element={<CategoryProducts />}
+              />
+              <Route
+                path="/orderconfirmation/:orderId"
+                element={<OrderConfirmation />}
+              />
+            </Routes>
+          </BrowserRouter>
+        </ToastProviderComponent>
       </CartProvider>
     </MessageProvider>
   );
 }
 
 export default App;
+
+

@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Navbar } from "../components/Navbar";
-import { Footer } from "../components/Footer";
 import { fetchUsers, updateUserStatus, saveUser, updateUser, updatePassword } from "../API/UserApi";
 import { fetchUserRoles } from "../API/UserRoleApi";
-import { FaLock, FaEdit, FaUser, FaShoppingCart } from 'react-icons/fa';
-import { RxDashboard } from 'react-icons/rx';
-import { getAllBranchesBySearch } from "../API/branchApi";
-import { AdminDashboardNavbar } from '../components/AdminDashboardNavbar';
+import { FaLock, FaEdit } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { IoArrowBack } from 'react-icons/io5';
+import AdminLayout from "../components/AdminLayout";
 
 export const AdminUsers = () => {
   const navigate = useNavigate();
@@ -211,77 +207,19 @@ export const AdminUsers = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <AdminDashboardNavbar />
-      <div className="flex flex-1 overflow-hidden">
-        <div className="w-64 bg-white shadow-md p-4 border-r border-gray-200 flex-shrink-0">
-          <div className="mb-6">
-            <h3 className="text-gray-400 text-sm uppercase mb-2">Main</h3>
-            <ul>
-              <li className="mb-2">
-                <a href="/admin/dashboard" className="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-                  <RxDashboard className="w-5 h-5 mr-3" />
-                  Dashboard
-                </a>
-              </li>
-              <li className="mb-2">
-                <a href="#" className="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-                  <FaShoppingCart className="w-5 h-5 mr-3" />
-                  POS
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* User Management */}
-          <div className="mb-6">
-            <h3 className="text-gray-400 text-sm uppercase mb-2">User</h3>
-            <ul>
-              <li className="mb-2">
-                <a href="/admin/users" className="flex items-center p-2 text-purple-700 bg-purple-100 rounded-lg">
-                  <FaUser className="w-5 h-5 mr-3" />
-                  User Management
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="mb-6">
-            <h3 className="text-gray-400 text-sm uppercase mb-2">Inventory</h3>
-            <ul>
-              <li className="mb-2">
-                <a href="#" className="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-                  <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zM5 9a1 1 0 011-1h.5a1 1 0 011 1V10a1 1 0 01-1 1H6a1 1 0 01-1-1V9zm4 0a1 1 0 011-1h.5a1 1 0 011 1V10a1 1 0 01-1 1H10a1 1 0 01-1-1V9zm4 0a1 1 0 011-1h.5a1 1 0 011 1V10a1 1 0 01-1 1H14a1 1 0 01-1-1V9z" clipRule="evenodd"></path>
-                  </svg>
-                  Products
-                </a>
-              </li>
-              <li className="mb-2">
-                <a href="#" className="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
-                  <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M11 3a1 1 0 100 2h2a1 1 0 100-2h-2z"></path>
-                    <path fillRule="evenodd" d="M4 14a2 2 0 002 2h8a2 2 0 002-2V7.167A.833.833 0 0015.167 6H4v8zM3 6h-.5A1.5 1.5 0 001 7.5v.083A.833.833 0 001.833 9H3V6z" clipRule="evenodd"></path>
-                  </svg>
-                  Custom Categories
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <main className="flex-1 overflow-auto">
-          <div className="container mx-auto px-4 py-8">
+    <AdminLayout>
+      <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-lg p-6">
           <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => navigate('/admin/dashboard')}
-                    className="flex items-center gap-2 text-gray-600 hover:text-[#1E90FF] transition-colors"
-                  >
-                    <IoArrowBack className="w-5 h-5" />
-                  </button>
-            <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-                </div>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate('/admin/dashboard')}
+                className="flex items-center gap-2 text-gray-600 hover:text-[#1E90FF] transition-colors"
+              >
+                <IoArrowBack className="w-5 h-5" />
+              </button>
+              <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+            </div>
             <div className="flex items-center gap-4">
               <select
                 value={selectedStatus.toString()}
@@ -414,9 +352,7 @@ export const AdminUsers = () => {
               </div>
             </>
           )}
-            </div>
         </div>
-      </main>
       </div>
 
       {/* Add User Modal */}
@@ -460,7 +396,7 @@ export const AdminUsers = () => {
                 </div>
               )}
               <form id="addUserForm" onSubmit={handleAddUser} className={`space-y-6 ${formLoading || formError ? 'pointer-events-none filter blur-sm select-none' : ''}`}>
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* First Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
@@ -517,7 +453,7 @@ export const AdminUsers = () => {
                   </div>
 
                   {/* Address */}
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
                     <input
                       type="text"
@@ -650,7 +586,7 @@ export const AdminUsers = () => {
             </div>
             <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
               <form onSubmit={handleEditSubmit} className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
                     <input type="text" value={editForm.firstName || ""} onChange={e => handleEditChange("firstName", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
@@ -667,7 +603,7 @@ export const AdminUsers = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                     <input type="email" value={editForm.emailAddress || ""} onChange={e => handleEditChange("emailAddress", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required />
                   </div>
-                  <div className="col-span-2">
+                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
                     <input type="text" value={editForm.address || ""} onChange={e => handleEditChange("address", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
                   </div>
@@ -753,7 +689,6 @@ export const AdminUsers = () => {
         </div>
       )}
 
-      <Footer />
-    </div>
+    </AdminLayout>
   );
-}; 
+};

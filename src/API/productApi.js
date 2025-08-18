@@ -92,6 +92,25 @@ export const getAllProducts = async () => {
     }
 };
 
+export const deleteProduct = async (productId) => {
+    try {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+            return { errorDescription: "Authentication required." };
+        }
+
+        const response = await axios.delete(`${BASE_BACKEND_URL}/product/delete/${productId}`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting product:', error);
+        return { errorDescription: error.response?.data?.errorDescription || "Failed to delete product." };
+    }
+};
+
 export const getAllproductPage = async (pageNumber = 1, pageSize = 10, status = 1) => {
     try {
         const accessToken = localStorage.getItem("accessToken");

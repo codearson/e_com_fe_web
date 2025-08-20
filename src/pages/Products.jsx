@@ -54,8 +54,11 @@ const Products = () => {
         const allProducts = await getAllProducts();
         console.log('All products from API:', allProducts);
         
+        // Filter products to only show those that are active
+        const activeProducts = allProducts.filter(p => p.isActive);
+
         // Filter products to only show those with active images
-        const productsWithActiveImages = await filterProductsWithActiveImages(allProducts);
+        const productsWithActiveImages = await filterProductsWithActiveImages(activeProducts);
         console.log('Products with active images:', productsWithActiveImages);
         
         setProducts(productsWithActiveImages);

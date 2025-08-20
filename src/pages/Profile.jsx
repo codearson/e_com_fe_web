@@ -4,7 +4,7 @@ import { Footer } from "../components/Footer";
 import { useNavigate } from "react-router-dom";
 import { getUserByEmail } from "../API/config";
 import { decodeJwt } from "../API/UserApi";
-import { getProductsByUserId } from "../API/productApi";
+import { getProductsByUserId, updateProductStatus } from "../API/productApi";
 import { filterProductsWithActiveImages } from "../API/ProductImageApi";
 import { findByUserId } from "../API/UserProfileImageApi";
 import { BASE_BACKEND_URL } from '../API/config'; 
@@ -16,6 +16,15 @@ export const Profile = () => {
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [profileImage, setProfileImage] = useState(null);
   const navigate = useNavigate();
+
+  const handleDelete = async (productId) => {
+    try {
+      await updateProductStatus(productId, 0);
+      setUserProducts(userProducts.filter((p) => p.id !== productId));
+    } catch (error) {
+      console.error("Error deleting product:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -237,6 +246,18 @@ export const Profile = () => {
                             <svg className="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                               <path d="M12 20h9" />
                               <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
+                            </svg>
+                          </button>
+                          <button
+                            className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors shadow-sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(product.id);
+                            }}
+                            aria-label="Delete product"
+                          >
+                            <svg className="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path d="M6 18L18 6M6 6l12 12" />
                             </svg>
                           </button>
                         </div>

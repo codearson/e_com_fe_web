@@ -284,8 +284,8 @@ export const Navbar = () => {
     : [];
   console.log(
     "Level 2 categories for hovered Level 1 (" +
-    hoveredLevel1Category?.name +
-    "):",
+      hoveredLevel1Category?.name +
+      "):",
     level2Categories
   );
 
@@ -298,8 +298,8 @@ export const Navbar = () => {
     : [];
   console.log(
     "Level 3 categories for hovered Level 2 (" +
-    hoveredLevel2Category?.name +
-    "):",
+      hoveredLevel2Category?.name +
+      "):",
     level3Categories
   );
 
@@ -537,8 +537,9 @@ export const Navbar = () => {
                 </span>
                 <span className="ml-1 text-gray-800">{user.firstName}</span>
                 <svg
-                  className={`w-4 h-4 ml-2 transition-transform duration-200 ${userDropdownOpen ? "rotate-180" : ""
-                    }`}
+                  className={`w-4 h-4 ml-2 transition-transform duration-200 ${
+                    userDropdownOpen ? "rotate-180" : ""
+                  }`}
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2"
@@ -582,6 +583,15 @@ export const Navbar = () => {
                     >
                       My Orders
                     </button>
+                    <button
+                      className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer w-full"
+                      onClick={() => {
+                        navigate("/profile/edit");
+                        setUserDropdownOpen(false);
+                      }}
+                    >
+                      Settings
+                    </button>
                     {/* Favourites link */}
                     <button
                       className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer w-full"
@@ -596,11 +606,11 @@ export const Navbar = () => {
                     <button
                       className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer w-full"
                       onClick={() => {
-                        navigate("/profile/edit");
+                        navigate("/seller/dashboard");
                         setUserDropdownOpen(false);
                       }}
                     >
-                      Settings
+                      Seller Dashboard
                     </button>
 
                     {/* Show Dashboard only for admin users */}
@@ -659,7 +669,14 @@ export const Navbar = () => {
             className="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 focus:outline-none"
             aria-label="Cart"
           >
-            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg
+              width="24"
+              height="24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
               <circle cx="9" cy="21" r="1" />
               <circle cx="20" cy="21" r="1" />
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
@@ -740,7 +757,7 @@ export const Navbar = () => {
             className="p-2 rounded-md hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-gray-200 flex items-center justify-center"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle menu"
-            style={{ minWidth: '44px', minHeight: '44px' }}
+            style={{ minWidth: "44px", minHeight: "44px" }}
           >
             <svg
               className="w-6 h-6 text-[#1E90FF]"
@@ -752,7 +769,9 @@ export const Navbar = () => {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+                d={
+                  menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"
+                }
               />
             </svg>
           </button>
@@ -876,10 +895,16 @@ export const Navbar = () => {
               <button
                 onClick={() => navigate("/cart")}
                 className="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 focus:outline-none"
-               
                 aria-label="Cart"
               >
-                <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <svg
+                  width="24"
+                  height="24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
                   <circle cx="9" cy="21" r="1" />
                   <circle cx="20" cy="21" r="1" />
                   <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
@@ -890,8 +915,8 @@ export const Navbar = () => {
                   </span>
                 )}
               </button>
-              </div>
-              <div className="p-4 flex flex-col gap-3 border-b border-gray-200">
+            </div>
+            <div className="p-4 flex flex-col gap-3 border-b border-gray-200">
               {user ? (
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                   <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#1E90FF] to-[#6dd5ed] text-white font-semibold text-lg">
@@ -942,6 +967,15 @@ export const Navbar = () => {
                   }}
                 >
                   Favourites
+                </button>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none"
+                  onClick={() => {
+                    navigate("/seller/dashboard");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Seller Dashboard
                 </button>
                 <button
                   className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none"
@@ -1037,7 +1071,6 @@ export const Navbar = () => {
       )}
       {/* Render AuthModal */}
       <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
-
     </nav>
   );
 };

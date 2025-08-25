@@ -5,7 +5,7 @@ import { decodeJwt } from "../API/UserApi";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/Navbar.css";
 
-export const AdminDashboardNavbar = () => {
+export const AdminDashboardNavbar = ({ sidebarOpen, setSidebarOpen }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -57,7 +57,7 @@ export const AdminDashboardNavbar = () => {
     <nav className="bg-white shadow-lg border-b border-gray-200 font-sans z-50 relative">
       {/* Main Navbar */}
       <div className="flex items-center justify-between px-4 py-3 lg:px-8 lg:py-4">
-        {/* Logo */}
+        {/* Logo and mobile sidebar toggle*/}
         <div className="flex items-center flex-shrink-0">
           <span
             className="text-2xl lg:text-3xl font-bold text-[#1E90FF] mr-6 select-none tracking-tight"
@@ -294,5 +294,3 @@ export const AdminDashboardNavbar = () => {
     </nav>
   );
 };
-
-

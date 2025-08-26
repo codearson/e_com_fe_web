@@ -47,7 +47,7 @@ const ProductManagement = () => {
   };
 
   const handleAddProduct = () => {
-    navigate('/sell-product');
+    navigate('/sell');
   };
 
   const renderContentView = () => {

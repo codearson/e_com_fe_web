@@ -19,6 +19,7 @@ import SearchResults from "./pages/SearchResults";
 import { AdminUsers } from "./pages/AdminUsers";
 import { Users } from "./pages/Users";
 import { DashboardAdmin } from "./pages/DashboardAdmin";
+import { LowStocks } from "./pages/LowStocks";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import CategoryProducts from "./pages/CategoryProducts";
 import Checkout from "./pages/Checkout";
@@ -119,6 +120,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
                     <DashboardAdmin />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/low-stocks"
+                element={
+                  <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+                    <LowStocks />
                   </ProtectedRoute>
                 }
               />

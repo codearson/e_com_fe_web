@@ -5,9 +5,11 @@ import { Footer } from "../components/Footer";
 import { BASE_BACKEND_URL } from "../API/config";
 import { useCart } from "../utils/CartContext";
 import { useNavigate } from "react-router-dom";
+import { decodeJwt } from "../API/UserApi";
+import { getUserByEmail } from "../API/config";
 
 const Cart = () => {
-  const userId = localStorage.getItem("userId");
+  const [userId, setUserId] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [removingItem, setRemovingItem] = useState(null);
@@ -24,11 +26,26 @@ const Cart = () => {
     setLoading(true);
     try {
       const res = await getCart(userId);
-      const items = Array.isArray(res?.data?.responseDto)
-        ? res.data.responseDto
-        : [];
+      console.log("Cart response:", res);
+      console.log("Cart response data:", res?.data);
+      console.log("Cart responseDto:", res?.data?.responseDto);
+      
+      let items = [];
+      if (Array.isArray(res?.data?.responseDto)) {
+        items = res.data.responseDto;
+      } else if (Array.isArray(res?.data)) {
+        items = res.data;
+      } else if (res?.data?.payload) {
+        items = Array.isArray(res.data.payload) ? res.data.payload : [];
+      }
+      
+      console.log("Cart items:", items);
+      if (items.length > 0) {
+        console.log("First cart item structure:", items[0]);
+        console.log("First cart item product:", items[0].product);
+      }
       setCartItems(items);
-      setSelectedItems(items.map(item => item.product.id));
+      setSelectedItems(items.map(item => item.product?.id || item.productId).filter(Boolean));
       refreshCartCount();
     } catch (err) {
       console.error("Failed to fetch cart:", err);
@@ -38,9 +55,42 @@ const Cart = () => {
     }
   };
 
+  // Get user ID from JWT token
   useEffect(() => {
-    fetchCart();
+    const getUserFromToken = async () => {
+      try {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+        
+        const decoded = decodeJwt(token);
+        const email = decoded?.sub;
+        if (!email) {
+          setLoading(false);
+          return;
+        }
+        
+        const userData = await getUserByEmail(email);
+        const userId = userData?.id;
+        if (userId) {
+          setUserId(userId);
+        }
+      } catch (error) {
+        console.error("Error getting user from token:", error);
+        setLoading(false);
+      }
+    };
+
+    getUserFromToken();
   }, []);
+
+  useEffect(() => {
+    if (userId) {
+      fetchCart();
+    }
+  }, [userId]);
 
   const handleRemove = async (e, productId) => {
     e.stopPropagation();
@@ -78,8 +128,15 @@ const Cart = () => {
   };
 
   const total = cartItems
-    .filter(item => selectedItems.includes(item.product.id))
-    .reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+    .filter(item => {
+      const product = item.product || item.productDto || {};
+      const productId = product.id || item.productId;
+      return selectedItems.includes(productId);
+    })
+    .reduce((acc, item) => {
+      const product = item.product || item.productDto || {};
+      return acc + (product.price || 0) * (item.quantity || 1);
+    }, 0);
 
   if (loading) {
     return (
@@ -119,17 +176,18 @@ const Cart = () => {
             <div>
               <ul>
                 {cartItems.map((item) => {
-                  const product = item.product || {};
+                  const product = item.product || item.productDto || {};
+                  const productId = product.id || item.productId;
                   return (
                     <li
-                      key={product.id}
+                      key={productId}
                       className="flex items-center mb-6 border-b pb-4"
                     >
                       <input
                         type="checkbox"
                         className="mr-4"
-                        checked={selectedItems.includes(product.id)}
-                        onChange={() => handleSelectItem(product.id)}
+                        checked={selectedItems.includes(productId)}
+                        onChange={() => handleSelectItem(productId)}
                       />
                       <img
                         src={
@@ -141,9 +199,9 @@ const Cart = () => {
                         width={100}
                         height={100}
                         className="rounded mr-4 object-cover cursor-pointer"
-                        onClick={() => handleNavigate(product.id)}
+                        onClick={() => handleNavigate(productId)}
                       />
-                      <div className="flex-1 cursor-pointer" onClick={() => handleNavigate(product.id)}>
+                      <div className="flex-1 cursor-pointer" onClick={() => handleNavigate(productId)}>
                         <div className="font-semibold text-lg">{product.title}</div>
                         <div className="text-gray-600">{product.brandDto?.brandName}</div>
                         <div className="text-lg font-bold text-green-600">
@@ -152,10 +210,10 @@ const Cart = () => {
                         <div className="text-sm text-gray-500">Qty: {item.quantity}</div>
                       </div>
                       <button
-                        onClick={(e) => handleRemove(e, product.id)}
-                        disabled={removingItem === product.id}
+                        onClick={(e) => handleRemove(e, productId)}
+                        disabled={removingItem === productId}
                         className={`p-3 rounded-full text-white transition-colors ${
-                          removingItem === product.id
+                          removingItem === productId
                             ? "bg-gray-400 cursor-not-allowed"
                             : "bg-red-500 hover:bg-red-600"
                         }`}
@@ -188,7 +246,11 @@ const Cart = () => {
                 <button
                   onClick={() => {
                     const firstSelectedId = selectedItems[0];
-                    const selectedProduct = cartItems.find(item => item.product.id === firstSelectedId)?.product;
+                    const selectedProduct = cartItems.find(item => {
+                      const product = item.product || item.productDto || {};
+                      const productId = product.id || item.productId;
+                      return productId === firstSelectedId;
+                    })?.product || cartItems.find(item => item.productDto?.id === firstSelectedId)?.productDto;
                     if (selectedProduct) {
                       navigate(`/checkout/${firstSelectedId}`, { state: { product: selectedProduct } });
                     }

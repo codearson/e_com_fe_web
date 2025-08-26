@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { AuthModal } from "./AuthModal";
-import { getUserByEmail } from "../API/config";
+import { getUserByEmail, BASE_BACKEND_URL } from "../API/config";
 import { decodeJwt } from "../API/UserApi";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CategoryDropdown } from "./CategoryDropdown";
+import { findByUserId } from "../API/UserProfileImageApi";
 import { getAllProductCategoriesBySearch } from "../API/ProductCategoryApi";
 import { searchProducts } from "../API/productApi";
 import { debounce } from "lodash";
@@ -126,8 +127,28 @@ export const Navbar = () => {
         const email = decoded?.sub;
         if (email) {
           const userData = await getUserByEmail(email);
-          setUser(userData);
-          console.log("Fetched user data in Navbar:", userData);
+          if (userData && userData.id) {
+            try {
+              const profileResponse = await findByUserId(userData.id);
+              if (
+                profileResponse &&
+                profileResponse.status &&
+                profileResponse.responseDto
+              ) {
+                setUser({
+                  ...userData,
+                  profileImage: profileResponse.responseDto.profileImage,
+                });
+              } else {
+                setUser(userData);
+              }
+            } catch (error) {
+              console.error("Error fetching profile image in Navbar:", error);
+              setUser(userData);
+            }
+          } else {
+            setUser(userData);
+          }
         }
       } else {
         setUser(null);
@@ -530,11 +551,23 @@ export const Navbar = () => {
                 style={{ fontWeight: 500 }}
                 onClick={() => setUserDropdownOpen((v) => !v)}
               >
-                {/* User avatar with initials */}
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-[#1E90FF] to-[#6dd5ed] text-white font-semibold text-base">
-                  {user.firstName?.[0]}
-                  {user.lastName?.[0]}
-                </span>
+                {/* User avatar with image or initials */}
+                {user.profileImage ? (
+                  <img
+                    src={`${BASE_BACKEND_URL}/uploads/profiles/${user.profileImage}`}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random&color=fff`;
+                    }}
+                  />
+                ) : (
+                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-[#1E90FF] to-[#6dd5ed] text-white font-semibold text-base">
+                    {user.firstName?.[0]}
+                    {user.lastName?.[0]}
+                  </span>
+                )}
                 <span className="ml-1 text-gray-800">{user.firstName}</span>
                 <svg
                   className={`w-4 h-4 ml-2 transition-transform duration-200 ${
@@ -556,10 +589,22 @@ export const Navbar = () => {
                 <div className="absolute right-0 mt-2 min-w-[14rem] w-auto max-w-xs bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
                   <div className="flex flex-col py-2">
                     <div className="flex items-center px-4 py-3 border-b border-gray-100">
-                      <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-600 text-white font-bold text-base mr-3">
-                        {user.firstName?.[0]}
-                        {user.lastName?.[0]}
-                      </span>
+                      {user.profileImage ? (
+                        <img
+                          src={`${BASE_BACKEND_URL}/uploads/profiles/${user.profileImage}`}
+                          alt="Profile"
+                          className="w-9 h-9 rounded-full object-cover mr-3"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random&color=fff`;
+                          }}
+                        />
+                      ) : (
+                        <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-600 text-white font-bold text-base mr-3">
+                          {user.firstName?.[0]}
+                          {user.lastName?.[0]}
+                        </span>
+                      )}
                       <span className="font-semibold text-gray-900">
                         {user.firstName} {user.lastName}
                       </span>
@@ -919,10 +964,22 @@ export const Navbar = () => {
             <div className="p-4 flex flex-col gap-3 border-b border-gray-200">
               {user ? (
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#1E90FF] to-[#6dd5ed] text-white font-semibold text-lg">
-                    {user.firstName?.[0]}
-                    {user.lastName?.[0]}
-                  </span>
+                  {user.profileImage ? (
+                    <img
+                      src={`${BASE_BACKEND_URL}/uploads/profiles/${user.profileImage}`}
+                      alt="Profile"
+                      className="w-10 h-10 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random&color=fff`;
+                      }}
+                    />
+                  ) : (
+                    <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#1E90FF] to-[#6dd5ed] text-white font-semibold text-lg">
+                      {user.firstName?.[0]}
+                      {user.lastName?.[0]}
+                    </span>
+                  )}
                   <div className="flex-1">
                     <div className="font-semibold text-gray-900 text-sm">
                       {user.firstName} {user.lastName}

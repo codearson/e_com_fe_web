@@ -70,7 +70,7 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
               </a>
             </li>
             <li className="mb-2">
-              <a href="#" className="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+              <a href="/admin/low-stocks" onClick={(e) => { e.preventDefault(); navigate('/admin/low-stocks'); }} className={`flex items-center p-2 rounded-lg ${activeView === 'low-stocks' ? 'text-purple-700 bg-purple-100' : 'text-gray-700 hover:bg-gray-100'}`}>
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                   <path d="M7 3a1 1 0 00-1 1v1a1 1 0 001 1h6a1 1 0 001-1V4a1 1 0 00-1-1H7z"></path>
                   <path fillRule="evenodd" d="M18 10a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h12a2 2 0 012 2v4zm-1 0H3v2h14V10z" clipRule="evenodd"></path>

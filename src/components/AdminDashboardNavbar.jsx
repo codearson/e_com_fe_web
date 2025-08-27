@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { AuthModal } from "./AuthModal";
-import { getUserByEmail } from "../API/config";
+import { getUserByEmail, BASE_BACKEND_URL } from "../API/config";
 import { decodeJwt } from "../API/UserApi";
+import { findByUserId } from "../API/UserProfileImageApi";
 import { useNavigate, useLocation } from "react-router-dom";
 import "../styles/Navbar.css";
 
@@ -23,7 +24,28 @@ export const AdminDashboardNavbar = ({ sidebarOpen, setSidebarOpen }) => {
         const email = decoded?.sub;
         if (email) {
           const userData = await getUserByEmail(email);
-          setUser(userData);
+          if (userData && userData.id) {
+            try {
+              const profileResponse = await findByUserId(userData.id);
+              if (
+                profileResponse &&
+                profileResponse.status &&
+                profileResponse.responseDto
+              ) {
+                setUser({
+                  ...userData,
+                  profileImage: profileResponse.responseDto.profileImage,
+                });
+              } else {
+                setUser(userData);
+              }
+            } catch (error) {
+              console.error("Error fetching profile image in Navbar:", error);
+              setUser(userData);
+            }
+          } else {
+            setUser(userData);
+          }
         }
       } else {
         setUser(null);
@@ -84,11 +106,23 @@ export const AdminDashboardNavbar = ({ sidebarOpen, setSidebarOpen }) => {
                 style={{ fontWeight: 500 }}
                 onClick={() => setUserDropdownOpen((v) => !v)}
               >
-                {/* User avatar with initials */}
-                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-[#1E90FF] to-[#6dd5ed] text-white font-semibold text-base">
-                  {user.firstName?.[0]}
-                  {user.lastName?.[0]}
-                </span>
+                {/* User avatar with image or initials */}
+                {user.profileImage ? (
+                  <img
+                    src={`${BASE_BACKEND_URL}/uploads/profiles/${user.profileImage}`}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random&color=fff`;
+                    }}
+                  />
+                ) : (
+                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-[#1E90FF] to-[#6dd5ed] text-white font-semibold text-base">
+                    {user.firstName?.[0]}
+                    {user.lastName?.[0]}
+                  </span>
+                )}
                 <span className="ml-1 text-gray-800">{user.firstName}</span>
                 <svg
                   className={`w-4 h-4 ml-2 transition-transform duration-200 ${
@@ -110,10 +144,22 @@ export const AdminDashboardNavbar = ({ sidebarOpen, setSidebarOpen }) => {
                 <div className="absolute right-0 mt-2 min-w-[14rem] w-auto max-w-xs bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
                   <div className="flex flex-col py-2">
                     <div className="flex items-center px-4 py-3 border-b border-gray-100">
-                      <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-600 text-white font-bold text-base mr-3">
-                        {user.firstName?.[0]}
-                        {user.lastName?.[0]}
-                      </span>
+                      {user.profileImage ? (
+                        <img
+                          src={`${BASE_BACKEND_URL}/uploads/profiles/${user.profileImage}`}
+                          alt="Profile"
+                          className="w-9 h-9 rounded-full object-cover mr-3"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random&color=fff`;
+                          }}
+                        />
+                      ) : (
+                        <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-600 text-white font-bold text-base mr-3">
+                          {user.firstName?.[0]}
+                          {user.lastName?.[0]}
+                        </span>
+                      )}
                       <span className="font-semibold text-gray-900">
                         {user.firstName} {user.lastName}
                       </span>
@@ -206,25 +252,30 @@ export const AdminDashboardNavbar = ({ sidebarOpen, setSidebarOpen }) => {
         </div>
 
         {/* Mobile Menu Button */}
-        <button
-          className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-gray-200"
-          onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle menu"
-        >
-          <svg
-            className="w-6 h-6 text-[#1E90FF]"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
+        <div className="lg:hidden flex items-center">
+          <button
+            className="p-2 rounded-md hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-gray-200 flex items-center justify-center"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+            style={{ minWidth: "44px", minHeight: "44px" }}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
-            />
-          </svg>
-        </button>
+            <svg
+              className="w-6 h-6 text-[#1E90FF]"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d={
+                  menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"
+                }
+              />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Mobile Sidebar */}
@@ -234,7 +285,7 @@ export const AdminDashboardNavbar = ({ sidebarOpen, setSidebarOpen }) => {
             className="fixed inset-0 bg-black/40 z-40 transition-opacity duration-300"
             onClick={() => setMenuOpen(false)}
           ></div>
-          <aside className="fixed top-0 left-0 w-64 md:w-80 h-full bg-white z-50 shadow-lg flex flex-col transition-transform duration-300 transform translate-x-0 overflow-y-auto">
+          <aside className="fixed top-0 right-0 w-64 md:w-80 h-full bg-white z-50 shadow-lg flex flex-col transition-transform duration-300 transform translate-x-0 overflow-y-auto">
             <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
               <span
                 className="text-2xl font-bold text-[#1E90FF] select-none tracking-tight"
@@ -257,40 +308,115 @@ export const AdminDashboardNavbar = ({ sidebarOpen, setSidebarOpen }) => {
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+                    d={
+                      menuOpen
+                        ? "M6 18L18 6M6 6l12 12"
+                        : "M4 6h16M4 12h16M4 18h16"
+                    }
                   />
                 </svg>
               </button>
             </div>
-
             <div className="p-4 flex flex-col gap-3 border-b border-gray-200">
-              <button
-                onClick={() => {
-                  navigate("/sell");
-                  setMenuOpen(false);
-                }}
-                className="w-full py-2.5 bg-[#1E90FF] text-white rounded-md font-medium hover:bg-[#1876cc] transition-colors focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:ring-opacity-50"
-              >
-                Sell now
-              </button>
-              <button
-                className="w-full py-2.5 border border-[#1E90FF] text-[#1E90FF] rounded-md font-medium hover:bg-[#e6f3ff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:ring-opacity-50"
-                onClick={() => setAuthModalOpen(true)}
-              >
-                Sign up | Log in
-              </button>
+              {user ? (
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  {user.profileImage ? (
+                    <img
+                      src={`${BASE_BACKEND_URL}/uploads/profiles/${user.profileImage}`}
+                      alt="Profile"
+                      className="w-10 h-10 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=random&color=fff`;
+                      }}
+                    />
+                  ) : (
+                    <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-[#1E90FF] to-[#6dd5ed] text-white font-semibold text-lg">
+                      {user.firstName?.[0]}
+                      {user.lastName?.[0]}
+                    </span>
+                  )}
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-900 text-sm">
+                      {user.firstName} {user.lastName}
+                    </div>
+                    <div className="text-gray-500 text-xs">{user.email}</div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  className="w-full py-2.5 border border-[#1E90FF] text-[#1E90FF] rounded-md font-medium hover:bg-[#e6f3ff] transition-colors focus:outline-none focus:ring-2 focus:ring-[#1E90FF] focus:ring-opacity-50"
+                  onClick={() => setAuthModalOpen(true)}
+                >
+                  Sign up | Log in
+                </button>
+              )}
             </div>
-
-           
+            {user && (
+              <div className="border-b border-gray-200">
+                <button
+                  className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none"
+                  onClick={() => {
+                    navigate("/profile");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Profile
+                </button>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none"
+                  onClick={() => {
+                    navigate("/favourites");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Favourites
+                </button>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none"
+                  onClick={() => {
+                    navigate("/profile/edit");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Settings
+                </button>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm font-semibold text-gray-600 hover:bg-gray-100 focus:outline-none"
+                  onClick={() => {
+                    navigate("/admin/dashboard");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Dashboard
+                </button>
+                <button
+                  className="w-full text-left px-4 py-3 text-sm font-semibold text-[#1E90FF] hover:bg-gray-100 focus:outline-none"
+                  onClick={() => {
+                    handleLogout();
+                    setMenuOpen(false);
+                  }}
+                >
+                  Log out
+                </button>
+              </div>
+            )}
+             <div className="flex-1 overflow-y-auto mobile-sidebar">
+                <button
+                  className="w-full flex items-center px-4 py-3 text-gray-800 hover:text-[#1E90FF] hover:bg-[#e6f3ff] text-base cursor-pointer transition-colors font-medium focus:outline-none"
+                  onClick={() => {
+                    navigate("/");
+                    setMenuOpen(false);
+                  }}
+                >
+                  Back to Home
+                </button>
+              </div>
           </aside>
         </>
       )}
-
       {/* Render AuthModal */}
-      <AuthModal
-        open={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-      />
+      <AuthModal open={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </nav>
   );
 };

@@ -34,6 +34,8 @@ import ProductManagement from "./pages/ProductManagement.jsx";
 import React, { createContext, useContext } from 'react';
 import { Toaster, toast } from 'sonner';
 import SellerDashboard from "./pages/SellerDashboard.jsx";
+import AdminInquiry from "./pages/AdminInquiry.jsx";
+import Inquiry from "./pages/Inquiry.jsx";
 
 
 const ToastContext = createContext(null);
@@ -77,7 +79,7 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="profile/edit" element={<ProfileEdit />} />
               <Route path="*" element={<NotFound />} />
-              <Route path="/sell" element={<SellProduct />} />
+              <Route path="/sell" element={<ProtectedRoute><SellProduct /></ProtectedRoute>} />
               <Route path="/our-platform" element={<OurPlatform />} />
               <Route path="/about-us" element={<AboutUs />} />
               <Route path="/productView/:id" element={<ProductView />} />
@@ -96,7 +98,8 @@ function App() {
               <Route path="/checkout/:id" element={<Checkout />} />
               <Route path="/edit-product/:id" element={<EditProduct />} />
               <Route path="/seller/:sellerId" element={<SellerProfile />} />
-              <Route path="/cart" element={<Cart />} />
+              <Route path="/cart" element={<ProtectedRoute><Cart /></ProtectedRoute>} />
+              <Route path="/inquiry" element={<ProtectedRoute><Inquiry /></ProtectedRoute>} />
               <Route
               path="/seller/dashboard"
               element={
@@ -128,6 +131,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
                     <LowStocks />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/inquiry"
+                element={
+                  <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+                    <AdminInquiry />
                   </ProtectedRoute>
                 }
               />

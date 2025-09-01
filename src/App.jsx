@@ -31,26 +31,25 @@ import SellerProfile from "./pages/SellerProfile";
 import Cart from "./pages/Cart";
 import { CartProvider } from "./utils/CartContext.jsx";
 import ProductManagement from "./pages/ProductManagement.jsx";
-import React, { createContext, useContext } from 'react';
-import { Toaster, toast } from 'sonner';
+import React, { createContext, useContext } from "react";
+import { Toaster, toast } from "sonner";
 import SellerDashboard from "./pages/SellerDashboard.jsx";
-
 
 const ToastContext = createContext(null);
 
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error('useToast must be used within a ToastProvider');
+    throw new Error("useToast must be used within a ToastProvider");
   }
   return context;
 };
 
 const ToastProviderComponent = ({ children }) => {
-  const showToast = ({ title, description, type = 'foreground' }) => {
-    if (type === 'foreground') {
+  const showToast = ({ title, description, type = "foreground" }) => {
+    if (type === "foreground") {
       toast.success(title, { description });
-    } else if (type === 'error') {
+    } else if (type === "error") {
       toast.error(title, { description });
     } else {
       toast(title, { description });
@@ -85,7 +84,10 @@ function App() {
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/cookie-policy" element={<CookiePolicy />} />
               <Route path="/cookie-settings" element={<CookieSettings />} />
-              <Route path="/product-management" element={<ProductManagement />} />
+              <Route
+                path="/product-management"
+                element={<ProductManagement />}
+              />
               <Route
                 path="/terms-and-conditions"
                 element={<TermsAndConditions />}
@@ -98,13 +100,13 @@ function App() {
               <Route path="/seller/:sellerId" element={<SellerProfile />} />
               <Route path="/cart" element={<Cart />} />
               <Route
-              path="/seller/dashboard"
-              element={
-                <ProtectedRoute>
-                  <SellerDashboard />
-                </ProtectedRoute>
-              }
-            />
+                path="/seller/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <SellerDashboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/myorders"
                 element={
@@ -148,5 +150,3 @@ function App() {
 }
 
 export default App;
-
-

@@ -12,6 +12,7 @@ import "../styles/Navbar.css";
 import CategoryDropdownRecursive from "./CategoryDropdownRecursive";
 import { useMessageContext } from "../utils/MessageContext.jsx";
 import { useCart } from "../utils/CartContext";
+import { MdContactSupport } from "react-icons/md";
 
 export const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -732,6 +733,15 @@ export const Navbar = () => {
               </span>
             )}
           </button>
+
+          {/* Inquiry Icon */}
+          <button
+            onClick={() => navigate("/inquiry")}
+            className={`relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 focus:outline-none text-gray-600`}
+            aria-label="Inquiry"
+          >
+            <MdContactSupport size={24} />
+          </button>
         </div>
 
         {/* Mobile Right Side Icons */}
@@ -959,6 +969,15 @@ export const Navbar = () => {
                     {cartCount}
                   </span>
                 )}
+              </button>
+
+              {/* Inquiry Icon */}
+              <button
+                onClick={() => navigate("/inquiry")}
+                className="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100 focus:outline-none"
+                aria-label="Inquiry"
+              >
+                <MdContactSupport size={24} />
               </button>
             </div>
             <div className="p-4 flex flex-col gap-3 border-b border-gray-200">

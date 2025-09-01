@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { RxDashboard } from 'react-icons/rx';
-import { FaUser } from 'react-icons/fa';
+import { FaUser, FaQuestionCircle } from 'react-icons/fa';
 import { LuArrowLeftFromLine } from "react-icons/lu";
 
 const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
@@ -35,6 +35,12 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
               <a href="/admin/users" className={`flex items-center p-2 rounded-lg ${activeView === 'users' ? 'text-purple-700 bg-purple-100' : 'text-gray-700 hover:bg-gray-100'}`}>
                 <FaUser className="w-5 h-5" />
                 {sidebarOpen && <span className="ml-3">User Management</span>}
+              </a>
+            </li>
+            <li className="mb-2">
+              <a href="/admin/inquiry" onClick={(e) => { e.preventDefault(); navigate('/admin/inquiry'); }} className={`flex items-center p-2 rounded-lg ${activeView === 'inquiry' ? 'text-purple-700 bg-purple-100' : 'text-gray-700 hover:bg-gray-100'}`}>
+                <FaQuestionCircle className="w-5 h-5" />
+                {sidebarOpen && <span className="ml-3">Inquiry</span>}
               </a>
             </li>
           </ul>

@@ -36,6 +36,7 @@ import { Toaster, toast } from "sonner";
 import SellerDashboard from "./pages/SellerDashboard.jsx";
 import AdminInquiry from "./pages/AdminInquiry.jsx";
 import Inquiry from "./pages/Inquiry.jsx";
+import AdminOrderManagement from "./pages/AdminOrderManagement.jsx";
 
 const ToastContext = createContext(null);
 
@@ -141,6 +142,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
                     <AdminInquiry />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/order-management"
+                element={
+                  <ProtectedRoute allowedRoles={["ROLE_ADMIN"]}>
+                    <AdminOrderManagement />
                   </ProtectedRoute>
                 }
               />

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { RxDashboard } from 'react-icons/rx';
-import { FaUser, FaQuestionCircle } from 'react-icons/fa';
+import { FaUser, FaQuestionCircle, FaShoppingBag } from 'react-icons/fa';
 import { LuArrowLeftFromLine } from "react-icons/lu";
 
 const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
@@ -82,6 +82,12 @@ const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
                   <path fillRule="evenodd" d="M18 10a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h12a2 2 0 012 2v4zm-1 0H3v2h14V10z" clipRule="evenodd"></path>
                 </svg>
                 {sidebarOpen && <span className="ml-3">Low Stocks</span>}
+              </a>
+            </li>
+            <li className="mb-2">
+              <a href="/admin/order-management" onClick={(e) => { e.preventDefault(); navigate('/admin/order-management'); }} className={`flex items-center p-2 rounded-lg ${activeView === 'order-management' ? 'text-purple-700 bg-purple-100' : 'text-gray-700 hover:bg-gray-100'}`}>
+                <FaShoppingBag className="w-5 h-5" />
+                {sidebarOpen && <span className="ml-3">Order Management</span>}
               </a>
             </li>
             <li className="mb-2">

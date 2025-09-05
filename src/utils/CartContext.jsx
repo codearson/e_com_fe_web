@@ -74,13 +74,13 @@ export const CartProvider = ({ children }) => {
   // Get user ID from JWT token
   const getUserIdFromToken = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) return null;
-      
+
       const decoded = decodeJwt(token);
       const email = decoded?.sub;
       if (!email) return null;
-      
+
       const userData = await getUserByEmail(email);
       return userData?.id;
     } catch (error) {
@@ -94,7 +94,7 @@ export const CartProvider = ({ children }) => {
       const currentUserId = await getUserIdFromToken();
       setUserId(currentUserId);
     };
-    
+
     initializeUser();
   }, []);
 
@@ -107,7 +107,7 @@ export const CartProvider = ({ children }) => {
   // Refresh cart count periodically
   useEffect(() => {
     if (!userId) return;
-    
+
     const interval = setInterval(() => {
       refreshCartCount();
     }, 3000); // Refresh every 3 seconds

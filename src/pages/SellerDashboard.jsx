@@ -1,6 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import {
+  saveShippingPreferences,
+  getShippingPreferencesByUserId,
+  deleteShippingPreference,
+  updateShippingPreference,
+} from "../API/shippingPreferencesApi";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
+import { decodeJwt } from "../API/UserApi";
+import { getUserByEmail } from "../API/config";
+import Modal from "../components/Modal";
 
 const tabs = [
   { key: "listing-items", label: "Listing Items" },
@@ -13,7 +22,29 @@ const tabs = [
 ];
 
 const SellerDashboard = () => {
+  const [userId, setUserId] = useState(null);
   const [activeTab, setActiveTab] = useState("listing-items");
+
+  useEffect(() => {
+    const getUserIdFromToken = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) return null;
+
+        const decoded = decodeJwt(token);
+        const email = decoded?.sub;
+        if (!email) return null;
+
+        const userData = await getUserByEmail(email);
+        setUserId(userData?.id);
+      } catch (error) {
+        console.error("Error getting user ID from token:", error);
+        return null;
+      }
+    };
+
+    getUserIdFromToken();
+  }, []);
 
   const [listings, setListings] = useState([]);
   const [newItem, setNewItem] = useState({
@@ -22,10 +53,8 @@ const SellerDashboard = () => {
     price: "",
     category: "",
   });
-  const handleEdit = (id) => {
-    alert("Edit functionality coming soon.");
-  };
 
+  const [rawShippingPreferences, setRawShippingPreferences] = useState([]);
   const [shippingPreferences, setShippingPreferences] = useState([]);
   const [showAddPreferenceForm, setShowAddPreferenceForm] = useState(false);
   const [newPreferenceName, setNewPreferenceName] = useState("");
@@ -36,6 +65,11 @@ const SellerDashboard = () => {
   const [newPreferenceCustomWeight, setNewPreferenceCustomWeight] =
     useState(false);
   const [customWeightValue, setCustomWeightValue] = useState("");
+  const [loadingPreferences, setLoadingPreferences] = useState(false);
+  const [savingPreference, setSavingPreference] = useState(false);
+  const [error, setError] = useState(null);
+  const [shippingSearchTerm, setShippingSearchTerm] = useState("");
+  const [editingPreference, setEditingPreference] = useState(null);
 
   const [promotions, setPromotions] = useState([]);
   const [showAddPromotionForm, setShowAddPromotionForm] = useState(false);
@@ -120,8 +154,237 @@ const SellerDashboard = () => {
     return 0;
   };
 
-  const handleSaveNewPreference = (e) => {
+  // Group shipping preferences by name to combine multiple package options
+  const groupShippingPreferences = (preferences) => {
+    const grouped = {};
+
+    preferences.forEach((pref) => {
+      const { shippingName, courierService, packageWeight, price } = pref;
+      if (!grouped[shippingName]) {
+        grouped[shippingName] = {
+          name: shippingName,
+          couriers: new Set(),
+          packages: [],
+        };
+      }
+      grouped[shippingName].couriers.add(courierService);
+      grouped[shippingName].packages.push({
+        weight: packageWeight,
+        price,
+        id: pref.id,
+      });
+    });
+
+    // Convert sets to arrays for rendering
+    Object.values(grouped).forEach((group) => {
+      group.couriers = Array.from(group.couriers);
+    });
+
+    return Object.values(grouped);
+  };
+
+  const loadShippingPreferences = async () => {
+    if (!userId) return;
+    setLoadingPreferences(true);
+    setError(null);
+    try {
+      const preferences = await getShippingPreferencesByUserId(userId);
+      setRawShippingPreferences(preferences);
+      const groupedPreferences = groupShippingPreferences(preferences);
+      setShippingPreferences(groupedPreferences);
+    } catch (err) {
+      setError("Failed to load shipping preferences.");
+      console.error("Error fetching shipping preferences:", err);
+    } finally {
+      setLoadingPreferences(false);
+    }
+  };
+
+  // Fetch shipping preferences when component mounts
+  useEffect(() => {
+    if (userId) {
+      loadShippingPreferences();
+    }
+  }, [userId]);
+
+  const handleEditPreference = (shippingName) => {
+    const preferenceToEdit = shippingPreferences.find(
+      (p) => p.name === shippingName
+    );
+    if (preferenceToEdit) {
+      setEditingPreference(preferenceToEdit);
+      setNewPreferenceName(preferenceToEdit.name);
+      setNewPreferenceCouriers(preferenceToEdit.couriers);
+      const packageSizes = preferenceToEdit.packages
+        .map((p) => {
+          if (p.weight > 0 && p.weight <= 1.5) return "Small";
+          if (p.weight > 1.5 && p.weight <= 5) return "Medium";
+          if (p.weight > 5 && p.weight <= 15) return "Large";
+          return null;
+        })
+        .filter(Boolean);
+      setNewPreferencePackageSizes(packageSizes);
+      const customPackage = preferenceToEdit.packages.find(
+        (p) => p.weight >= 15
+      );
+      if (customPackage) {
+        setNewPreferenceCustomWeight(true);
+        setCustomWeightValue(customPackage.weight);
+      } else {
+        setNewPreferenceCustomWeight(false);
+        setCustomWeightValue("");
+      }
+    }
+  };
+
+  const handleUpdatePreference = async (e) => {
     e.preventDefault();
+    if (!editingPreference) return;
+
+    setSavingPreference(true);
+    setError(null);
+
+    const packageSizeToWeight = {
+      Small: 1,
+      Medium: 5,
+      Large: 15,
+    };
+
+    const existingPreferences = rawShippingPreferences.filter(
+      (p) => p.shippingName === editingPreference.name
+    );
+
+    const newPreferences = [];
+    newPreferenceCouriers.forEach((courier) => {
+      newPreferencePackageSizes.forEach((size) => {
+        newPreferences.push({
+          shippingName: newPreferenceName,
+          courierService: courier,
+          packageWeight: packageSizeToWeight[size],
+          price: fixedPrices[size],
+          isActive: true,
+          userDto: { id: userId },
+        });
+      });
+
+      if (newPreferenceCustomWeight && customWeightValue) {
+        newPreferences.push({
+          shippingName: newPreferenceName,
+          courierService: courier,
+          packageWeight: parseFloat(customWeightValue),
+          price: calculateCustomWeightPrice(customWeightValue),
+          isActive: true,
+          userDto: { id: userId },
+        });
+      }
+    });
+
+    const preferencesToUpdate = [];
+    const preferencesToAdd = [];
+    const preferencesToDeactivate = [];
+
+    newPreferences.forEach((newPref) => {
+      const existingPref = existingPreferences.find(
+        (p) =>
+          p.courierService === newPref.courierService &&
+          p.packageWeight === newPref.packageWeight
+      );
+      if (existingPref) {
+        preferencesToUpdate.push({ ...existingPref, ...newPref });
+      } else {
+        preferencesToAdd.push(newPref);
+      }
+    });
+
+    existingPreferences.forEach((existingPref) => {
+      const newPref = newPreferences.find(
+        (p) =>
+          p.courierService === existingPref.courierService &&
+          p.packageWeight === existingPref.packageWeight
+      );
+      if (!newPref) {
+        preferencesToDeactivate.push({ ...existingPref, isActive: 0 });
+      }
+    });
+
+    try {
+      for (const pref of preferencesToUpdate) {
+        await updateShippingPreference(pref);
+      }
+      for (const pref of preferencesToAdd) {
+        await saveShippingPreferences(pref);
+      }
+      for (const pref of preferencesToDeactivate) {
+        await updateShippingPreference(pref);
+      }
+
+      setEditingPreference(null);
+      loadShippingPreferences();
+      alert(`Shipping preference "${newPreferenceName}" updated!`);
+    } catch (err) {
+      setError("Failed to update shipping preference.");
+      console.error("Error updating shipping preference:", err);
+    } finally {
+      setSavingPreference(false);
+    }
+  };
+
+  const handleDeletePreference = async (shippingName) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete the shipping preference "${shippingName}"?`
+      )
+    ) {
+      return;
+    }
+
+    const preferencesToDelete = rawShippingPreferences.filter(
+      (p) => p.shippingName === shippingName
+    );
+
+    try {
+      for (const pref of preferencesToDelete) {
+        const updatedPref = { ...pref, isActive: 0 };
+        const response = await updateShippingPreference(updatedPref);
+        if (response.errorDescription) {
+          throw new Error(response.errorDescription);
+        }
+      }
+
+      loadShippingPreferences();
+      alert(`Shipping preference "${shippingName}" deleted!`);
+    } catch (err) {
+      setError("Failed to delete shipping preference.");
+      console.error("Error deleting shipping preference:", err);
+    }
+  };
+
+  const toggleNewPreferenceCourier = (courier) => {
+    setNewPreferenceCouriers((prev) =>
+      prev.includes(courier)
+        ? prev.filter((c) => c !== courier)
+        : [...prev, courier]
+    );
+  };
+
+  const toggleNewPreferencePackageSize = (size) => {
+    setNewPreferencePackageSizes((prev) =>
+      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
+    );
+  };
+
+  const toggleNewPreferenceCustomWeight = () => {
+    setNewPreferenceCustomWeight((prev) => !prev);
+  };
+
+  const handleSaveNewPreference = async (e) => {
+    e.preventDefault();
+
+    if (!userId) {
+      alert("You must be logged in to save preferences.");
+      return;
+    }
+
     if (!newPreferenceName.trim()) {
       alert("Please enter a name for the shipping preference.");
       return;
@@ -142,31 +405,69 @@ const SellerDashboard = () => {
       }
     }
 
-    const newPreference = {
-      id: Date.now(),
-      name: newPreferenceName,
-      couriers: newPreferenceCouriers,
-      packageSizes: newPreferencePackageSizes,
-      prices: fixedPrices,
-      customWeight: newPreferenceCustomWeight
-        ? {
-            weight: parseFloat(customWeightValue),
-            price: calculateCustomWeightPrice(customWeightValue),
-          }
-        : null,
+    const packageSizeToWeight = {
+      Small: 1,
+      Medium: 5,
+      Large: 15,
     };
 
-    setShippingPreferences((prev) => [...prev, newPreference]);
-    // In production: fetch('/api/shipping/preferences', { method: 'POST', body: JSON.stringify(newPreference) })
+    const preferencesToSave = [];
+
+    newPreferenceCouriers.forEach((courier) => {
+      newPreferencePackageSizes.forEach((size) => {
+        preferencesToSave.push({
+          shippingName: newPreferenceName,
+          courierService: courier,
+          packageWeight: packageSizeToWeight[size],
+          price: fixedPrices[size],
+          isActive: true,
+        });
+      });
+
+      if (newPreferenceCustomWeight && customWeightValue) {
+        preferencesToSave.push({
+          shippingName: newPreferenceName,
+          courierService: courier,
+          packageWeight: parseFloat(customWeightValue),
+          price: calculateCustomWeightPrice(customWeightValue),
+          isActive: true,
+        });
+      }
+    });
+
+    setSavingPreference(true);
+    setError(null);
+    try {
+      const savedPreferences = [];
+      for (const pref of preferencesToSave) {
+        const response = await saveShippingPreferences(pref);
+        if (response.errorDescription) {
+          setError(response.errorDescription);
+          break;
+        } else {
+          savedPreferences.push(response);
+        }
+      }
+
+      if (!error) {
+        const allPreferences = await getShippingPreferencesByUserId(userId);
+        const groupedPreferences = groupShippingPreferences(allPreferences);
+        setShippingPreferences(groupedPreferences);
+        alert(`Shipping preference "'${newPreferenceName}'" saved!`);
+      }
+    } catch (err) {
+      setError("Failed to save shipping preference.");
+      console.error("Error saving shipping preference:", err);
+    } finally {
+      setSavingPreference(false);
+    }
+
     setNewPreferenceName("");
     setNewPreferenceCouriers([]);
     setNewPreferencePackageSizes([]);
     setNewPreferenceCustomWeight(false);
     setCustomWeightValue("");
     setShowAddPreferenceForm(false);
-    alert(
-      `Shipping preference "${newPreference.name}" saved! Apply it to your listings in the Listing Items tab.`
-    );
   };
 
   const handleSaveNewPromotion = (e) => {
@@ -198,9 +499,9 @@ const SellerDashboard = () => {
     setNewPromotionType("");
     setNewPromotionDuration("");
     setNewPromotionItemId("");
-    setShowAddPromotionForm(false);
+    setShowAddPreferenceForm(false);
     alert(
-      `Promotion "${newPromotion.type}" for ${newPromotion.duration} days saved!`
+      `Promotion "'${newPromotion.type}'" for ${newPromotion.duration} days saved!`
     );
   };
 
@@ -236,80 +537,6 @@ const SellerDashboard = () => {
     // In production: fetch('/api/offers', { method: 'POST', body: JSON.stringify(newOffer) })
     setNewOfferItemId("");
     setNewOfferBuyerId("");
-    setNewOfferDiscount("");
-    setNewOfferDuration("");
-    setShowAddOfferForm(false);
-    alert(
-      `Offer sent to buyer for item "${
-        listings.find((item) => item.id === newOffer.itemId)?.title || "Unknown"
-      }"!`
-    );
-  };
-
-  const toggleNewPreferenceCourier = (courier) => {
-    setNewPreferenceCouriers((prev) =>
-      prev.includes(courier)
-        ? prev.filter((c) => c !== courier)
-        : [...prev, courier]
-    );
-  };
-
-  const toggleNewPreferencePackageSize = (size) => {
-    setNewPreferencePackageSizes((prev) =>
-      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
-    );
-  };
-
-  const toggleNewPreferenceCustomWeight = () => {
-    setNewPreferenceCustomWeight((prev) => !prev);
-    if (!newPreferenceCustomWeight) {
-      setCustomWeightValue("");
-    }
-  };
-
-  const handleDeletePreference = (id) => {
-    setShippingPreferences((prev) => prev.filter((pref) => pref.id !== id));
-    // In production: fetch(`/api/shipping/preferences/${id}`, { method: 'DELETE' })
-    alert("Shipping preference deleted.");
-  };
-
-  const handleDeletePromotion = (id) => {
-    setPromotions((prev) => prev.filter((promo) => promo.id !== id));
-    // In production: fetch(`/api/promotions/${id}`, { method: 'DELETE' })
-    alert("Promotion deleted.");
-  };
-
-  const handleDeleteOffer = (id) => {
-    setOffers((prev) => prev.filter((offer) => offer.id !== id));
-    // In production: fetch(`/api/offers/${id}`, { method: 'DELETE' })
-    alert("Offer deleted.");
-  };
-
-  const handleUpdateOrder = (e) => {
-    e.preventDefault();
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === editingOrderId
-          ? {
-              ...order,
-              status: editingStatus,
-              trackingNumber: editingTrackingNumber,
-              sellerPaysShipping: editingSellerPaysShipping,
-            }
-          : order
-      )
-    );
-    // In production: fetch(`/api/orders/${editingOrderId}`, { method: 'PUT', body: JSON.stringify({ status: editingStatus, trackingNumber: editingTrackingNumber, sellerPaysShipping: editingSellerPaysShipping }) })
-    alert("Order updated!");
-    setEditingOrderId(null);
-    setEditingStatus("");
-    setEditingTrackingNumber("");
-    setEditingSellerPaysShipping(false);
-  };
-
-  const handleGenerateLabel = (orderId) => {
-    alert(`Shipping label generated for order ${orderId}!`);
-    // In production: fetch('/api/orders/generate-label', { method: 'POST', body: JSON.stringify({ orderId }) }).then((response) => { /* Download label PDF */ })
   };
 
   const handleTrackOrder = (orderId) => {
@@ -449,7 +676,12 @@ const SellerDashboard = () => {
                           <div className="flex flex-col gap-2">
                             <button
                               className="text-sm text-white bg-[#1E90FF] px-3 py-1 rounded hover:bg-[#1C86EE]"
-                              onClick={() => handleEdit(item.id)}
+                              onClick={() =>
+                                console.log(
+                                  "Edit button clicked for item:",
+                                  item.id
+                                )
+                              }
                             >
                               Edit
                             </button>
@@ -468,6 +700,7 @@ const SellerDashboard = () => {
                       ))}
                     </ul>
                   )}
+                  {error && <p className="text-red-500 mt-4">Error: {error}</p>}
                 </div>
               </div>
             )}
@@ -476,7 +709,15 @@ const SellerDashboard = () => {
                 <h3 className="text-xl font-bold mb-4">Shipping Preferences</h3>
                 <div className="bg-white rounded-xl shadow p-4 mb-6 space-y-6">
                   <button
-                    onClick={() => setShowAddPreferenceForm(true)}
+                    onClick={() => {
+                      setNewPreferenceName("");
+                      setNewPreferenceCouriers([]);
+                      setNewPreferencePackageSizes([]);
+                      setNewPreferenceCustomWeight(false);
+                      setCustomWeightValue("");
+                      setEditingPreference(null);
+                      setShowAddPreferenceForm(true);
+                    }}
                     className="bg-[#1E90FF] text-white px-6 py-2 rounded-full font-semibold hover:bg-[#1C86EE]"
                   >
                     Create New Shipping Preference
@@ -618,13 +859,15 @@ const SellerDashboard = () => {
                         <button
                           type="submit"
                           className="bg-[#1E90FF] text-white px-6 py-2 rounded-full font-semibold hover:bg-[#1C86EE]"
+                          disabled={savingPreference}
                         >
-                          Save Preference
+                          {savingPreference ? "Saving..." : "Save Preference"}
                         </button>
                         <button
                           type="button"
                           onClick={() => setShowAddPreferenceForm(false)}
                           className="bg-gray-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-gray-600"
+                          disabled={savingPreference}
                         >
                           Cancel
                         </button>
@@ -635,53 +878,78 @@ const SellerDashboard = () => {
                   <h4 className="text-lg font-semibold mb-3 mt-6">
                     Your Shipping Preferences
                   </h4>
-                  {shippingPreferences.length === 0 ? (
-                    <p className="text-gray-500">
-                      No shipping preferences created yet.
-                    </p>
-                  ) : (
-                    <ul className="space-y-4">
-                      {shippingPreferences.map((pref) => (
-                        <li key={pref.id} className="border rounded-lg p-4">
-                          <h5 className="text-lg font-bold text-[#1E90FF]">
-                            {pref.name}
-                          </h5>
-                          <p className="text-gray-700">
-                            Couriers: {pref.couriers.join(", ") || "None"}
-                          </p>
-                          <p className="text-gray-700">
-                            Package Sizes and Prices:
-                          </p>
-                          <ul className="list-disc pl-5 text-gray-700">
-                            {pref.packageSizes.map((size) => (
-                              <li key={size}>
-                                {size} (
-                                {size === "Small"
-                                  ? "<1.5kg"
-                                  : size === "Medium"
-                                  ? "<5kg"
-                                  : "<15kg"}
-                                ): ₹{pref.prices[size].toFixed(2)}
-                              </li>
-                            ))}
-                          </ul>
-                          {pref.customWeight && (
-                            <p className="text-gray-700">
-                              Custom Weight:{" "}
-                              {pref.customWeight.weight.toFixed(2)}kg, ₹
-                              {pref.customWeight.price.toFixed(2)}
-                            </p>
-                          )}
-                          <button
-                            className="text-sm text-white bg-red-500 px-3 py-1 rounded hover:bg-red-600 mt-2"
-                            onClick={() => handleDeletePreference(pref.id)}
-                          >
-                            Delete
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <input
+                    type="text"
+                    placeholder="Search Shipping Preferences..."
+                    className="border rounded px-3 py-2 w-full mb-4"
+                    value={shippingSearchTerm}
+                    onChange={(e) => setShippingSearchTerm(e.target.value)}
+                  />
+                  <div className="max-h-96 overflow-y-auto">
+                    {loadingPreferences ? (
+                      <p>Loading shipping preferences...</p>
+                    ) : shippingPreferences.length === 0 ? (
+                      <p className="text-gray-500">
+                        No shipping preferences created yet.
+                      </p>
+                    ) : (
+                      <ul className="space-y-4">
+                        {shippingPreferences
+                          .filter((pref) =>
+                            pref.name
+                              .toLowerCase()
+                              .includes(shippingSearchTerm.toLowerCase())
+                          )
+                          .map((pref) => (
+                            <li
+                              key={pref.name}
+                              className="border rounded-lg p-4"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h5 className="text-lg font-bold text-[#1E90FF]">
+                                    {pref.name}
+                                  </h5>
+                                  <p className="text-gray-700">
+                                    Couriers:{" "}
+                                    {pref.couriers.join(", ") || "None"}
+                                  </p>
+                                  <p className="text-gray-700">
+                                    Package Sizes and Prices:
+                                  </p>
+                                  <ul className="list-disc pl-5 text-gray-700">
+                                    {pref.packages.map((pkg) => (
+                                      <li key={pkg.id}>
+                                        {pkg.weight}kg: ₹{pkg.price.toFixed(2)}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                                <div className="flex items-center">
+                                  <button
+                                    className="text-sm text-white bg-blue-500 px-3 py-1 rounded hover:bg-blue-600"
+                                    onClick={() =>
+                                      handleEditPreference(pref.name)
+                                    }
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    className="text-sm text-white bg-red-500 px-3 py-1 rounded hover:bg-red-600 ml-2"
+                                    onClick={() =>
+                                      handleDeletePreference(pref.name)
+                                    }
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
+                  {error && <p className="text-red-500 mt-4">Error: {error}</p>}
                 </div>
               </div>
             )}
@@ -1348,6 +1616,134 @@ const SellerDashboard = () => {
             )}
           </section>
         </div>
+        <Modal
+          open={!!editingPreference}
+          onClose={() => setEditingPreference(null)}
+        >
+          {editingPreference && (
+            <form onSubmit={handleUpdatePreference} className="space-y-6 mt-4">
+              <h3 className="text-xl font-bold mb-4">
+                Edit Shipping Preference
+              </h3>
+              <div>
+                <h4 className="text-md font-semibold mb-2 text-gray-800">
+                  Preference Name
+                </h4>
+                <input
+                  type="text"
+                  className="border rounded px-3 py-2 w-full"
+                  value={newPreferenceName}
+                  onChange={(e) => setNewPreferenceName(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <h4 className="text-md font-semibold mb-2 text-gray-800">
+                  Available Couriers
+                </h4>
+                <div className="flex flex-col gap-2">
+                  {["Prompt xpress"].map((courier) => (
+                    <label key={courier} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={newPreferenceCouriers.includes(courier)}
+                        onChange={() => toggleNewPreferenceCourier(courier)}
+                        className="mr-2"
+                      />
+                      {courier}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-md font-semibold mb-2 text-gray-800">
+                  Package Sizes
+                </h4>
+                <div className="flex flex-col gap-4">
+                  {[
+                    {
+                      size: "Small",
+                      weight: "<1.5kg",
+                      price: fixedPrices.Small,
+                    },
+                    {
+                      size: "Medium",
+                      weight: "<5kg",
+                      price: fixedPrices.Medium,
+                    },
+                    {
+                      size: "Large",
+                      weight: "<15kg",
+                      price: fixedPrices.Large,
+                    },
+                  ].map(({ size, weight, price }) => (
+                    <div key={size} className="flex items-center gap-4">
+                      <label className="flex items-center flex-1">
+                        <input
+                          type="checkbox"
+                          checked={newPreferencePackageSizes.includes(size)}
+                          onChange={() => toggleNewPreferencePackageSize(size)}
+                          className="mr-2"
+                        />
+                        {size} ({weight}, ₹{price.toFixed(2)})
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-md font-semibold mb-2 text-gray-800">
+                  Custom Weight (16–25kg)
+                </h4>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center flex-1">
+                    <input
+                      type="checkbox"
+                      checked={newPreferenceCustomWeight}
+                      onChange={toggleNewPreferenceCustomWeight}
+                      className="mr-2"
+                    />
+                    Custom Weight (16–25kg)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Weight (kg)"
+                    className="border rounded px-3 py-2 w-32"
+                    value={customWeightValue}
+                    onChange={(e) => setCustomWeightValue(e.target.value)}
+                    min="16"
+                    max="25"
+                    step="0.01"
+                    disabled={!newPreferenceCustomWeight}
+                  />
+                  {newPreferenceCustomWeight && customWeightValue && (
+                    <span className="text-gray-700">
+                      ₹
+                      {calculateCustomWeightPrice(customWeightValue).toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <button
+                  type="submit"
+                  className="bg-[#1E90FF] text-white px-6 py-2 rounded-full font-semibold hover:bg-[#1C86EE]"
+                  disabled={savingPreference}
+                >
+                  {savingPreference ? "Updating..." : "Update Preference"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingPreference(null)}
+                  className="bg-gray-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-gray-600"
+                  disabled={savingPreference}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </Modal>
       </main>
       <Footer />
     </div>

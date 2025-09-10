@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAllProducts, deleteProduct, updateProductStatus } from '../API/productApi';
+import { getAllProducts, updateProductStatus } from '../API/productApi';
 import { BASE_BACKEND_URL } from '../API/config';
 import AdminLayout from '../components/AdminLayout';
 import { useToast } from '../App.jsx';
@@ -52,60 +52,50 @@ const ProductManagement = () => {
 
   const renderContentView = () => {
     if (loading) {
-      return <div>Loading...</div>;
+      return <div className="flex justify-center items-center h-64">Loading...</div>;
     }
   
     if (error) {
-      return <div>Error: {error}</div>;
+      return <div className="text-red-500 text-center p-4">Error: {error}</div>;
     }
 
     return (
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">Product Management</h1>
-        
-        <div className="mb-4">
-          <button onClick={handleAddProduct} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">Product Management</h1>
+          <button onClick={handleAddProduct} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
             Add Product
-          </button>
-          <button className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2">
-            Bulk Upload (CSV)
           </button>
         </div>
   
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white">
-            <thead>
+        <div className="overflow-x-auto shadow-lg sm:rounded-lg">
+          <table className="min-w-full bg-white divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <th className="py-2 px-4 border-b">Image</th>
-                <th className="py-2 px-4 border-b">Name</th>
-                <th className="py-2 px-4 border-b">Category</th>
-                <th className="py-2 px-4 border-b">Price</th>
-                <th className="py-2 px-4 border-b">Stock</th>
-                <th className="py-2 px-4 border-b">Status</th>
-                <th className="py-2 px-4 border-b">Actions</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-200">
               {products && products.length > 0 ? (
-                products.map((product) => (
-                  <tr key={product.id}>
-                    <td className="py-2 px-4 border-b">
-                      <img src={`${BASE_BACKEND_URL}${product.imageUrl}`} alt={product.title} className="h-16 w-16 object-cover" />
+                products.map((product, index) => (
+                  <tr key={product.id} className={index % 2 === 0 ? 'bg-white hover:bg-gray-50' : 'bg-gray-50 hover:bg-gray-100'}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <img src={`${BASE_BACKEND_URL}${product.imageUrl}`} alt={product.title} className="h-16 w-16 object-cover rounded-md" />
                     </td>
-                    <td className="py-2 px-4 border-b">{product.title}</td>
-                    <td className="py-2 px-4 border-b">{product.productCategoryDto?.name || 'N/A'}</td>
-                    <td className="py-2 px-4 border-b">${product.price}</td>
-                    <td className="py-2 px-4 border-b">{product.quentity}</td>
-                    <td className="py-2 px-4 border-b">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {product.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className="py-2 px-4 border-b">
-                      <button onClick={() => handleEdit(product.id)} className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-1 px-2 rounded text-xs">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{product.title}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.productCategoryDto?.name || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.price}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.quentity}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button onClick={() => handleEdit(product.id)} className="text-indigo-600 hover:text-white hover:bg-indigo-700 border border-indigo-600 font-bold py-1 px-2 rounded transition-colors duration-300">
                         Edit
                       </button>
-                      <button onClick={() => handleDelete(product.id)} className="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded ml-2 text-xs">
+                      <button onClick={() => handleDelete(product.id)} className="text-red-600 hover:text-white hover:bg-red-700 border border-red-600 font-bold py-1 px-2 rounded ml-4 transition-colors duration-300">
                         Delete
                       </button>
                     </td>
@@ -113,7 +103,13 @@ const ProductManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-4">No products found.</td>
+                  <td colSpan="6" className="text-center py-10 text-gray-500">
+                    <div className="flex flex-col items-center">
+                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                      <p className="mt-2 font-semibold">No products found.</p>
+                      <p className="text-sm mt-1">Click "Add Product" to get started.</p>
+                    </div>
+                  </td>
                 </tr>
               )}
             </tbody>

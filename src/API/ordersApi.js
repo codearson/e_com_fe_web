@@ -106,3 +106,24 @@ export const getAllOrdersPage = async (pageNumber = 1, pageSize = 10, status = t
         return { payload: [], totalRecords: 0 };
     }
 };
+
+export const deleteOrder = async (orderId) => {
+    try {
+        const accessToken = localStorage.getItem("accessToken");
+        if (!accessToken) {
+            return { errorDescription: "Authentication required." };
+        }
+        const response = await axios.delete(
+            `${BASE_BACKEND_URL}/orders/delete?ordersId=${orderId}`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting order:', error);
+        return { errorDescription: error.response?.data?.errorDescription || "Failed to delete order." };
+    }
+};

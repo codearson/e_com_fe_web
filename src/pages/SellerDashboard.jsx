@@ -10,6 +10,33 @@ import { Footer } from "../components/Footer";
 import { decodeJwt } from "../API/UserApi";
 import { getUserByEmail } from "../API/config";
 import Modal from "../components/Modal";
+import { getProductsByUserId } from "../API/productApi";
+import { filterProductsWithActiveImages } from "../API/ProductImageApi";
+import { BASE_BACKEND_URL } from "../API/config";
+
+const ProductCard = ({ product, onClick, isSelected }) => {
+  const { title, price, imageUrl } = product;
+  const fullImageUrl = imageUrl
+    ? `${BASE_BACKEND_URL}${imageUrl}`
+    : "https://via.placeholder.com/150";
+
+  return (
+    <div
+      className={`border rounded-lg p-4 cursor-pointer ${
+        isSelected ? "border-blue-500" : "border-gray-300"
+      }`}
+      onClick={() => onClick(product.id)}
+    >
+      <img
+        src={fullImageUrl}
+        alt={title}
+        className="w-full h-32 object-cover rounded-md mb-4"
+      />
+      <h3 className="text-lg font-semibold">{title}</h3>
+      <p className="text-gray-600">Rs.{price}</p>
+    </div>
+  );
+};
 
 const tabs = [
   { key: "listing-items", label: "Listing Items" },
@@ -24,6 +51,7 @@ const tabs = [
 const SellerDashboard = () => {
   const [userId, setUserId] = useState(null);
   const [activeTab, setActiveTab] = useState("listing-items");
+  const [userProducts, setUserProducts] = useState([]);
 
   useEffect(() => {
     const getUserIdFromToken = async () => {
@@ -45,6 +73,24 @@ const SellerDashboard = () => {
 
     getUserIdFromToken();
   }, []);
+
+  useEffect(() => {
+    const fetchUserProducts = async () => {
+      if (userId) {
+        try {
+          const products = await getProductsByUserId(userId);
+          const productsWithActiveImages = await filterProductsWithActiveImages(
+            products
+          );
+          setUserProducts(productsWithActiveImages);
+        } catch (error) {
+          console.error("Error fetching user products:", error);
+          setUserProducts([]);
+        }
+      }
+    };
+    fetchUserProducts();
+  }, [userId]);
 
   const [listings, setListings] = useState([]);
   const [newItem, setNewItem] = useState({
@@ -75,7 +121,8 @@ const SellerDashboard = () => {
   const [showAddPromotionForm, setShowAddPromotionForm] = useState(false);
   const [newPromotionType, setNewPromotionType] = useState("");
   const [newPromotionDuration, setNewPromotionDuration] = useState("");
-  const [newPromotionItemId, setNewPromotionItemId] = useState("");
+  const [newPromotionItemIds, setNewPromotionItemIds] = useState([]);
+  const [promotionSearchTerm, setPromotionSearchTerm] = useState("");
 
   const [favorites, setFavorites] = useState([
     // Mock data: In production, fetch via API (e.g., GET /api/favorites/:sellerId)
@@ -480,28 +527,28 @@ const SellerDashboard = () => {
       alert("Please select a duration.");
       return;
     }
-    if (newPromotionType === "Item Bump" && !newPromotionItemId) {
-      alert("Please select an item for Item Bump.");
+    if (newPromotionType === "Item Bump" && newPromotionItemIds.length === 0) {
+      alert("Please select at least one item for Item Bump.");
       return;
     }
 
     const newPromotion = {
-      id: Date.now(),
+      id: Date.now(), // Unique ID for the promotion
       type: newPromotionType,
       duration: parseInt(newPromotionDuration),
       cost: calculatePromotionCost(newPromotionType, newPromotionDuration),
-      itemId: newPromotionType === "Item Bump" ? newPromotionItemId : null,
+      itemIds: newPromotionItemIds, // Store multiple item IDs if applicable
       status: "Active", // Mock status
     };
 
     setPromotions((prev) => [...prev, newPromotion]);
-    // In production: fetch('/api/promotions', { method: 'POST', body: JSON.stringify(newPromotion) })
+    // In production: fetch('/api/promotions', { method: 'POST', body: JSON.stringify(newPromotions) })
     setNewPromotionType("");
     setNewPromotionDuration("");
-    setNewPromotionItemId("");
-    setShowAddPreferenceForm(false);
+    setNewPromotionItemIds([]);
+    setShowAddPromotionForm(false);
     alert(
-      `Promotion "'${newPromotion.type}'" for ${newPromotion.duration} days saved!`
+      `Promotion "'${newPromotionType}'" for ${newPromotionDuration} days saved for ${newPromotionItemIds.length} items!`
     );
   };
 
@@ -537,6 +584,13 @@ const SellerDashboard = () => {
     // In production: fetch('/api/offers', { method: 'POST', body: JSON.stringify(newOffer) })
     setNewOfferItemId("");
     setNewOfferBuyerId("");
+  };
+
+  const handleBumpItem = (itemId) => {
+    setActiveTab("promotions");
+    setNewPromotionType("Item Bump");
+    setNewPromotionItemIds([itemId]);
+    setShowAddPromotionForm(true);
   };
 
   const handleTrackOrder = (orderId) => {
@@ -612,7 +666,7 @@ const SellerDashboard = () => {
                       />
                       <input
                         type="text"
-                        placeholder="Price (₹)"
+                        placeholder="Price (Rs.)"
                         className="border rounded px-3 py-2 w-full"
                         value={newItem.price}
                         onChange={(e) =>
@@ -665,7 +719,7 @@ const SellerDashboard = () => {
                             <h5 className="text-lg font-bold text-[#1E90FF]">
                               {item.title}
                             </h5>
-                            <p className="text-gray-700">₹{item.price}</p>
+                            <p className="text-gray-700">Rs.{item.price}</p>
                             <p className="text-sm text-gray-500">
                               {item.category}
                             </p>
@@ -694,6 +748,12 @@ const SellerDashboard = () => {
                               }
                             >
                               Delete
+                            </button>
+                            <button
+                              className="text-sm text-white bg-green-500 px-3 py-1 rounded hover:bg-green-600 mt-2"
+                              onClick={() => handleBumpItem(item.id)}
+                            >
+                              Bump
                             </button>
                           </div>
                         </li>
@@ -807,7 +867,7 @@ const SellerDashboard = () => {
                                   }
                                   className="mr-2"
                                 />
-                                {size} ({weight}, ₹{price.toFixed(2)})
+                                {size} ({weight}, Rs.{price.toFixed(2)})
                               </label>
                             </div>
                           ))}
@@ -846,7 +906,7 @@ const SellerDashboard = () => {
                           />
                           {newPreferenceCustomWeight && customWeightValue && (
                             <span className="text-gray-700">
-                              ₹
+                              Rs.
                               {calculateCustomWeightPrice(
                                 customWeightValue
                               ).toFixed(2)}
@@ -920,7 +980,8 @@ const SellerDashboard = () => {
                                   <ul className="list-disc pl-5 text-gray-700">
                                     {pref.packages.map((pkg) => (
                                       <li key={pkg.id}>
-                                        {pkg.weight}kg: ₹{pkg.price.toFixed(2)}
+                                        {pkg.weight}kg: Rs.
+                                        {pkg.price.toFixed(2)}
                                       </li>
                                     ))}
                                   </ul>
@@ -992,27 +1053,42 @@ const SellerDashboard = () => {
                           <h4 className="text-md font-semibold mb-2 text-gray-800">
                             Select Item
                           </h4>
-                          {listings.length === 0 ? (
+                          <input
+                            type="text"
+                            placeholder="Search by product name..."
+                            className="border rounded px-3 py-2 w-full mb-4"
+                            onChange={(e) => setPromotionSearchTerm(e.target.value)}
+                          />
+                          {userProducts.length === 0 ? (
                             <p className="text-sm text-red-500">
                               No items listed. Please add items in the Listing
                               Items tab first.
                             </p>
                           ) : (
-                            <select
-                              className="border rounded px-3 py-2 w-full"
-                              value={newPromotionItemId}
-                              onChange={(e) =>
-                                setNewPromotionItemId(e.target.value)
-                              }
-                              required
-                            >
-                              <option value="">Select an item</option>
-                              {listings.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                  {item.title}
-                                </option>
-                              ))}
-                            </select>
+                            <div className="max-h-96 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 border rounded-lg">
+                              {userProducts
+                                .filter((product) =>
+                                  product.title
+                                    .toLowerCase()
+                                    .includes(promotionSearchTerm.toLowerCase())
+                                )
+                                .map((product) => (
+                                  <ProductCard
+                                    key={product.id}
+                                    product={product}
+                                    onClick={(productId) =>
+                                      setNewPromotionItemIds((prev) =>
+                                        prev.includes(productId)
+                                          ? prev.filter((id) => id !== productId)
+                                          : [...prev, productId]
+                                      )
+                                    }
+                                    isSelected={newPromotionItemIds.includes(
+                                      product.id
+                                    )}
+                                  />
+                                ))}
+                            </div>
                           )}
                         </div>
                       )}
@@ -1048,7 +1124,7 @@ const SellerDashboard = () => {
                             Cost
                           </h4>
                           <p className="text-gray-700">
-                            ₹
+                            Rs.
                             {calculatePromotionCost(
                               newPromotionType,
                               newPromotionDuration
@@ -1063,7 +1139,7 @@ const SellerDashboard = () => {
                           className="bg-[#1E90FF] text-white px-6 py-2 rounded-full font-semibold hover:bg-[#1C86EE]"
                           disabled={
                             newPromotionType === "Item Bump" &&
-                            listings.length === 0
+                            userProducts.length === 0
                           }
                         >
                           Save Promotion
@@ -1074,7 +1150,7 @@ const SellerDashboard = () => {
                             setShowAddPromotionForm(false);
                             setNewPromotionType("");
                             setNewPromotionDuration("");
-                            setNewPromotionItemId("");
+                            setNewPromotionItemIds([]);
                           }}
                           className="bg-gray-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-gray-600"
                         >
@@ -1100,13 +1176,22 @@ const SellerDashboard = () => {
                             Duration: {promo.duration} days
                           </p>
                           <p className="text-gray-700">
-                            Cost: ₹{promo.cost.toFixed(2)}
+                            Cost: Rs.{promo.cost.toFixed(2)}
                           </p>
-                          {promo.itemId && (
+                          {promo.itemIds && (
                             <p className="text-gray-700">
-                              Item:{" "}
-                              {listings.find((item) => item.id === promo.itemId)
-                                ?.title || "Unknown"}
+                              Item(s):{" "}
+                              {Array.isArray(promo.itemIds)
+                                ? promo.itemIds
+                                    .map(
+                                      (id) =>
+                                        userProducts.find((item) => item.id === id)
+                                          ?.title || "Unknown"
+                                    )
+                                    .join(", ")
+                                : userProducts.find(
+                                    (item) => item.id === promo.itemIds
+                                  )?.title || "Unknown"}
                             </p>
                           )}
                           <p className="text-gray-700">
@@ -1145,7 +1230,7 @@ const SellerDashboard = () => {
                         <h4 className="text-md font-semibold mb-2 text-gray-800">
                           Select Item
                         </h4>
-                        {listings.length === 0 ? (
+                        {userProducts.length === 0 ? (
                           <p className="text-sm text-red-500">
                             No items listed. Please add items in the Listing
                             Items tab first.
@@ -1161,7 +1246,7 @@ const SellerDashboard = () => {
                             required
                           >
                             <option value="">Select an item</option>
-                            {listings.map((item) => (
+                            {userProducts.map((item) => (
                               <option key={item.id} value={item.id}>
                                 {item.title}
                               </option>
@@ -1242,7 +1327,7 @@ const SellerDashboard = () => {
                           type="submit"
                           className="bg-[#1E90FF] text-white px-6 py-2 rounded-full font-semibold hover:bg-[#1C86EE]"
                           disabled={
-                            listings.length === 0 ||
+                            userProducts.length === 0 ||
                             (newOfferItemId &&
                               favorites.filter(
                                 (fav) => fav.itemId === newOfferItemId
@@ -1279,8 +1364,9 @@ const SellerDashboard = () => {
                         <li key={offer.id} className="border rounded-lg p-4">
                           <h5 className="text-lg font-bold text-[#1E90FF]">
                             Item:{" "}
-                            {listings.find((item) => item.id === offer.itemId)
-                              ?.title || "Unknown"}
+                            {userProducts.find(
+                              (item) => item.id === offer.itemId
+                            )?.title || "Unknown"}
                           </h5>
                           <p className="text-gray-700">
                             Buyer:{" "}
@@ -1333,8 +1419,9 @@ const SellerDashboard = () => {
                           </h5>
                           <p className="text-gray-700">
                             Item:{" "}
-                            {listings.find((item) => item.id === order.itemId)
-                              ?.title || "Unknown"}
+                            {userProducts.find(
+                              (item) => item.id === order.itemId
+                            )?.title || "Unknown"}
                           </p>
                           <p className="text-gray-700">
                             Buyer: {order.buyerName} ({order.buyerEmail})
@@ -1352,7 +1439,7 @@ const SellerDashboard = () => {
                             Tracking Number: {order.trackingNumber || "Not set"}
                           </p>
                           <p className="text-gray-700">
-                            Shipping Fee: ₹{order.shippingFee.toFixed(2)} (
+                            Shipping Fee: Rs.{order.shippingFee.toFixed(2)} (
                             {order.sellerPaysShipping
                               ? "Seller Pays"
                               : "Buyer Pays"}
@@ -1685,7 +1772,7 @@ const SellerDashboard = () => {
                           onChange={() => toggleNewPreferencePackageSize(size)}
                           className="mr-2"
                         />
-                        {size} ({weight}, ₹{price.toFixed(2)})
+                        {size} ({weight}, Rs.{price.toFixed(2)})
                       </label>
                     </div>
                   ))}
@@ -1718,7 +1805,7 @@ const SellerDashboard = () => {
                   />
                   {newPreferenceCustomWeight && customWeightValue && (
                     <span className="text-gray-700">
-                      ₹
+                      Rs.
                       {calculateCustomWeightPrice(customWeightValue).toFixed(2)}
                     </span>
                   )}

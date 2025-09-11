@@ -1766,36 +1766,7 @@ export const ProfileEdit = () => {
                   </button>
                 </div>
                 {/* User's Products Section */}
-                <div className="mt-10">
-                  <h3 className="text-xl font-bold mb-4">Your Listed Items</h3>
-                  {loadingProducts ? (
-                    <div>Loading your items...</div>
-                  ) : userProducts.length === 0 ? (
-                    <div className="text-gray-500">You have not listed any products yet.</div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                      {userProducts.map((product) => (
-                        <div
-                          key={product.id}
-                          className="bg-white rounded-xl shadow p-4 flex flex-col items-center cursor-pointer hover:shadow-lg transition"
-                        >
-                          <img
-                            src={
-                              product.imageUrl && product.imageUrl.startsWith('http')
-                                ? product.imageUrl
-                                : "https://via.placeholder.com/150"
-                            }
-                            alt={product.title}
-                            className="w-32 h-32 object-cover rounded mb-3"
-                          />
-                          <div className="font-semibold text-lg mb-1">{product.title}</div>
-                          <div className="text-gray-600 mb-1">{product.brandDto?.brandName}</div>
-                          <div className="text-gray-800 font-bold">{product.price ? `Rs. ${product.price}` : "Price not set"}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                
               </div>
             )}
             {activeTab === "account" && (
